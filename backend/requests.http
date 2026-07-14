@@ -1,0 +1,111 @@
+### Arquivo para a extensão "REST Client" do VS Code.
+### API principal: http://localhost:3001 · Webhooks: http://localhost:3002
+
+# ──────────────────────────── AUTENTICAÇÃO ────────────────────────────
+
+### Login (admin)
+# @name login
+POST http://localhost:3001/api/auth/login
+Content-Type: application/json
+
+{ "email": "admin@crm.local", "password": "Admin@123" }
+
+### Usuário atual
+GET http://localhost:3001/api/auth/me
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Renovar sessão (rotaciona o refresh token)
+POST http://localhost:3001/api/auth/refresh
+Content-Type: application/json
+
+{ "refreshToken": "{{login.response.body.refreshToken}}" }
+
+# ──────────────────────────── TICKETS ────────────────────────────
+
+### Listar tickets (filtros: status, platform, assignedTo=me|unassigned|<id>, search, dateFrom, dateTo)
+GET http://localhost:3001/api/tickets?page=1&pageSize=20
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Contadores por status
+GET http://localhost:3001/api/tickets/stats
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Buscar por nome/telefone/nº
+GET http://localhost:3001/api/tickets?search=Maria
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Criar ticket manual (lead que ligou/veio à loja)
+POST http://localhost:3001/api/tickets
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "lead": { "name": "Cliente Balcão", "phone": "11912341234" },
+  "message": "Procura hatch automático até 70 mil.",
+  "vehicleText": "Hatch automático até R$ 70.000"
+}
+
+### Detalhe do ticket (troque :id)
+GET http://localhost:3001/api/tickets/COLOQUE_O_ID_AQUI
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Atualizar status / prioridade / responsável
+PATCH http://localhost:3001/api/tickets/COLOQUE_O_ID_AQUI
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{ "status": "IN_PROGRESS", "priority": "HIGH" }
+
+### Responder o cliente (registra 1ª resposta p/ SLA; assume ticket livre)
+POST http://localhost:3001/api/tickets/COLOQUE_O_ID_AQUI/interactions
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{ "type": "AGENT_REPLY", "body": "Olá! O veículo está disponível sim." }
+
+### Nota interna
+POST http://localhost:3001/api/tickets/COLOQUE_O_ID_AQUI/interactions
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{ "type": "INTERNAL_NOTE", "body": "Cliente prefere contato após as 18h." }
+
+# ──────────────────────────── WEBHOOKS (porta 3002) ────────────────────────────
+
+### Lead OLX (token compartilhado — valor de dev em backend/.env)
+POST http://localhost:3002/webhooks/olx
+Content-Type: application/json
+x-olx-token: dev-olx-token
+
+< ./samples/olx-lead.json
+
+### Lead Webmotors
+POST http://localhost:3002/webhooks/webmotors
+Content-Type: application/json
+x-webmotors-token: dev-webmotors-token
+
+< ./samples/webmotors-lead.json
+
+### Lead Mercado Livre — exige HMAC-SHA256 do corpo em x-signature.
+### Gere a assinatura com PowerShell (corpo EXATAMENTE igual ao enviado):
+###   $body = [IO.File]::ReadAllBytes("samples/mercadolivre-lead.json")
+###   $h = [Security.Cryptography.HMACSHA256]::new([Text.Encoding]::UTF8.GetBytes("dev-ml-secret"))
+###   -join ($h.ComputeHash($body) | ForEach-Object ToString x2)
+POST http://localhost:3002/webhooks/mercadolivre
+Content-Type: application/json
+x-signature: COLOQUE_A_ASSINATURA_AQUI
+
+< ./samples/mercadolivre-lead.json
+
+### Plataformas suportadas
+GET http://localhost:3002/webhooks/platforms
+
+# ──────────────────────────── FILA (admin) ────────────────────────────
+
+### Eventos de webhook recebidos/processados/falhos
+GET http://localhost:3001/api/webhook-events?page=1&pageSize=20
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Reprocessar evento com falha
+POST http://localhost:3001/api/webhook-events/COLOQUE_O_ID_AQUI/retry
+Authorization: Bearer {{login.response.body.accessToken}}

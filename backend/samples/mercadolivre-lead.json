@@ -1,0 +1,16 @@
+{
+  "lead_id": "ml-8801",
+  "date_created": "2026-07-02T14:10:00.000-03:00",
+  "buyer": {
+    "name": "Beatriz Rocha",
+    "email": "bia.rocha@example.com",
+    "phone": { "area_code": "21", "number": "98765-1122" }
+  },
+  "item": {
+    "id": "MLB4455667788",
+    "title": "Volkswagen T-Cross Highline 1.4 TSI 2022",
+    "price": 139900,
+    "permalink": "https://carro.mercadolivre.com.br/MLB4455667788"
+  },
+  "message": "Oi! Qual a quilometragem real? As fotos mostram 28 mil km."
+}

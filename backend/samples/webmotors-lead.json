@@ -1,0 +1,18 @@
+{
+  "ProposalId": "wm-30455",
+  "Name": "Felipe Cardoso",
+  "Email": "felipe.cardoso@example.com",
+  "Phone": "31992348877",
+  "Message": "Tenho interesse na Ranger. Qual o prazo de entrega com transferência inclusa?",
+  "Vehicle": {
+    "UniqueId": 81255,
+    "Make": "Ford",
+    "Model": "Ranger",
+    "Version": "Limited 3.0 V6",
+    "YearFabrication": 2024,
+    "Price": 319990,
+    "Url": "https://www.webmotors.com.br/comprar/ford/ranger/81255"
+  },
+  "MediaSource": "webmotors-showcase",
+  "CreatedDate": "2026-07-02T15:02:00-03:00"
+}

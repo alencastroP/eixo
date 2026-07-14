@@ -1,0 +1,15 @@
+{
+  "leadId": "olx-2001",
+  "name": "Marcos Vinícius",
+  "email": "marcos.v@example.com",
+  "phone": "11991234567",
+  "message": "Bom dia! O Corolla 2021 aceita financiamento com entrada de 20 mil?",
+  "ad": {
+    "listId": "899123",
+    "subject": "Toyota Corolla XEi 2.0 2021",
+    "price": 129900,
+    "url": "https://sp.olx.com.br/autos/899123"
+  },
+  "utmCampaign": "olx-turbo",
+  "createdAt": "2026-07-02T13:45:00-03:00"
+}

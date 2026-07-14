@@ -1,0 +1,592 @@
+// CRM Automotivo — Schema do módulo de Atendimento (Tickets)
+//
+// Convenções:
+//  - PKs em cuid() (exceto Ticket.number, sequencial e amigável para humanos).
+//  - `platform` é uma String (slug do adapter em src/integrations), não um enum:
+//    adicionar uma nova plataforma NÃO exige migration.
+//  - Dados pessoais do lead (PII) ficam concentrados em `leads`, preparados
+//    para anonimização (LGPD — direito ao esquecimento).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  AGENT
+}
+
+/// Ciclo de vida da conta contratante (tenant). É o portão de acesso efetivo:
+/// somente TRIAL e ACTIVE liberam o uso; os demais bloqueiam o login/rotas.
+enum AccountStatus {
+  TRIAL // período gratuito em andamento
+  ACTIVE // assinatura paga ativa
+  PAST_DUE // inadimplente (cobrança falhou) — bloqueia
+  SUSPENDED // suspensa manualmente pelo operador — bloqueia
+  EXPIRED // trial/assinatura vencido — bloqueia (dados preservados)
+  CANCELED // cancelada pelo cliente — bloqueia
+}
+
+/// Estado de billing da assinatura (espelha o gateway quando integrado).
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum TicketStatus {
+  NEW
+  IN_PROGRESS
+  WAITING_CUSTOMER
+  CONVERTED
+  LOST
+  ARCHIVED
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum InteractionType {
+  CUSTOMER_MESSAGE // mensagem recebida do lead (via plataforma ou registro manual)
+  AGENT_REPLY      // resposta enviada pelo atendente
+  INTERNAL_NOTE    // nota interna, invisível ao cliente
+  STATUS_CHANGE    // registro de mudança de status na linha do tempo
+  ASSIGNMENT       // registro de (re)atribuição na linha do tempo
+  SYSTEM           // eventos automáticos
+}
+
+enum WebhookEventStatus {
+  RECEIVED
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+enum IntegrationStatus {
+  AVAILABLE // ainda não conectada
+  CONNECTED // credenciais válidas, operando
+  AUTH_ERROR // credenciais rejeitadas na última verificação
+  DISABLED // conectada, porém pausada pelo admin
+}
+
+enum VehicleType {
+  CAR
+  MOTORCYCLE
+  HEAVY // pesados (caminhões/ônibus)
+}
+
+enum VehicleSaleStatus {
+  PREPARING // em preparação (oficina/estética)
+  AVAILABLE // disponível para venda
+  RESERVED // reservado
+  SOLD // vendido
+  CONSIGNED // consignado (não é da loja)
+}
+
+enum DispatchStatus {
+  SENT
+  FAILED
+  SKIPPED // sync desativada ou integração não conectada
+}
+
+enum CreditDocType {
+  CPF
+  CNPJ
+}
+
+enum FinancialType {
+  PAYABLE // conta a pagar (despesa)
+  RECEIVABLE // conta a receber (faturamento)
+}
+
+enum FinancialStatus {
+  PENDING
+  PAID
+  // "OVERDUE" (atrasado) é derivado: PENDING + dueDate < hoje
+}
+
+enum FiscalKind {
+  NFE_ENTRY // NF-e de entrada (compra de veículo de PF)
+  NFE_EXIT // NF-e de saída (venda definitiva)
+  NFE_RETURN // NF-e de devolução (retirada de consignado)
+  NFSE // NFS-e (comissão de intermediação / serviços de oficina)
+}
+
+enum FiscalStatus {
+  PROCESSING
+  AUTHORIZED
+  CANCELED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(AGENT)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  /// Conta (tenant) à qual o usuário pertence. Nullable apenas por compatibilidade
+  /// de migração; a aplicação sempre popula (backfill dos usuários pré-SaaS numa
+  /// conta default). Todo novo usuário herda o accountId de quem o cria.
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id])
+
+  assignedTickets Ticket[]            @relation("TicketAssignee")
+  interactions    TicketInteraction[]
+  refreshTokens   RefreshToken[]
+  auditLogs       AuditLog[]
+  creditQueries   CreditQuery[]
+
+  @@index([accountId])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique // sha256 do token — o valor bruto nunca é persistido
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+/// Interessado/cliente em potencial. Contém PII — tratar conforme LGPD:
+/// nunca logar em texto claro; anonimizável via anonymizedAt.
+model Lead {
+  id           String    @id @default(cuid())
+  name         String
+  phone        String? // somente dígitos, normalizado na ingestão
+  email        String?
+  platform     String // slug da plataforma de origem (olx, mercadolivre, webmotors, manual)
+  externalId   String? // id do lead na plataforma de origem — chave de deduplicação
+  anonymizedAt DateTime? // LGPD: preenchido quando o titular exerce o direito ao esquecimento
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  document String? // CPF/CNPJ do cliente (dígitos) — usado na consulta rápida
+  extra    Json? // campos personalizados do formulário (config em Setting "leadForm")
+
+  tickets       Ticket[]
+  creditQueries CreditQuery[]
+
+  @@unique([platform, externalId])
+  @@index([phone])
+  @@index([email])
+  @@index([name])
+  @@map("leads")
+}
+
+model Ticket {
+  id       String         @id @default(cuid())
+  number   Int            @unique @default(autoincrement()) // exibição: #123
+  leadId   String
+  lead     Lead           @relation(fields: [leadId], references: [id])
+  status   TicketStatus   @default(NEW)
+  priority TicketPriority @default(NORMAL)
+
+  assignedToId String?
+  assignedTo   User?   @relation("TicketAssignee", fields: [assignedToId], references: [id])
+
+  platform String // origem do ticket (slug)
+  campaign String? // campanha/mídia, quando a plataforma informa
+
+  /// Agente de Pré-Venda IA ("bot_ativo"): quando true, mensagens recebidas do
+  /// lead nesta conversa são respondidas automaticamente pelo Claude. O bot se
+  /// desliga (false) ao transferir para um humano ou quando o atendente assume.
+  botEnabled Boolean @default(false) @map("bot_enabled")
+
+  /// Referência flexível ao veículo de interesse (o módulo de Estoque ainda não existe).
+  /// Formato: { externalId?, title?, price?, url?, ...extras da plataforma }.
+  /// Migração futura planejada (ver README): adicionar `vehicleId` FK para `vehicles`,
+  /// fazer backfill a partir deste JSON e manter este campo como registro de origem.
+  vehicleRefExternal Json? @map("vehicle_ref_external")
+
+  firstResponseAt       DateTime? // base do SLA de primeira resposta (calculado na API)
+  lastCustomerMessageAt DateTime?
+  closedAt              DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  interactions TicketInteraction[]
+
+  @@index([status])
+  @@index([assignedToId])
+  @@index([platform])
+  @@index([createdAt])
+  @@index([leadId])
+  @@map("tickets")
+}
+
+/// Linha do tempo do ticket: mensagens, respostas, notas e eventos.
+model TicketInteraction {
+  id        String          @id @default(cuid())
+  ticketId  String
+  ticket    Ticket          @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  type      InteractionType
+  authorId  String? // null para mensagens do lead e eventos de sistema
+  author    User?           @relation(fields: [authorId], references: [id])
+  body      String?
+  metadata  Json? // ex.: { from, to } em mudanças de status/atribuição
+  createdAt DateTime        @default(now())
+
+  @@index([ticketId, createdAt])
+  @@map("ticket_interactions")
+}
+
+/// Trilha de auditoria genérica — base dos relatórios futuros de performance
+/// (tempo por status, reatribuições, conversão por vendedor).
+model AuditLog {
+  id         String   @id @default(cuid())
+  entityType String // ex.: TICKET, LEAD
+  entityId   String
+  action     String // CREATED, STATUS_CHANGED, ASSIGNED, PRIORITY_CHANGED, LEAD_ANONYMIZED...
+  actorId    String? // null quando a ação veio de integração/sistema
+  actor      User?    @relation(fields: [actorId], references: [id])
+  data       Json? // detalhes: { from, to, via, ... }
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorId])
+  @@map("audit_logs")
+}
+
+/// Evento bruto recebido pelo serviço de webhooks. Persistido ANTES de qualquer
+/// processamento (fila em banco): picos ou payloads inválidos nunca perdem dados.
+/// O worker (src/workers/lead-processor.ts) consome, normaliza via adapter e
+/// cria/atualiza tickets, com retry e backoff.
+model WebhookEvent {
+  id            String             @id @default(cuid())
+  platform      String
+  payload       Json
+  status        WebhookEventStatus @default(RECEIVED)
+  attempts      Int                @default(0)
+  nextAttemptAt DateTime? // backoff entre tentativas
+  lastError     String?
+  ticketId      String? // preenchido após processamento (sem FK, acoplamento fraco)
+  receivedAt    DateTime           @default(now())
+  processedAt   DateTime?
+
+  @@index([status, receivedAt])
+  @@map("webhook_events")
+}
+
+/// Estado de conexão de uma plataforma no Módulo de Integrações.
+/// Uma linha por plataforma (slug do adapter). As credenciais de API ficam
+/// CIFRADAS em repouso (AES-256-GCM, ver src/lib/crypto.ts) — o valor bruto
+/// nunca trafega de volta para o front (a API devolve apenas uma máscara).
+model Integration {
+  id            String            @id @default(cuid())
+  platform      String            @unique // slug do adapter (olx, mercadolivre, ...)
+  status        IntegrationStatus @default(AVAILABLE)
+  syncEnabled   Boolean           @default(true) // sincronização de mensagens (in/out)
+  credentials   Json? // { iv, tag, data } — payload cifrado; nunca em texto claro
+  accountLabel  String? // rótulo da conta conectada (retornado pela validação)
+  connectedAt   DateTime?
+  lastCheckedAt DateTime?
+  lastError     String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  dispatches IntegrationDispatch[]
+
+  @@map("integrations")
+}
+
+/// Log de mensagens enviadas do CRM de volta para a plataforma (fluxo OUTBOUND).
+/// Alimenta a área de "fluxo visualizado" da tela de integrações.
+model IntegrationDispatch {
+  id            String         @id @default(cuid())
+  integrationId String
+  integration   Integration    @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  platform      String
+  ticketId      String?
+  interactionId String?
+  status        DispatchStatus
+  detail        String? // resumo sem PII (ex.: "reply enviado", motivo do skip/erro)
+  externalRef   String? // id retornado pela plataforma no envio
+  createdAt     DateTime       @default(now())
+
+  @@index([platform, createdAt])
+  @@map("integration_dispatches")
+}
+
+/// Módulo de Análise de Crédito & Bureau — consultas de score/restrições por CPF/CNPJ.
+/// `report` guarda o snapshot completo do diagnóstico no momento da consulta
+/// (histórico auditável). O documento é armazenado só em dígitos (PII — nunca logar).
+model CreditQuery {
+  id       String        @id @default(cuid())
+  document String // somente dígitos (CPF 11 / CNPJ 14)
+  docType  CreditDocType
+  name     String
+  score    Int // 0..1000
+  report   Json // snapshot completo do diagnóstico
+
+  actorId String? // quem realizou a consulta
+  actor   User?   @relation(fields: [actorId], references: [id])
+  leadId  String? // vínculo opcional a um lead/cliente
+  lead    Lead?   @relation(fields: [leadId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([document])
+  @@index([createdAt])
+  @@map("credit_queries")
+}
+
+/// Configurações da aplicação (chave → JSON). Ex.: "company" (dados da loja),
+/// "leadForm" (quais campos do cadastro de leads são visíveis/obrigatórios).
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SaaS MULTI-TENANT — Contas, Planos, Assinaturas e Trial
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Catálogo de planos comercializáveis.
+model Plan {
+  id           String  @id @default(cuid())
+  code         String  @unique // slug estável: 'trial', 'pro', 'business'
+  name         String
+  priceCents   Int     @default(0) // em centavos (BRL)
+  durationDays Int? // null = recorrente mensal; trial = 15
+  features     Json    @default("{}") // { maxUsers, maxVehicles, modules: [...] }
+  active       Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  accounts      Account[]
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+/// Empresa contratante = tenant. É a raiz de isolamento do SaaS: no retrofit,
+/// toda tabela de dado de cliente ganha `accountId` referenciando esta conta.
+model Account {
+  id     String        @id @default(cuid())
+  name   String // razão social / nome fantasia da loja
+  cnpj   String? // somente dígitos (opcional no trial)
+  status AccountStatus @default(TRIAL)
+
+  planId String?
+  plan   Plan?   @relation(fields: [planId], references: [id])
+
+  trialStartedAt DateTime?
+  trialEndsAt    DateTime? // trialStartedAt + 15 dias
+  expiryNotifiedAt DateTime? // evita reenviar o aviso de pré-expiração
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  subscription Subscription?
+  trialCpf     TrialCpfRegistry?
+
+  @@index([status])
+  @@index([trialEndsAt])
+  @@map("accounts")
+}
+
+/// Assinatura da conta (1:1). Guarda o estado de billing e os pontos de extensão
+/// para o gateway de pagamento recorrente (Stripe/Pagar.me/Iugu — integração real depois).
+model Subscription {
+  id        String             @id @default(cuid())
+  accountId String             @unique
+  account   Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  planId    String
+  plan      Plan               @relation(fields: [planId], references: [id])
+  status    SubscriptionStatus @default(TRIALING)
+
+  startedAt        DateTime  @default(now())
+  currentPeriodEnd DateTime? // fim do ciclo pago vigente
+  canceledAt       DateTime?
+
+  // Hooks de billing — preenchidos quando o gateway for plugado.
+  externalCustomerId     String?
+  externalSubscriptionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("subscriptions")
+}
+
+/// Registro anti-fraude de CPFs que já usufruíram do trial gratuito.
+/// O CPF NUNCA é gravado em texto claro: `cpfHash` (SHA-256 + pepper) garante a
+/// unicidade sem reversibilidade; `cpfSealed` guarda o CPF cifrado (AES-256-GCM)
+/// só para uso administrativo/antifraude. A linha PERSISTE mesmo se a conta for
+/// removida (accountId vira NULL) — o bloqueio do CPF é permanente.
+model TrialCpfRegistry {
+  id        String   @id @default(cuid())
+  cpfHash   String   @unique
+  cpfSealed Json? // { iv, tag, data } — payload cifrado
+  accountId String?  @unique
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  usedAt    DateTime @default(now())
+
+  @@index([cpfHash])
+  @@map("trial_cpf_registry")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MÓDULOS FUTUROS (placeholders — NÃO implementados no MVP)
+/// Módulo de Estoque / Garagem Digital — inventário de veículos da loja.
+model Vehicle {
+  id   String      @id @default(cuid())
+  type VehicleType @default(CAR)
+
+  // identificação
+  brand           String // marca
+  model           String
+  version         String?
+  yearFabrication Int
+  yearModel       Int
+  color           String?
+  fuel            String? // Flex, Gasolina, Diesel, Etanol, Elétrico, Híbrido, GNV
+  km              Int      @default(0)
+  plate           String?  @unique
+  chassi          String?
+  renavam         String?
+
+  // precificação (Decimal para integridade financeira nos relatórios futuros)
+  fipePrice Decimal? @db.Decimal(12, 2) // informativo (tabela FIPE)
+  costPrice Decimal? @db.Decimal(12, 2) // quanto a loja pagou
+  salePrice Decimal  @db.Decimal(12, 2) // valor anunciado
+
+  status      VehicleSaleStatus @default(PREPARING)
+  optionals   Json              @default("[]") // string[] de itens/acessórios
+  notes       String?
+  description String? // texto de anúncio (gerado pelo co-piloto de IA, editável)
+
+  /// ids do anúncio em cada plataforma — casa com Ticket.vehicle_ref_external
+  /// no plano de migração (backfill futuro liga tickets a veículos por aqui).
+  externalRefs Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  photos          VehiclePhoto[]
+  costs           VehicleCost[]
+  financialEntries FinancialEntry[]
+  fiscalInvoices  FiscalInvoice[]
+
+  @@index([status])
+  @@index([type])
+  @@index([brand])
+  @@index([createdAt])
+  @@map("vehicles")
+}
+
+model VehiclePhoto {
+  id        String   @id @default(cuid())
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  url       String
+  position  Int      @default(0) // ordem na galeria
+  isCover   Boolean  @default(false) // foto principal/capa
+  createdAt DateTime @default(now())
+
+  @@index([vehicleId, position])
+  @@map("vehicle_photos")
+}
+
+/// Histórico de gastos atrelados ao veículo (preparação, estética, documentação…).
+model VehicleCost {
+  id          String   @id @default(cuid())
+  vehicleId   String
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  category    String // Oficina, Estética, Documentação, Peças, Outros
+  description String
+  amount      Decimal  @db.Decimal(12, 2)
+  incurredAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([vehicleId, incurredAt])
+  @@map("vehicle_costs")
+}
+
+/// Módulo Administrativo & Fiscal — lançamento do fluxo de caixa (a pagar/receber).
+model FinancialEntry {
+  id          String          @id @default(cuid())
+  type        FinancialType
+  status      FinancialStatus @default(PENDING)
+  category    String // Combustível, Aluguel, Comissão, Preparação de Veículo, Venda...
+  description String
+  amount      Decimal         @db.Decimal(12, 2)
+  dueDate     DateTime
+  paidAt      DateTime?
+
+  vehicleId String? // vínculo opcional a um veículo do estoque
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type, dueDate])
+  @@index([status])
+  @@map("financial_entries")
+}
+
+/// Nota fiscal emitida (NF-e de veículos / NFS-e de serviços). Emissão mockada:
+/// a integração real com a SEFAZ/prefeitura substitui o serviço mantendo o schema.
+model FiscalInvoice {
+  id            String       @id @default(cuid())
+  number        Int          @unique @default(autoincrement())
+  kind          FiscalKind
+  status        FiscalStatus @default(PROCESSING)
+  accessKey     String? // chave de acesso de 44 dígitos (NF-e)
+  recipientName String
+  recipientDoc  String? // CPF/CNPJ do destinatário (somente dígitos)
+
+  operationValue Decimal @db.Decimal(12, 2) // valor da operação
+  taxBase        Decimal @db.Decimal(12, 2) // base de cálculo (margem, para usados)
+  taxRate        Decimal @db.Decimal(5, 4) // alíquota aplicada
+  taxAmount      Decimal @db.Decimal(12, 2) // imposto apurado
+  taxLabel       String // explicação (ex.: "ICMS sobre a margem")
+
+  vehicleId String?
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+
+  xml         String? // conteúdo XML mock
+  rejectReason String?
+  issuedAt    DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([kind, issuedAt])
+  @@index([status])
+  @@map("fiscal_invoices")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRÓXIMO PASSO DE INTEGRAÇÃO (planejado — não neste módulo)
+// ─────────────────────────────────────────────────────────────────────────────
+// Ligar Ticket ⇄ Vehicle: migration adiciona `vehicleId String?` + FK em tickets;
+// backfill casando Ticket.vehicle_ref_external.externalId com Vehicle.externalRefs;
+// mantém vehicle_ref_external como histórico da origem.
+//
+// model SaleRecord { id, ticketId FK, vehicleId FK, sellerId FK, amount, soldAt }
+// alimentará os relatórios de receita/conversão por vendedor.
