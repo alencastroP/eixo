@@ -1,0 +1,11 @@
+# Deploy de site estático (SPA) via Cloudflare Workers (assets-only, sem
+# script de Worker). O nome abaixo precisa bater com o nome do Worker que
+# você digitou na tela de criação no dashboard.
+name = "eixo"
+compatibility_date = "2026-07-16"
+
+[assets]
+directory = "./dist"
+# BrowserRouter faz roteamento client-side — sem isso, recarregar uma rota
+# como /vehicles retorna 404 em vez de servir o index.html da SPA.
+not_found_handling = "single-page-application"

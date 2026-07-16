@@ -1,0 +1,130 @@
+# Blueprint do Render — dois serviços a partir da mesma imagem Docker
+# (backend/Dockerfile), cada um rodando um processo diferente do backend.
+#
+# Uso: no painel do Render, "New" → "Blueprint" → aponte para este repositório.
+# Depois do primeiro deploy, preencha manualmente (no dashboard) as env vars
+# marcadas com `sync: false` — são segredos externos (Neon, Anthropic, tokens
+# de webhook) que não devem ficar versionados aqui.
+
+envVarGroups:
+  # Mesma string de conexão nos dois serviços (mesmo banco Neon).
+  - name: eixo-database
+    envVars:
+      - key: DATABASE_URL # connection string com "-pooler" (runtime)
+        sync: false
+      - key: DIRECT_URL # connection string sem "-pooler" (migrations)
+        sync: false
+
+  # Precisam ser IDÊNTICOS entre api e webhooks: CREDENTIALS_SECRET cifra
+  # credenciais de integração no banco — se os processos usarem valores
+  # diferentes, um não consegue decifrar o que o outro gravou. JWT_ACCESS_SECRET
+  # e TRIAL_CPF_PEPPER são exigidos no boot dos dois processos (config/env.ts
+  # os lê incondicionalmente), mesmo quando só um dos serviços os usa de fato.
+  - name: eixo-secrets
+    envVars:
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: CREDENTIALS_SECRET
+        generateValue: true
+      - key: TRIAL_CPF_PEPPER
+        generateValue: true
+
+services:
+  # ─── API principal (autenticada) ────────────────────────────────────────
+  - type: web
+    name: eixo-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    # roda as migrations pendentes antes de subir o processo. `migrate deploy`
+    # usa lock consultivo no Postgres — seguro mesmo se os dois serviços
+    # reiniciarem ao mesmo tempo.
+    dockerCommand: sh -c "npm run prisma:deploy && node dist/server.js"
+    envVarGroups:
+      - eixo-database
+      - eixo-secrets
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      # URL pública do frontend (Cloudflare Pages/Vercel). Preencher após o
+      # deploy do front, para liberar CORS.
+      - key: CORS_ORIGIN
+        sync: false
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL_DAYS
+        value: "7"
+      # Sem esta chave, o Co-Piloto de IA fica indisponível (atendimento
+      # segue 100% humano) — não é bloqueante para o deploy.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-opus-4-8
+      - key: ANTHROPIC_MAX_TOOL_ITERATIONS
+        value: "4"
+      - key: ANTHROPIC_MAX_TOKENS
+        value: "1024"
+      - key: RATE_LIMIT_GLOBAL_PER_MIN
+        value: "300"
+      - key: RATE_LIMIT_AUTH_PER_15MIN
+        value: "20"
+      - key: RATE_LIMIT_TRIAL_PER_HOUR
+        value: "5"
+      - key: DEDUP_WINDOW_HOURS
+        value: "72"
+      - key: SLA_FIRST_RESPONSE_MINUTES
+        value: "30"
+      - key: RETENTION_WEBHOOK_EVENT_DAYS
+        value: "90"
+      - key: RETENTION_CREDIT_QUERY_DAYS
+        value: "365"
+      - key: RETENTION_AUDIT_LOG_DAYS
+        value: "730"
+
+  # ─── Recepção de webhooks + worker de leads (processo independente) ────
+  - type: web
+    name: eixo-webhooks
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    dockerCommand: node dist/webhook-server.js
+    envVarGroups:
+      - eixo-database
+      - eixo-secrets
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # o Render roteia tráfego pela var PORT (senão assume 10000); o app só
+      # abre a porta lida em WEBHOOK_PORT — as duas precisam apontar pro
+      # mesmo valor para o roteamento bater com onde o processo escuta.
+      - key: PORT
+        value: "3002"
+      - key: WEBHOOK_PORT
+        value: "3002"
+      # worker embutido no mesmo processo (mantém 1 serviço em vez de 2 no
+      # plano free). Se crescer o volume, separar em eixo-worker próprio.
+      - key: WORKER_INLINE
+        value: "true"
+      - key: WORKER_POLL_INTERVAL_MS
+        value: "2000"
+      - key: WORKER_BATCH_SIZE
+        value: "20"
+      - key: WORKER_MAX_ATTEMPTS
+        value: "5"
+      - key: WORKER_RETRY_DELAY_MS
+        value: "30000"
+      - key: RATE_LIMIT_WEBHOOK_PER_MIN
+        value: "120"
+      # tokens/segredos por plataforma — preencher conforme forem contratadas.
+      - key: OLX_WEBHOOK_TOKEN
+        sync: false
+      - key: MERCADOLIVRE_WEBHOOK_SECRET
+        sync: false
+      - key: WEBMOTORS_WEBHOOK_TOKEN
+        sync: false
