@@ -42,10 +42,9 @@ services:
     # usa lock consultivo no Postgres — seguro mesmo se os dois serviços
     # reiniciarem ao mesmo tempo.
     dockerCommand: sh -c "npm run prisma:deploy && node dist/server.js"
-    envVarGroups:
-      - eixo-database
-      - eixo-secrets
     envVars:
+      - fromGroup: eixo-database
+      - fromGroup: eixo-secrets
       - key: NODE_ENV
         value: production
       - key: PORT
@@ -94,10 +93,9 @@ services:
     plan: free
     healthCheckPath: /health
     dockerCommand: node dist/webhook-server.js
-    envVarGroups:
-      - eixo-database
-      - eixo-secrets
     envVars:
+      - fromGroup: eixo-database
+      - fromGroup: eixo-secrets
       - key: NODE_ENV
         value: production
       # o Render roteia tráfego pela var PORT (senão assume 10000); o app só
