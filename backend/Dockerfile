@@ -1,7 +1,7 @@
 # Imagem base compartilhada — Debian slim (não alpine) porque o engine do
 # Prisma precisa de OpenSSL com glibc; evita o ajuste de binaryTargets do musl.
 FROM node:20-slim AS base
-RUN apt-get update -y && apt-get install -y --no-install-scripts openssl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # ─── Build: instala todas as deps, gera o Prisma Client e compila TS → dist ──

@@ -64,7 +64,7 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: ANTHROPIC_MODEL
-        value: claude-opus-4-8
+        value: claude-sonnet-4-6
       - key: ANTHROPIC_MAX_TOOL_ITERATIONS
         value: "4"
       - key: ANTHROPIC_MAX_TOKENS
