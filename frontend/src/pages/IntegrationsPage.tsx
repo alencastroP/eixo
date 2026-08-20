@@ -45,7 +45,7 @@ export function IntegrationsPage() {
   return (
     <div className="dash integ-page">
       <PageHeader
-        icon={<PlugIcon size={19} />}
+        back={{ to: '/admin', label: 'Voltar à Administração' }}
         eyebrow="Administração"
         title="Integrações"
         subtitle="Conecte plataformas de anúncios para centralizar leads e mensagens no seu atendimento."

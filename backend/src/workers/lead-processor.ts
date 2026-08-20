@@ -19,6 +19,7 @@ import { prisma } from '../lib/prisma';
 import { AdapterPayloadError, getAdapter } from '../integrations';
 import { ingestNormalizedLead } from '../modules/tickets/ingest.service';
 import { handleInboundMessage } from '../modules/aiAgent/agent.service';
+import { processDueTickets } from '../modules/flow/flow.worker';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -111,6 +112,13 @@ export function startWorker(label = 'lead-processor'): () => void {
         processed = await processPendingEvents();
       } catch (err) {
         logger.error('falha no ciclo do worker', { err });
+      }
+      // Motor de fluxo (follow-up, encerramento, alerta de SLA). Isolado do
+      // processamento da fila: uma falha aqui não pode travar a ingestão de leads.
+      try {
+        await processDueTickets();
+      } catch (err) {
+        logger.error('falha no ciclo do motor de fluxo', { err });
       }
       // fila com itens → segue em ritmo acelerado; vazia → aguarda o poll interval
       await sleep(processed > 0 ? 100 : env.worker.pollIntervalMs);

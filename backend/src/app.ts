@@ -19,6 +19,7 @@ import { financeRouter } from './modules/finance/finance.routes';
 import { fiscalRouter } from './modules/fiscal/fiscal.routes';
 import { settingsRouter } from './modules/settings/settings.routes';
 import { storefrontRouter } from './modules/storefront/storefront.routes';
+import { agentRouter } from './modules/aiAgent/agent.routes';
 import { publicSiteRouter } from './modules/storefront/public.routes';
 import { webhookEventsRouter } from './webhooks/webhook-events.routes';
 
@@ -63,6 +64,7 @@ export function createApiApp() {
   app.use('/api/fiscal', tenant, fiscalRouter);
   app.use('/api/settings', tenant, settingsRouter);
   app.use('/api/storefront', tenant, storefrontRouter);
+  app.use('/api/agent', tenant, agentRouter);
   app.use('/api/webhook-events', tenant, webhookEventsRouter);
 
   app.use(notFoundHandler);

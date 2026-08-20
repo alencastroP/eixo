@@ -3,7 +3,7 @@ import { ApiError } from '../api/client';
 import { storefrontApi } from '../api/endpoints';
 import { useAuth } from '../auth/AuthContext';
 import { PageHeader } from '../components/PageHeader';
-import { ExternalIcon, GlobeIcon } from '../components/icons';
+import { ExternalIcon } from '../components/icons';
 import { HIGHLIGHT_ICON_KEYS } from '../storefront/icons';
 import { storefrontUrl } from '../storefront/resolveSlug';
 import type { StorefrontConfig } from '../storefront/types';
@@ -109,8 +109,8 @@ export function StorefrontConfigPage() {
   return (
     <div className="dash settings-page">
       <PageHeader
-        icon={<GlobeIcon size={19} />}
-        eyebrow="Vitrine"
+        back={{ to: '/admin', label: 'Voltar à Administração' }}
+        eyebrow="Administração · Vitrine"
         title="Site da loja"
         subtitle="A landing page pública que reflete o seu estoque em tempo real."
         actions={

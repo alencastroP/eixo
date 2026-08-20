@@ -53,7 +53,12 @@ export function VehicleExpensesTab() {
         </label>
       </div>
 
-      {loading && !detail && <div className="muted">Carregando…</div>}
+      {loading && !detail && (
+        <div className="ds-loading-block" aria-busy="true" aria-label="Carregando">
+          <span className="ds-skeleton" style={{ height: 74 }} />
+          <span className="ds-skeleton" style={{ height: 180 }} />
+        </div>
+      )}
 
       {detail && (
         <div className="expenses-layout">

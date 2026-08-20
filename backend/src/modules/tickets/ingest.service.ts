@@ -3,6 +3,7 @@ import { env } from '../../config/env';
 import { prisma } from '../../lib/prisma';
 import type { NormalizedLead } from '../../integrations/core/types';
 import { writeAudit } from '../audit/audit.service';
+import { rescheduleTicket } from '../flow/flow.service';
 import { CLOSED_STATUSES } from './tickets.service';
 
 const toJson = (value: unknown) => value as Prisma.InputJsonValue;
@@ -32,7 +33,7 @@ export async function ingestNormalizedLead(
   platform: string,
   n: NormalizedLead,
 ): Promise<IngestResult> {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     // 1) localizar ou criar o lead (dedup por externalId; fallback telefone/e-mail)
     let lead: Lead | null = null;
 
@@ -106,7 +107,12 @@ export async function ingestNormalizedLead(
         },
       });
 
-      const data: Prisma.TicketUncheckedUpdateInput = { lastCustomerMessageAt: new Date() };
+      // Cliente respondeu: a escada de follow-up recomeça do zero e o ticket
+      // volta a ser problema de gente. `nextActionAt` é recalculado no fim.
+      const data: Prisma.TicketUncheckedUpdateInput = {
+        lastCustomerMessageAt: new Date(),
+        followUpCount: 0,
+      };
       if (!existing.vehicleRefExternal && n.vehicle) data.vehicleRefExternal = toJson(n.vehicle);
 
       // o cliente respondeu — ticket volta para atendimento
@@ -164,4 +170,9 @@ export async function ingestNormalizedLead(
 
     return { ticketId: ticket.id, leadId: lead.id, created: true };
   });
+
+  // Relógio do fluxo: fora da transação de propósito — recalcular envolve ler a
+  // política da conta e não deve prolongar o lock da ingestão.
+  await rescheduleTicket(result.ticketId);
+  return result;
 }

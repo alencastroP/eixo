@@ -1,19 +1,19 @@
-import { NavLink, Navigate, Outlet } from 'react-router-dom';
+import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../theme/ThemeContext';
 import { BrandMark } from './BrandMark';
+import { MobileNav } from './MobileNav';
 import { TrialBanner, AccountBlocked } from './TrialBanner';
 import { UserMenu } from './UserMenu';
+import { ADMIN_ROUTES } from '../pages/AdminPage';
 import {
   BarChartIcon,
   CarIcon,
   ColumnsIcon,
   GaugeIcon,
-  GlobeIcon,
-  HistoryIcon,
+  GridIcon,
   InboxIcon,
   MoonIcon,
-  PlugIcon,
   ShieldIcon,
   SunIcon,
   WalletIcon,
@@ -23,6 +23,9 @@ import {
 export function ProtectedLayout() {
   const { user, initializing } = useAuth();
   const { theme, toggle } = useTheme();
+  const { pathname } = useLocation();
+  // as telas da central não têm alvo próprio no rail: o botão dela fica aceso
+  const inAdmin = ADMIN_ROUTES.some((p) => pathname.startsWith(p));
 
   if (initializing) {
     return (
@@ -45,7 +48,7 @@ export function ProtectedLayout() {
     <div className="app-shell">
       <nav className="rail">
         <div className="rail-logo" title="CRM Auto — Atendimento">
-          <BrandMark variant="orange" size={20} glow />
+          <BrandMark variant="asphalt" size={20} />
         </div>
         <NavLink to="/dashboard" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Painel">
           <GaugeIcon />
@@ -83,25 +86,11 @@ export function ProtectedLayout() {
               <BarChartIcon />
             </NavLink>
             <NavLink
-              to="/audit"
-              className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`}
-              title="Trilha de Auditoria"
+              to="/admin"
+              className={({ isActive }) => `rail-btn ${isActive || inAdmin ? 'active' : ''}`}
+              title="Administração"
             >
-              <HistoryIcon />
-            </NavLink>
-            <NavLink
-              to="/storefront"
-              className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`}
-              title="Vitrine (site da loja)"
-            >
-              <GlobeIcon />
-            </NavLink>
-            <NavLink
-              to="/integrations"
-              className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`}
-              title="Integrações"
-            >
-              <PlugIcon />
+              <GridIcon />
             </NavLink>
           </>
         )}
@@ -115,6 +104,7 @@ export function ProtectedLayout() {
         <TrialBanner account={user.account} />
         <Outlet />
       </div>
+      <MobileNav isAdmin={user.role === 'ADMIN'} />
     </div>
   );
 }

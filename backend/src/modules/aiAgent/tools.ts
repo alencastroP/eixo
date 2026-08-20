@@ -4,47 +4,150 @@ import { prisma } from '../../lib/prisma';
 import { logger } from '../../lib/logger';
 import { maskDocument, validateDocument } from '../../lib/document';
 import { generateReport } from '../credit/bureau.mock';
+import { getInventoryDetail, searchInventory } from './inventory.tool';
+import { mergeLeadProfile, searchKnowledge, type AgentProfileResolved, type LeadProfile } from './context.service';
 
 const brl = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 const toJson = (value: unknown) => value as Prisma.InputJsonValue;
 
-/** Definições expostas ao Claude (Function Calling / Tool Use). */
-export const AGENT_TOOLS: Anthropic.Tool[] = [
-  {
-    name: 'consultar_credito_cliente',
-    description:
-      'Use esta ferramenta quando o cliente fornecer voluntariamente um CPF ou CNPJ válido para realizar a simulação de crédito. Retorna o score, a faixa de risco, o limite de financiamento estimado e a entrada sugerida. É uma estimativa — nunca uma aprovação.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        documento: {
-          type: 'string',
-          description: 'CPF (11 dígitos) ou CNPJ (14 dígitos) informado pelo cliente. Pode conter pontuação.',
-        },
-      },
-      required: ['documento'],
+// ─────────────────────────────────────────────────────────────────────────────
+// Definições expostas ao Claude (Function Calling / Tool Use)
+//
+// O conjunto é montado por conta (ver buildAgentTools). Desligar uma capacidade
+// no perfil da loja REMOVE a ferramenta, em vez de só pedir no prompt para não
+// usá-la: o modelo não pode chamar o que não recebeu.
+//
+// Atenção ao cache de prompt: `tools` renderiza na posição 0, antes do system.
+// Mudar o conjunto invalida o cache inteiro — por isso ele é derivado apenas do
+// perfil da loja (estável), nunca do turno ou do cliente.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SEARCH_TOOL: Anthropic.Tool = {
+  name: 'buscar_veiculos',
+  description:
+    'Busca veículos disponíveis no estoque desta loja. Use sempre que o cliente indicar o que procura (marca, modelo, faixa de preço, ano, quilometragem). Os filtros numéricos são exatos: precoMax nunca devolve nada acima do valor pedido. Responda ao cliente apenas com o que esta ferramenta retornar.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      marca: { type: 'string', description: 'Marca do veículo, ex.: Honda, Toyota.' },
+      modelo: { type: 'string', description: 'Modelo, ex.: Civic, Corolla.' },
+      precoMax: { type: 'number', description: 'Preço máximo em reais (apenas o número).' },
+      precoMin: { type: 'number', description: 'Preço mínimo em reais.' },
+      anoMin: { type: 'number', description: 'Ano/modelo mínimo aceito.' },
+      kmMax: { type: 'number', description: 'Quilometragem máxima.' },
+      combustivel: { type: 'string', description: 'Flex, Gasolina, Diesel, Híbrido, Elétrico.' },
+      tipo: { type: 'string', enum: ['carro', 'moto', 'pesado'], description: 'Categoria do veículo.' },
     },
+    required: [],
   },
-  {
-    name: 'transferir_para_atendente_humano',
-    description:
-      'Use esta ferramenta imediatamente se o cliente pedir explicitamente para falar com um humano, se demonstrar pressa/irritação, se a conversa avançar para preço/proposta/visita, ou se você concluir a coleta de dados com sucesso. Desliga o atendimento automático e alerta a equipe de vendas.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        motivo_transferencia: {
-          type: 'string',
-          description: 'Motivo curto do transbordo (ex.: "cliente quer negociar preço", "pediu para falar com vendedor").',
-        },
-      },
-      required: [],
+};
+
+const DETAIL_TOOL: Anthropic.Tool = {
+  name: 'detalhar_veiculo',
+  description:
+    'Ficha completa de um veículo do estoque, a partir do id devolvido por buscar_veiculos. Use quando o cliente demonstrar interesse em uma das opções apresentadas.',
+  input_schema: {
+    type: 'object',
+    properties: { veiculoId: { type: 'string', description: 'Id do veículo, vindo de buscar_veiculos.' } },
+    required: ['veiculoId'],
+  },
+};
+
+const SCHEDULE_TOOL: Anthropic.Tool = {
+  name: 'agendar_visita',
+  description:
+    'Registra a intenção do cliente de visitar a loja ou fazer test-drive e avisa a equipe. NÃO confirma a agenda — quem confirma é um vendedor. Use quando o cliente indicar dia ou período.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      preferencia: { type: 'string', description: 'Dia e horário como o cliente falou, ex.: "sábado de manhã".' },
+      veiculoId: { type: 'string', description: 'Id do veículo de interesse, se houver.' },
     },
+    required: ['preferencia'],
   },
-];
+};
+
+const PROFILE_TOOL: Anthropic.Tool = {
+  name: 'registrar_perfil_cliente',
+  description:
+    'Guarda o que você descobriu sobre o cliente (orçamento, entrada, forma de pagamento, carro na troca, prazo, preferências). Chame assim que a informação aparecer na conversa — é o que evita reperguntar depois. Envie apenas os campos que descobriu.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      orcamento: { type: 'string', description: 'Faixa de valor que o cliente pretende gastar.' },
+      entrada: { type: 'string', description: 'Valor de entrada disponível.' },
+      formaPagamento: { type: 'string', description: 'À vista, financiado, consórcio, troca.' },
+      veiculoNaTroca: { type: 'string', description: 'Veículo que o cliente daria na troca.' },
+      prazo: { type: 'string', description: 'Urgência ou prazo para decidir.' },
+      preferencias: { type: 'string', description: 'Cor, câmbio, opcionais, uso pretendido.' },
+      observacoes: { type: 'string', description: 'Qualquer outro dado útil ao vendedor.' },
+    },
+    required: [],
+  },
+};
+
+const KNOWLEDGE_TOOL: Anthropic.Tool = {
+  name: 'consultar_conhecimento',
+  description:
+    'Consulta as políticas e informações escritas pela loja (garantia, financiamento, troca, documentação, horários). Use antes de responder qualquer pergunta sobre condições e regras da loja.',
+  input_schema: {
+    type: 'object',
+    properties: { pergunta: { type: 'string', description: 'A dúvida do cliente, em linguagem natural.' } },
+    required: ['pergunta'],
+  },
+};
+
+const CREDIT_TOOL: Anthropic.Tool = {
+  name: 'consultar_credito_cliente',
+  description:
+    'Use quando o cliente fornecer voluntariamente um CPF ou CNPJ válido para simulação de crédito. Retorna score, faixa de risco, limite estimado e entrada sugerida. É uma estimativa — nunca uma aprovação.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      documento: {
+        type: 'string',
+        description: 'CPF (11 dígitos) ou CNPJ (14 dígitos) informado pelo cliente. Pode conter pontuação.',
+      },
+    },
+    required: ['documento'],
+  },
+};
+
+const HANDOFF_TOOL: Anthropic.Tool = {
+  name: 'transferir_para_atendente_humano',
+  description:
+    'Use imediatamente se o cliente pedir para falar com um humano, demonstrar pressa/irritação, se a conversa avançar para preço/proposta, ou se você concluir a qualificação. Desliga o atendimento automático e alerta a equipe de vendas.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      motivo_transferencia: {
+        type: 'string',
+        description: 'Motivo curto do transbordo (ex.: "cliente quer negociar preço").',
+      },
+    },
+    required: [],
+  },
+};
+
+/**
+ * Conjunto de ferramentas desta loja. A ordem é fixa e determinística — o cache
+ * de prompt casa por bytes, então reordenar aqui custaria o prefixo inteiro.
+ */
+export function buildAgentTools(profile: AgentProfileResolved, useKnowledgeRetrieval: boolean): Anthropic.Tool[] {
+  const tools: Anthropic.Tool[] = [];
+  if (profile.canSearchInventory) tools.push(SEARCH_TOOL, DETAIL_TOOL);
+  if (useKnowledgeRetrieval) tools.push(KNOWLEDGE_TOOL);
+  if (profile.canQuoteCredit) tools.push(CREDIT_TOOL);
+  if (profile.canScheduleVisit) tools.push(SCHEDULE_TOOL);
+  tools.push(PROFILE_TOOL, HANDOFF_TOOL);
+  return tools;
+}
 
 export interface AgentToolContext {
   ticketId: string;
   leadId: string;
+  /** Conta dona do atendimento. Nunca vem do modelo — sempre do ticket. */
+  accountId: string;
 }
 
 export interface ToolOutcome {
@@ -57,7 +160,7 @@ export interface ToolOutcome {
 /** Registra uma ação da IA na linha do tempo (alimenta o "Log de Ações" do painel). */
 export async function logAiAction(
   ticketId: string,
-  event: 'reply' | 'credit' | 'handoff',
+  event: 'reply' | 'credit' | 'handoff' | 'inventory' | 'schedule' | 'profile' | 'followup',
   summary: string,
   extra: Record<string, unknown> = {},
 ): Promise<void> {
@@ -69,6 +172,126 @@ export async function logAiAction(
       metadata: toJson({ kind: 'ai', event, summary, at: new Date().toISOString(), ...extra }),
     },
   });
+}
+
+// ─── Executores ──────────────────────────────────────────────────────────────
+
+async function runSearchTool(input: Record<string, unknown>, ctx: AgentToolContext): Promise<ToolOutcome> {
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
+  const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
+
+  const result = await searchInventory(ctx.accountId, {
+    marca: str(input.marca),
+    modelo: str(input.modelo),
+    precoMax: num(input.precoMax),
+    precoMin: num(input.precoMin),
+    anoMin: num(input.anoMin),
+    kmMax: num(input.kmMax),
+    combustivel: str(input.combustivel),
+    tipo: str(input.tipo),
+  });
+
+  await logAiAction(ctx.ticketId, 'inventory', `Busca no estoque · ${result.encontrados} resultado(s)`, {
+    filtros: input,
+    encontrados: result.encontrados,
+  });
+
+  if (result.encontrados === 0) {
+    return {
+      content:
+        'Nenhum veículo no estoque atende a esses critérios. Diga isso ao cliente com honestidade, ofereça avisá-lo quando entrar algo no perfil e pergunte se ele flexibilizaria algum ponto (faixa de preço, ano ou modelo).',
+    };
+  }
+
+  return {
+    content: [
+      `${result.encontrados} veículo(s) encontrado(s); os ${result.mostrando} mais relevantes:`,
+      JSON.stringify(result.veiculos, null, 2),
+      'Apresente no máximo 2 ou 3 opções, em texto corrido e curto, com preço e ano. Não cole este JSON na conversa.',
+    ].join('\n'),
+  };
+}
+
+async function runDetailTool(input: Record<string, unknown>, ctx: AgentToolContext): Promise<ToolOutcome> {
+  const id = typeof input.veiculoId === 'string' ? input.veiculoId : '';
+  if (!id) return { content: 'Informe o veiculoId devolvido por buscar_veiculos.' };
+
+  const vehicle = await getInventoryDetail(ctx.accountId, id);
+  if (!vehicle) {
+    return {
+      content:
+        'Este veículo não está mais disponível. Não o ofereça ao cliente; use buscar_veiculos para apresentar alternativas.',
+    };
+  }
+  await logAiAction(ctx.ticketId, 'inventory', `Detalhe consultado · ${vehicle.titulo}`, { veiculoId: id });
+  return { content: `Ficha do veículo:\n${JSON.stringify(vehicle, null, 2)}` };
+}
+
+async function runKnowledgeTool(input: Record<string, unknown>, ctx: AgentToolContext): Promise<ToolOutcome> {
+  const pergunta = typeof input.pergunta === 'string' ? input.pergunta : '';
+  const docs = await searchKnowledge(ctx.accountId, pergunta);
+  if (docs.length === 0) {
+    return {
+      content:
+        'Nada encontrado na base da loja sobre isso. Não improvise a resposta: diga que vai confirmar com o vendedor.',
+    };
+  }
+  return {
+    content: docs.map((d) => `## ${d.title}\n${d.content}`).join('\n\n'),
+  };
+}
+
+async function runProfileTool(input: Record<string, unknown>, ctx: AgentToolContext): Promise<ToolOutcome> {
+  const allowed: Array<keyof LeadProfile> = [
+    'orcamento', 'entrada', 'formaPagamento', 'veiculoNaTroca', 'prazo', 'preferencias', 'observacoes',
+  ];
+  const patch: LeadProfile = {};
+  for (const key of allowed) {
+    const value = input[key];
+    if (typeof value === 'string' && value.trim()) patch[key] = value.trim();
+  }
+  if (Object.keys(patch).length === 0) {
+    return { content: 'Nenhum campo informado — nada foi salvo.' };
+  }
+
+  await mergeLeadProfile(ctx.leadId, patch);
+  // Não loga os VALORES: são preferências comerciais do titular (PII).
+  await logAiAction(ctx.ticketId, 'profile', `Perfil do cliente atualizado (${Object.keys(patch).join(', ')})`, {
+    campos: Object.keys(patch),
+  });
+  return { content: 'Perfil atualizado. Não repita ao cliente o que acabou de registrar; siga a conversa.' };
+}
+
+async function runScheduleTool(input: Record<string, unknown>, ctx: AgentToolContext): Promise<ToolOutcome> {
+  const preferencia = typeof input.preferencia === 'string' ? input.preferencia.trim() : '';
+  if (!preferencia) return { content: 'Pergunte ao cliente qual dia e horário seriam melhores.' };
+
+  const veiculoId = typeof input.veiculoId === 'string' ? input.veiculoId : undefined;
+  const vehicle = veiculoId ? await getInventoryDetail(ctx.accountId, veiculoId) : null;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.ticket.update({
+      where: { id: ctx.ticketId },
+      data: { priority: TicketPriority.HIGH },
+    });
+    await tx.ticketInteraction.create({
+      data: {
+        ticketId: ctx.ticketId,
+        type: InteractionType.SYSTEM,
+        body: `Visita solicitada: ${preferencia}${vehicle ? ` · ${vehicle.titulo}` : ''}`,
+        metadata: toJson({
+          kind: 'ai', event: 'schedule', alert: true, preferencia,
+          veiculoId: veiculoId ?? null, at: new Date().toISOString(),
+        }),
+      },
+    });
+  });
+
+  logger.info('IA: visita solicitada', { ticketId: ctx.ticketId });
+  return {
+    content:
+      'Interesse de visita registrado e equipe avisada. Confirme ao cliente que um vendedor vai retornar para fechar o horário — não confirme a agenda como se já estivesse marcada.',
+  };
 }
 
 async function runCreditTool(documentoRaw: unknown, ctx: AgentToolContext): Promise<ToolOutcome> {
@@ -126,17 +349,18 @@ async function runHandoffTool(motivoRaw: unknown, ctx: AgentToolContext): Promis
   const motivo = typeof motivoRaw === 'string' && motivoRaw.trim() ? motivoRaw.trim() : 'Coleta inicial concluída';
 
   await prisma.$transaction(async (tx) => {
-    // desliga o bot desta conversa e prioriza para a equipe humana notar
-    const ticket = await tx.ticket.update({
+    // desliga o bot desta conversa e prioriza para a equipe humana notar.
+    // nextActionAt = null tira o ticket do motor de fluxo: quem manda mensagem
+    // a partir daqui é gente, não o sistema.
+    await tx.ticket.update({
       where: { id: ctx.ticketId },
       data: {
         botEnabled: false,
         priority: TicketPriority.HIGH,
         status: 'IN_PROGRESS',
+        nextActionAt: null,
       },
-      select: { priority: true },
     });
-    void ticket;
 
     // alerta de transbordo na linha do tempo (o front destaca/dispara notificação)
     await tx.ticketInteraction.create({
@@ -165,6 +389,16 @@ export async function executeAgentTool(
   ctx: AgentToolContext,
 ): Promise<ToolOutcome> {
   switch (name) {
+    case 'buscar_veiculos':
+      return runSearchTool(input, ctx);
+    case 'detalhar_veiculo':
+      return runDetailTool(input, ctx);
+    case 'consultar_conhecimento':
+      return runKnowledgeTool(input, ctx);
+    case 'registrar_perfil_cliente':
+      return runProfileTool(input, ctx);
+    case 'agendar_visita':
+      return runScheduleTool(input, ctx);
     case 'consultar_credito_cliente':
       return runCreditTool(input.documento, ctx);
     case 'transferir_para_atendente_humano':

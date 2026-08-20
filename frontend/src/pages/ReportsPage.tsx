@@ -139,7 +139,7 @@ export function ReportsPage() {
             <section className="panel report-chart-panel">
               <div className="panel-header">
                 <h2>{metricName}</h2>
-                <span className="muted small">{rows.length} grupos</span>
+                <span className="muted small ds-num">{rows.length} grupos</span>
               </div>
               <ReportChart
                 chartType={config.chartType}

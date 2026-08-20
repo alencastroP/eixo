@@ -2,6 +2,8 @@ import { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedLayout } from './components/Layout';
 import { AdminRoute } from './components/AdminRoute';
+import { AgentConfigPage } from './pages/AgentConfigPage';
+import { AdminPage } from './pages/AdminPage';
 import { CompanyPage } from './pages/CompanyPage';
 import { CreditPage } from './pages/CreditPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -113,7 +115,22 @@ export default function App() {
           }
         />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/company" element={<CompanyPage />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/company"
+          element={
+            <AdminRoute>
+              <CompanyPage />
+            </AdminRoute>
+          }
+        />
         <Route
           path="/users"
           element={
@@ -135,6 +152,14 @@ export default function App() {
           element={
             <AdminRoute>
               <StorefrontConfigPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/agent"
+          element={
+            <AdminRoute>
+              <AgentConfigPage />
             </AdminRoute>
           }
         />

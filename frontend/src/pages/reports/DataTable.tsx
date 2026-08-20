@@ -36,7 +36,7 @@ export function DataTable({ rows, dimensionLabel, metricName, metricFormat, canD
       </div>
 
       <div className="table-wrap">
-        <table className="fin-table report-table">
+        <table className="fin-table report-table ds-table-cards">
           <thead>
             <tr>
               <th>{dimensionLabel}</th>
@@ -55,14 +55,18 @@ export function DataTable({ rows, dimensionLabel, metricName, metricFormat, canD
                   className={canDrill ? 'report-row-drill' : ''}
                   onClick={canDrill ? () => onDrill(r.key) : undefined}
                 >
-                  <td className="report-cell-label">{r.label}</td>
-                  <td className="right amount">{formatMetric(r.value, metricFormat)}</td>
-                  <td className="report-share-col">
+                  <td className="report-cell-label ds-cell-title">{r.label}</td>
+                  <td className="right amount" data-label={metricName}>
+                    {formatMetric(r.value, metricFormat)}
+                  </td>
+                  <td className="report-share-col" data-label="Participação">
                     <span className="report-share-track">
                       <span className="report-share-bar" style={{ width: `${(r.value / max) * 100}%` }} />
                     </span>
                   </td>
-                  <td className="right muted">{pct.toFixed(1)}%</td>
+                  <td className="right muted ds-num" data-label="%">
+                    {pct.toFixed(1)}%
+                  </td>
                   {canDrill && (
                     <td className="right">
                       <ChevronRightIcon size={15} />
@@ -85,7 +89,7 @@ export function DataTable({ rows, dimensionLabel, metricName, metricFormat, canD
                 <td className="report-cell-label">Total ({rows.length})</td>
                 <td className="right amount">{formatMetric(total, metricFormat)}</td>
                 <td className="report-share-col" />
-                <td className="right muted">100%</td>
+                <td className="right muted ds-num">100%</td>
                 {canDrill && <td />}
               </tr>
             </tfoot>

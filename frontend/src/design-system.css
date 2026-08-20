@@ -1,0 +1,1285 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   EIXO · DESIGN SYSTEM — CAMADA DE FUNDAÇÃO
+   ───────────────────────────────────────────────────────────────────────────
+   Carregada DEPOIS de styles.css: a paleta continua vindo de lá (os tokens de
+   cor já são os do sistema), e aqui entram as regras que faltavam —
+   tipografia, ritmo, matéria (luz/textura), movimento e alvos de toque.
+
+   Ordem de força da matéria, sempre nesta sequência:
+     1. luz no topo do card  → todos os painéis
+     2. brilho na borda      → só no hover de itens clicáveis
+     3. hachura diagonal     → só em área vazia
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══ 1 · TOKENS ══════════════════════════════════════════════════════════ */
+:root {
+  /* tipografia */
+  --font-sans: 'Archivo', 'Helvetica Neue', Helvetica, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+
+  /* escala de texto — aplicação concreta do sistema nas telas do produto */
+  --fs-display: clamp(20px, 2.6vw, 27px); /* título da tela */
+  --fs-panel: 14.5px; /* título de painel */
+  --fs-form: 15px; /* corpo e formulário */
+  --fs-body: 13px; /* dado denso: tabela, lista, card */
+  --fs-sm: 12px;
+  --fs-label: 10px; /* rótulo mono em caixa alta */
+  --ls-label: 0.22em;
+
+  /* espaço — base 4 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 20px;
+  --sp-5: 32px;
+  --sp-6: 48px;
+
+  /* raio: 10 painel · 14 card · 999 pílula */
+  --r-panel: 10px;
+  --r-card: 14px;
+  --r-pill: 999px;
+
+  /* movimento */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-tap: 140ms; /* toque / hover */
+  --dur-state: 180ms; /* estado / aba */
+  --dur-enter: 420ms; /* entrada de bloco */
+  --stagger: 45ms; /* passo da cascata */
+
+  /* alvo mínimo de toque */
+  --tap: 44px;
+}
+
+/* matéria — dark (padrão) */
+:root,
+:root[data-theme='dark'] {
+  --surface-top: linear-gradient(180deg, var(--surface-2), var(--surface));
+  --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --edge-light-strong: inset 0 1px 0 rgb(255 255 255 / 0.09);
+  --hatch: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.03) 0 1px, transparent 1px 9px);
+  --hatch-bg: #1a1e22;
+  --well: #101316; /* superfície rebaixada: trilho de abas, cabeçalho de tabela */
+  --header-sheen: rgb(255 255 255 / 0.04); /* luz no topo do cabeçalho */
+  --shadow-lift: 0 14px 34px rgb(0 0 0 / 0.45);
+}
+
+/* matéria — light: a luz continua vindo de cima, mas branca sobre branco */
+:root[data-theme='light'] {
+  --surface-top: linear-gradient(180deg, #ffffff, #fafbfc);
+  --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --edge-light-strong: inset 0 1px 0 rgb(255 255 255 / 1);
+  --hatch: repeating-linear-gradient(135deg, rgb(20 23 26 / 0.04) 0 1px, transparent 1px 9px);
+  --hatch-bg: #f0f1f3;
+  --well: #e7e9eb;
+  --header-sheen: rgb(255 255 255 / 0.8);
+  --shadow-lift: 0 14px 34px rgb(20 23 26 / 0.14);
+}
+
+/* ═══ 2 · TIPOGRAFIA ══════════════════════════════════════════════════════ */
+body {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+/* Archivo tem caixa alta larga: título pede tracking negativo */
+h1,
+h2,
+h3 {
+  font-family: var(--font-sans);
+  letter-spacing: -0.015em;
+}
+
+/* Rótulo do sistema: mono, caixa alta, tracking largo — nunca negrito pesado */
+.ds-label,
+.page-header-eyebrow,
+.fin-kpi-label,
+.credit-limit-label,
+.credit-search-label,
+.recent-title,
+.kpi-label,
+.report-block-hint {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+/* Tudo que se compara vira mono com números tabulares:
+   dinheiro, placa, documento, data, score, contagem. */
+.mono,
+.amount,
+.fin-kpi-value,
+.kpi-value,
+.gauge-score,
+.credit-limit-value,
+.recent-doc,
+.recent-score,
+.recent-date,
+.down-payment-pct,
+.report-tooltip-value,
+.cost-formula-value,
+.ticket-number,
+.plate,
+.veh-plate,
+.audit-time,
+.cost-amount,
+.cost-total,
+.expense-amount,
+.tax-value,
+.invoice-number,
+.invoice-key,
+.margin-value,
+.funnel-count,
+.board-col-count,
+.platform-count,
+.gauge-value,
+.conv-number,
+.plate-mini,
+.plate-preview,
+.audit-count,
+.new-count,
+.restrictions-total strong,
+.panel-total strong,
+.ds-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* ═══ 3 · MATÉRIA · luz no topo (todos os painéis) ════════════════════════ */
+.panel,
+.card,
+.kpi-card,
+.fin-kpi,
+.report-config,
+.form-section,
+.modal,
+.credit-search,
+.integ-card,
+.settings-card,
+.board-col,
+.veh-card,
+.inv-toolbar,
+.composer-card,
+.conv-sidebar,
+.copilot,
+.cost-formula-item,
+.login-card,
+.auth-card,
+.user-menu-pop,
+.stat-chip,
+.report-tab {
+  background-image: var(--surface-top);
+  box-shadow: var(--edge-light), var(--shadow-sm);
+}
+
+/* superfície elevada dentro de um painel (linha, item de lista, botão-cartão) */
+.restriction-row,
+.company-status,
+.report-filter,
+.report-module-btn,
+.report-chart-type,
+.credit-limit,
+.down-payment {
+  box-shadow: var(--edge-light);
+}
+
+/* ═══ 4 · MATÉRIA · brilho na borda (só onde há clique) ═══════════════════ */
+/* A promessa do clique: a borda ganha brilho diagonal e o bloco sobe 3px. */
+.ds-clickable,
+.recent-item,
+.lead-result,
+.veh-card,
+.report-chart-type,
+.report-module-btn {
+  position: relative;
+  transition: transform var(--dur-state) var(--ease), border-color var(--dur-state) ease,
+    box-shadow var(--dur-state) ease, background var(--dur-state) ease, color var(--dur-state) ease;
+}
+.ds-clickable:hover,
+.recent-item:hover,
+.veh-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: var(--edge-light-strong), var(--shadow-lift);
+}
+
+@supports (mask-composite: exclude) or (-webkit-mask-composite: xor) {
+  .ds-clickable::after,
+  .recent-item::after,
+  .veh-card::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      115deg,
+      transparent 42%,
+      color-mix(in srgb, var(--accent) 55%, transparent) 50%,
+      transparent 58%
+    );
+    -webkit-mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity var(--dur-state) ease;
+  }
+  .ds-clickable:hover::after,
+  .recent-item:hover::after,
+  .veh-card:hover::after {
+    opacity: 1;
+  }
+}
+
+/* ═══ 5 · MATÉRIA · hachura diagonal (só em área vazia) ═══════════════════ */
+/* Área sem dado deixa de parecer defeito: hachurada, tracejada, com ação. */
+.ds-empty,
+.empty-row,
+.veh-empty,
+.board-empty,
+.integ-empty,
+.expenses-empty,
+.report-chart-empty,
+.copilot-log-empty,
+.json-empty {
+  background-color: var(--hatch-bg);
+  background-image: var(--hatch);
+  color: var(--text-2);
+  text-align: center;
+}
+.ds-empty,
+.veh-empty,
+.integ-empty,
+.expenses-empty,
+.report-chart-empty {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-card);
+}
+.empty-row {
+  padding: 34px 16px;
+  font-size: var(--fs-body);
+}
+.report-add-filter,
+.report-tab-add {
+  background-image: var(--hatch);
+}
+
+/* ═══ 6 · MOVIMENTO ═══════════════════════════════════════════════════════ */
+@keyframes ds-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes ds-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes ds-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+}
+@keyframes ds-shimmer {
+  from {
+    background-position: -220px 0;
+  }
+  to {
+    background-position: 220px 0;
+  }
+}
+@keyframes ds-arc {
+  from {
+    stroke-dashoffset: var(--arc-len, 520);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ds-needle {
+  from {
+    transform: rotate(var(--needle-from, -88deg));
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* entrada de bloco — cascata de 45ms, no máximo 6 passos */
+@media (prefers-reduced-motion: no-preference) {
+  .dash > .panel,
+  .dash > .card,
+  .kpi-grid > *,
+  .fin-kpi-grid > *,
+  .credit-grid > .panel,
+  .credit-search-wrap > *,
+  .report-view > *,
+  .report-layout > *,
+  .dash-grid > *,
+  .ds-enter {
+    animation: ds-rise var(--dur-enter) var(--ease) both;
+  }
+  .kpi-grid > :nth-child(2),
+  .fin-kpi-grid > :nth-child(2),
+  .credit-grid > .panel:nth-child(2),
+  .credit-search-wrap > :nth-child(2),
+  .report-view > :nth-child(2),
+  .report-layout > :nth-child(2),
+  .dash-grid > :nth-child(2),
+  .ds-enter:nth-child(2) {
+    animation-delay: calc(1 * var(--stagger));
+  }
+  .kpi-grid > :nth-child(3),
+  .fin-kpi-grid > :nth-child(3),
+  .credit-grid > .panel:nth-child(3),
+  .report-view > :nth-child(3),
+  .dash-grid > :nth-child(3),
+  .ds-enter:nth-child(3) {
+    animation-delay: calc(2 * var(--stagger));
+  }
+  .kpi-grid > :nth-child(4),
+  .fin-kpi-grid > :nth-child(4),
+  .report-view > :nth-child(4),
+  .dash-grid > :nth-child(4),
+  .ds-enter:nth-child(4) {
+    animation-delay: calc(3 * var(--stagger));
+  }
+  .kpi-grid > :nth-child(5),
+  .dash-grid > :nth-child(5),
+  .ds-enter:nth-child(5) {
+    animation-delay: calc(4 * var(--stagger));
+  }
+  .kpi-grid > :nth-child(n + 6),
+  .dash-grid > :nth-child(n + 6),
+  .ds-enter:nth-child(n + 6) {
+    animation-delay: calc(5 * var(--stagger));
+  }
+
+  /* barra sempre cresce da esquerda */
+  .report-share-bar,
+  .funnel-bar,
+  .ds-bar {
+    transform-origin: left center;
+    animation: ds-grow 780ms var(--ease) both;
+  }
+}
+
+/* carregamento é shimmer, nunca giro */
+.ds-skeleton {
+  display: block;
+  min-height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--surface), var(--surface-2), var(--surface));
+  background-size: 220px 100%;
+  animation: ds-shimmer 1.4s linear infinite;
+  color: transparent;
+  user-select: none;
+}
+.ds-skeleton-row {
+  padding: 14px !important;
+  background: none !important;
+}
+
+/* ponto que pulsa = o único status que exige ação agora */
+.ds-pulse {
+  animation: ds-breathe 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ═══ 7 · COMPONENTES ═════════════════════════════════════════════════════ */
+
+/* ── Foco: sempre azul, 3px. Nunca laranja — laranja é ação. ── */
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--info) 45%, transparent);
+  outline-offset: 1px;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--info);
+  box-shadow: var(--ring);
+}
+
+/* ── Botões: alvo 40 no mouse, 44 no toque ── */
+.btn {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: var(--r-panel);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  gap: var(--sp-2);
+  transition: transform var(--dur-tap) var(--ease), background var(--dur-tap) ease,
+    border-color var(--dur-tap) ease, box-shadow var(--dur-state) ease, opacity var(--dur-tap) ease;
+}
+.btn-primary {
+  background: linear-gradient(180deg, var(--accent-hover), var(--accent));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 6px 18px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 10px 26px color-mix(in srgb, var(--accent) 38%, transparent);
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(1px) scale(0.99);
+}
+.btn-ghost {
+  box-shadow: var(--edge-light);
+}
+.btn-ghost:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+}
+.btn-sm {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: var(--fs-sm);
+}
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-panel);
+  transition: background var(--dur-tap) ease, color var(--dur-tap) ease;
+}
+.icon-btn.sm {
+  width: 32px;
+  height: 32px;
+}
+/* mora dentro do recuo de 34px do cartão de filtro — não pode crescer */
+.report-filter-del {
+  width: 26px;
+  height: 26px;
+}
+
+/* pílula de filtro / período */
+.ds-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--dur-state) ease, border-color var(--dur-state) ease, background var(--dur-state) ease;
+}
+.ds-pill:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.ds-pill.active {
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Campos: corpo de formulário em 15px ── */
+input,
+select,
+textarea {
+  min-height: 42px;
+  padding: 9px 13px;
+  font-size: var(--fs-form);
+  border-radius: var(--r-panel);
+  background: var(--well);
+}
+:root[data-theme='light'] input,
+:root[data-theme='light'] select,
+:root[data-theme='light'] textarea {
+  background: var(--surface);
+}
+textarea {
+  min-height: 84px;
+}
+.control-sm {
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: var(--fs-sm);
+}
+/* Rótulo de campo costuma ser longo — mantém a forma do sistema (mono, caixa
+   alta) com tracking menor, senão quebra em duas linhas no painel estreito. */
+.field > span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/* ── Status: cor + forma. O ponto é a forma; o pulso é a exceção. ── */
+.badge {
+  gap: 7px;
+  padding: 4px 11px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  border: 1px solid color-mix(in srgb, currentColor 26%, transparent);
+}
+.badge[class*='status-']::before,
+.badge[class*='priority-']::before,
+.badge[class*='fin-']::before,
+.badge[class*='fiscal-']::before,
+.badge[class*='veh-']::before,
+.credit-pill-ok::before,
+.credit-pill-bad::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: currentColor;
+  flex-shrink: 0;
+}
+.integ-badge::before,
+.platform-badge::before {
+  content: none;
+}
+/* só o status que exige ação agora respira */
+.badge.status-IN_PROGRESS::before,
+.badge.priority-URGENT::before,
+.badge.fin-status.fin-OVERDUE::before,
+.badge.fiscal-ERROR::before {
+  animation: ds-breathe 2.4s ease-in-out infinite;
+}
+
+/* ── Abas: fundo elevado + laranja. Nunca sublinhado e fundo ao mesmo tempo. ── */
+.tab-nav {
+  background: var(--well);
+  border-radius: var(--r-card);
+  padding: var(--sp-1);
+  gap: var(--sp-1);
+}
+.tab-btn {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 9px;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  transition: color var(--dur-state) ease, background var(--dur-state) ease, box-shadow var(--dur-state) ease;
+}
+.tab-btn.active {
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  box-shadow: var(--edge-light), var(--shadow-sm);
+}
+
+/* ── Painéis e cabeçalho de tela ── */
+.panel {
+  border-radius: var(--r-card);
+  padding: var(--sp-4);
+}
+.panel-header {
+  margin-bottom: var(--sp-3);
+}
+.panel-header h2,
+.modal-header h2 {
+  font-size: var(--fs-panel);
+  font-weight: 600;
+}
+.page-header h1 {
+  font-size: var(--fs-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.page-header-eyebrow {
+  color: var(--text-3);
+  margin-bottom: var(--sp-1);
+}
+.page-subtitle {
+  font-size: var(--fs-body);
+}
+.page-header-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--r-card);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent) 22%, transparent),
+    color-mix(in srgb, var(--accent) 8%, transparent)
+  );
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: var(--edge-light-strong);
+}
+
+/* ── Tabelas: cabeçalho em mono, linha com trilho laranja no hover ── */
+.fin-table th,
+.report-table th,
+.audit-table th,
+.users-table th {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: var(--well);
+  padding: 11px 16px;
+}
+.fin-table td,
+.report-table td {
+  font-size: var(--fs-body);
+  padding: 13px 16px;
+}
+.fin-table tbody tr,
+.report-table tbody tr {
+  transition: background var(--dur-tap) ease, box-shadow var(--dur-tap) ease;
+}
+.fin-table tbody tr:hover,
+.report-table tbody tr:hover {
+  background: var(--surface-2);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* ── Shell ──────────────────────────────────────────────────────────────── */
+/* A faixa de trial é irmã da tela dentro de .app-content, que é flex. Em
+   linha ela virava uma coluna estreita ao lado do conteúdo; o certo é
+   empilhar — faixa em cima, tela ocupando o resto da altura. */
+.app-content {
+  flex-direction: column;
+}
+.app-content > .trial-banner {
+  flex-shrink: 0;
+}
+.app-content > :not(.trial-banner) {
+  min-height: 0;
+}
+
+/* ── Rail: alvo de 44 e marca com a luz da ação ── */
+.rail-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-card);
+  transition: background var(--dur-state) ease, color var(--dur-state) ease;
+}
+.rail-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: linear-gradient(160deg, var(--accent-hover), var(--accent) 60%, #e2551f);
+  border: none;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 6px 18px color-mix(in srgb, var(--accent) 28%, transparent);
+  margin-bottom: var(--sp-3);
+}
+
+/* ═══ 8 · TOQUE E CELULAR ═════════════════════════════════════════════════ */
+
+/* Nenhum alvo abaixo de 44×44 quando a entrada é o dedo. */
+@media (pointer: coarse) {
+  .btn,
+  .btn-sm,
+  .tab-btn,
+  .ds-pill,
+  .rail-btn,
+  .report-tab-name,
+  .segmented button,
+  .view-chip,
+  .report-agg-toggle button {
+    min-height: var(--tap);
+  }
+  .icon-btn,
+  .icon-btn.sm,
+  .report-tab-action {
+    width: var(--tap);
+    height: var(--tap);
+  }
+  .report-filter-del {
+    width: 32px;
+    height: 32px;
+  }
+  input,
+  select,
+  textarea {
+    min-height: var(--tap);
+    font-size: 16px; /* evita o zoom automático do iOS */
+  }
+}
+
+/* ── Barra inferior: o rail vira 5 ícones + "Mais" ── */
+.mobile-nav,
+.mobile-nav-sheet {
+  display: none;
+}
+@media (max-width: 880px) {
+  .app-shell {
+    flex-direction: column;
+  }
+  .rail {
+    display: none;
+  }
+  .app-content {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+  .mobile-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: var(--sp-1);
+    padding: var(--sp-2) var(--sp-2) calc(var(--sp-2) + env(safe-area-inset-bottom, 0px));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 24px rgb(0 0 0 / 0.28);
+  }
+  .mobile-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-width: 0;
+    height: var(--tap);
+    border: none;
+    background: transparent;
+    border-radius: var(--r-card);
+    color: var(--text-3);
+    font: inherit;
+    font-size: 9.5px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background var(--dur-state) ease, color var(--dur-state) ease;
+  }
+  .mobile-nav-btn span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mobile-nav-btn.active {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent);
+  }
+  .mobile-nav-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    display: flex;
+    align-items: flex-end;
+    background: rgb(0 0 0 / 0.55);
+    backdrop-filter: blur(2px);
+    border: none;
+    padding: 0;
+  }
+  .mobile-nav-sheet-body {
+    width: 100%;
+    max-height: 82vh;
+    overflow-y: auto;
+    background: var(--surface);
+    background-image: var(--surface-top);
+    border-top: 1px solid var(--border);
+    border-radius: var(--r-card) var(--r-card) 0 0;
+    padding: var(--sp-4) var(--sp-3) calc(var(--sp-4) + 64px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+    animation: ds-rise var(--dur-enter) var(--ease) both;
+  }
+  .mobile-nav-sheet-user {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding-bottom: var(--sp-4);
+    border-bottom: 1px solid var(--border);
+  }
+  .mobile-nav-sheet-user > div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .mobile-nav-sheet-user strong {
+    font-size: var(--fs-body);
+    font-weight: 600;
+  }
+  .mobile-nav-sheet-user span.muted {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mobile-nav-sheet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: var(--sp-2);
+  }
+  .mobile-nav-sheet-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    min-height: 78px;
+    padding: var(--sp-3) var(--sp-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-panel);
+    background: var(--surface-2);
+    color: var(--text-2);
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+  }
+  .mobile-nav-sheet-item.active {
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--accent);
+  }
+  .mobile-nav-sheet-item.danger {
+    border-color: color-mix(in srgb, var(--danger) 32%, transparent);
+    color: var(--danger);
+  }
+}
+
+/* ── Tabela vira lista de cards ── */
+@media (max-width: 720px) {
+  .ds-table-cards {
+    min-width: 0;
+  }
+  .ds-table-cards thead {
+    display: none;
+  }
+  .ds-table-cards,
+  .ds-table-cards tbody,
+  .ds-table-cards tr,
+  .ds-table-cards td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .ds-table-cards tr {
+    border: 1px solid var(--border);
+    border-radius: var(--r-panel);
+    background: var(--surface-2);
+    padding: var(--sp-3);
+    margin-bottom: var(--sp-2);
+  }
+  .ds-table-cards td {
+    border: none;
+    padding: 3px 0;
+    text-align: left !important;
+  }
+  /* rótulo em mono acima, valor em destaque */
+  .ds-table-cards td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 2px;
+  }
+  .ds-table-cards td.ds-cell-title {
+    font-size: 14px;
+    font-weight: 600;
+    padding-bottom: var(--sp-2);
+  }
+  .ds-table-cards td.ds-cell-actions {
+    display: flex;
+    gap: var(--sp-2);
+    justify-content: flex-end;
+    margin-top: var(--sp-2);
+  }
+  .ds-table-cards tbody tr:hover {
+    box-shadow: none;
+  }
+}
+
+/* ── KPI empilha, filtros viram trilho rolável, ação primária fica fixa ── */
+@media (max-width: 680px) {
+  .fin-kpi-grid,
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .fin-kpi-value,
+  .kpi-value {
+    font-size: 26px;
+  }
+  .ds-filter-rail {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: var(--sp-2);
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: var(--sp-1);
+  }
+  .ds-filter-rail::-webkit-scrollbar {
+    display: none;
+  }
+  .ds-filter-rail > * {
+    flex: 0 0 auto;
+  }
+  .ds-sticky-action {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    margin: var(--sp-4) calc(-1 * var(--sp-3)) 0;
+    padding: var(--sp-3);
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--border);
+  }
+  .ds-sticky-action .btn-primary {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+/* ═══ 9 · MÓDULOS ═════════════════════════════════════════════════════════ */
+
+/* ── Bureau ─────────────────────────────────────────────────────────────── */
+/* Veredito de uma linha fecha o painel de saúde financeira. */
+.credit-verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-panel);
+  border: 1px solid transparent;
+}
+.credit-verdict > div {
+  display: flex;
+  flex-direction: column;
+}
+.credit-verdict strong {
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+.credit-verdict-meta {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-3);
+}
+.credit-verdict-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-pill);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.credit-verdict.ok {
+  background: color-mix(in srgb, var(--success) 7%, transparent);
+  border-color: color-mix(in srgb, var(--success) 20%, transparent);
+}
+.credit-verdict.ok .credit-verdict-icon {
+  background: color-mix(in srgb, var(--success) 18%, transparent);
+  color: var(--success);
+}
+.credit-verdict.bad {
+  background: color-mix(in srgb, var(--danger) 7%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 22%, transparent);
+}
+.credit-verdict.bad .credit-verdict-icon {
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
+  color: var(--danger);
+}
+
+/* O documento é dado comparável: mono com tracking largo. */
+.credit-doc-input {
+  font-family: var(--font-mono);
+  letter-spacing: 0.14em;
+}
+.gauge-band {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+}
+
+/* ── Financeiro ─────────────────────────────────────────────────────────── */
+/* O KPI se identifica pela borda superior — a lateral competia com a tabela. */
+.fin-kpi::before {
+  inset: 0 0 auto 0;
+  width: auto;
+  height: 2px;
+  opacity: 1;
+}
+/* KPI não é clicável: não sobe, não brilha. Elevação é promessa de clique. */
+.fin-kpi:hover,
+.kpi-card:hover {
+  transform: none;
+  border-color: var(--border);
+  box-shadow: var(--edge-light), var(--shadow-sm);
+}
+.fin-kpi-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--danger);
+  font-weight: 600;
+}
+.fin-kpi-alert-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--danger);
+  flex-shrink: 0;
+}
+
+/* Filtro é pílula — mesma forma no desktop e no trilho rolável do celular. */
+.fin-filters select {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+.fin-filters select:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+/* ── Relatórios ─────────────────────────────────────────────────────────── */
+/* O painel de configuração fala em rótulos, não em títulos. */
+.report-block-title {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.report-grouped {
+  font-size: var(--fs-body);
+}
+.report-share-track {
+  background: var(--well);
+}
+.report-table tfoot td {
+  font-weight: 700;
+  background: var(--well);
+}
+
+/* ── Estado vazio e carregamento (usados em todos os módulos) ───────────── */
+.ds-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-4);
+  min-height: 148px;
+}
+.ds-empty strong {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text);
+}
+.ds-loading-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* ═══ 10 · CABEÇALHO, PREENCHIMENTOS E LARGURA ════════════════════════════ */
+
+/* ── Cabeçalho de módulo: mesma luz em todos ─────────────────────────────
+   O cabeçalho clareia no topo e se dissolve até a cor de quem está atrás —
+   como o gradiente sangra até a borda da tela, cada container declara o
+   próprio recuo em --page-pad-*, e o cabeçalho o desconta em margem. */
+.dash {
+  --page-pad-x: 28px;
+  --page-pad-top: 24px;
+  padding: var(--page-pad-top) var(--page-pad-x) 40px;
+}
+.kanban-page {
+  --page-pad-x: 22px;
+  --page-pad-top: 20px;
+  padding: var(--page-pad-top) var(--page-pad-x);
+}
+@media (max-width: 680px) {
+  .dash {
+    --page-pad-x: 16px;
+    --page-pad-top: 18px;
+  }
+  .kanban-page {
+    --page-pad-x: 14px;
+    --page-pad-top: 16px;
+  }
+}
+.page-header {
+  margin-top: calc(-1 * var(--page-pad-top, 0px));
+  margin-inline: calc(-1 * var(--page-pad-x, 0px));
+  padding: var(--page-pad-top, 0px) var(--page-pad-x, 0px) 18px;
+  background-image: linear-gradient(180deg, var(--header-sheen), transparent);
+}
+/* Cabeçalhos que já ocupam a largura do próprio painel: só a luz, que se
+   dissolve na cor de quem está atrás deles. */
+.inbox-list-header,
+.board-col-header,
+.copilot-head {
+  background-image: linear-gradient(180deg, var(--header-sheen), transparent);
+}
+/* A conversa tem corpo na cor da página, não na do painel — aqui o gradiente
+   sai da superfície e desce até o fundo, sem degrau na divisa. */
+.conv-header {
+  background-color: transparent;
+  background-image: linear-gradient(180deg, var(--surface), var(--bg));
+}
+
+/* ── Preenchimento de ação: laranja com luz no topo ──────────────────────
+   Todo controle que se preenche de laranja usa o mesmo corpo do botão
+   primário — gradiente, luz interna e brilho curto. */
+.btn-primary,
+.segmented button.active,
+.view-chip.active,
+.report-agg-toggle button.active,
+.trial-banner.urgent .trial-banner-cta,
+.thumb-btn.active,
+.optional-chip.on .optional-check,
+.switch.on,
+.ds-fill-accent {
+  background: linear-gradient(180deg, var(--accent-hover), var(--accent));
+  color: var(--accent-contrast);
+  transition: background var(--dur-state) ease, box-shadow var(--dur-state) ease,
+    transform var(--dur-tap) var(--ease), color var(--dur-state) ease;
+}
+/* controles compactos: luz no topo e brilho curto */
+.segmented button.active,
+.view-chip.active,
+.report-agg-toggle button.active,
+.trial-banner.urgent .trial-banner-cta,
+.thumb-btn.active,
+.ds-fill-accent {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 3px 10px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+/* o mesmo corpo em azul: a faixa de trial só vira laranja quando é urgência */
+.trial-banner-cta {
+  background: linear-gradient(180deg, var(--info-hover), var(--info));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 3px 10px color-mix(in srgb, var(--info) 30%, transparent);
+}
+/* peças miúdas (trilho de switch, caixa de marcação): só a luz interna */
+.optional-chip.on .optional-check,
+.switch.on {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28);
+}
+
+/* ── Trilho dos controles segmentados: superfície rebaixada ── */
+.segmented {
+  background: var(--well);
+  border-radius: var(--r-panel);
+  padding: 3px;
+}
+.segmented button,
+.view-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 13px;
+  font-weight: 600;
+  border-radius: 7px;
+  transition: background var(--dur-state) ease, color var(--dur-state) ease, box-shadow var(--dur-state) ease;
+}
+.view-chip {
+  border-radius: var(--r-pill);
+}
+.segmented button:not(.active):hover,
+.view-chip:not(.active):hover {
+  color: var(--text);
+  background: var(--hover);
+}
+/* contador dentro do chip: dado, logo mono */
+.view-count,
+.new-count,
+.audit-count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.view-chip.active .view-count {
+  opacity: 0.75;
+}
+
+/* ── Filtros de módulo: mesma altura e mesmo raio em toda a aplicação ── */
+.inbox-filters select,
+.inv-toolbar-filters select,
+.inv-toolbar-filters input,
+.audit-filters > select,
+.inv-filter-select,
+.inv-filter-model {
+  min-height: 38px;
+  border-radius: var(--r-panel);
+}
+
+/* ── Largura: módulo ocupa a página inteira ──────────────────────────────
+   O teto de largura ficava em cada módulo e cada um escolhia o seu; agora a
+   página inteira é a medida, e quem precisa de leitura curta limita só o
+   bloco de conteúdo, não o módulo. */
+.credit-page,
+.finance-page,
+.settings-page,
+.users-page,
+.audit-page,
+.inv-page,
+.integ-page,
+.veh-form-page,
+.report-page {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+}
+.veh-form,
+.credit-search-wrap {
+  max-width: none;
+}
+/* a linha do documento continua com medida de leitura — o painel é que cresce */
+.credit-search-row {
+  max-width: 560px;
+  margin-inline: auto;
+}
+
+/* O painel agora cresce com a página. Para o campo não esticar até perder a
+   medida de leitura, a linha de campos ganha mais colunas em vez de largura,
+   e o campo solto tem teto próprio. */
+.settings-card .field-row,
+.veh-form .field-row {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.settings-card .field > input,
+.settings-card .field > select,
+.settings-card .field > textarea,
+.settings-card .static-field {
+  max-width: 620px;
+}

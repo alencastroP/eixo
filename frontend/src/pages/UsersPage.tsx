@@ -88,7 +88,7 @@ export function UsersPage() {
       />
 
       <div className="card table-wrap">
-        <table className="fin-table users-table">
+        <table className="fin-table users-table ds-table-cards">
           <thead>
             <tr>
               <th>Funcionário</th>
@@ -101,7 +101,7 @@ export function UsersPage() {
           <tbody>
             {users.map((u) => (
               <tr key={u.id}>
-                <td>
+                <td className="ds-cell-title">
                   <div className="user-cell">
                     <span className="avatar sm" style={{ backgroundColor: avatarColor(u.name) }}>
                       {initials(u.name)}
@@ -112,14 +112,16 @@ export function UsersPage() {
                     </span>
                   </div>
                 </td>
-                <td className="muted">{u.email}</td>
-                <td>
+                <td className="muted" data-label="E-mail">
+                  {u.email}
+                </td>
+                <td data-label="Papel">
                   <span className={`badge ${u.role === 'ADMIN' ? 'role-admin' : 'role-agent'}`}>{ROLE_LABELS[u.role]}</span>
                 </td>
-                <td>
+                <td data-label="Status">
                   <span className={`badge ${u.active ? 'fin-PAID' : 'fin-OVERDUE'}`}>{u.active ? 'Ativo' : 'Revogado'}</span>
                 </td>
-                <td className="right">
+                <td className="right ds-cell-actions">
                   <div className="row-actions">
                     <button className="btn btn-ghost btn-sm" onClick={() => openEdit(u)}>
                       Editar
@@ -133,13 +135,15 @@ export function UsersPage() {
                 </td>
               </tr>
             ))}
-            {loading && users.length === 0 && (
-              <tr>
-                <td colSpan={5} className="empty-row">
-                  Carregando…
-                </td>
-              </tr>
-            )}
+            {loading &&
+              users.length === 0 &&
+              Array.from({ length: 3 }, (_, i) => (
+                <tr key={`sk-${i}`} aria-hidden="true">
+                  <td colSpan={5} className="ds-skeleton-row">
+                    <span className="ds-skeleton" style={{ height: 18 }} />
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>

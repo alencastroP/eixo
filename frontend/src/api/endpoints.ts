@@ -7,8 +7,11 @@ import type {
   FinancialType,
   FiscalInvoice,
   FiscalKind,
+  AgentProfileConfig,
+  FlowPolicyConfig,
   Integration,
   IntegrationDetail,
+  KnowledgeDoc,
   WebhookSecret,
   LeadFormSettings,
   LeadSearchResult,
@@ -240,4 +243,22 @@ export const fiscalApi = {
     operationValue: number;
   }) => api<FiscalInvoice>('/fiscal/invoices', { method: 'POST', body: input }),
   cancel: (id: string) => api<FiscalInvoice>(`/fiscal/invoices/${id}/cancel`, { method: 'POST' }),
+};
+
+export const agentApi = {
+  getProfile: () => api<AgentProfileConfig>('/agent/profile'),
+  saveProfile: (input: Partial<AgentProfileConfig>) =>
+    api<AgentProfileConfig>('/agent/profile', { method: 'PUT', body: input }),
+
+  listKnowledge: () =>
+    api<{ docs: KnowledgeDoc[]; chars: number; budgetChars: number }>('/agent/knowledge'),
+  createDoc: (input: { title: string; content: string; enabled?: boolean }) =>
+    api<KnowledgeDoc>('/agent/knowledge', { method: 'POST', body: input }),
+  updateDoc: (id: string, input: Partial<{ title: string; content: string; enabled: boolean }>) =>
+    api<KnowledgeDoc>(`/agent/knowledge/${id}`, { method: 'PUT', body: input }),
+  removeDoc: (id: string) => api<void>(`/agent/knowledge/${id}`, { method: 'DELETE' }),
+
+  getFlow: () => api<FlowPolicyConfig>('/agent/flow'),
+  saveFlow: (input: Partial<FlowPolicyConfig>) =>
+    api<FlowPolicyConfig & { ticketsReprogramados: number }>('/agent/flow', { method: 'PUT', body: input }),
 };

@@ -160,6 +160,19 @@ export function CreditPage() {
                 </div>
               )}
 
+              {/* Fecho do painel: a leitura de uma linha, com a hora real da apuração. */}
+              <div className={`credit-verdict ${r.restrictions.hasRestrictions ? 'bad' : 'ok'}`}>
+                <span className="credit-verdict-icon">
+                  {r.restrictions.hasRestrictions ? <AlertIcon size={15} /> : <CheckIcon size={15} />}
+                </span>
+                <div>
+                  <strong>
+                    {r.restrictions.hasRestrictions ? 'Pendências em aberto' : 'Nenhuma pendência em aberto'}
+                  </strong>
+                  <span className="credit-verdict-meta">apurado em {formatDateTime(r.queriedAt)}</span>
+                </div>
+              </div>
+
               {r.company && (
                 <div className={`company-status ${r.company.active ? 'active' : 'inactive'}`}>
                   <span className="company-icon">{r.company.active ? <CheckIcon size={15} /> : <AlertIcon size={15} />}</span>

@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { ROLE_LABELS } from '../types';
 import { avatarColor, initials } from '../utils/format';
-import { BuildingIcon, LogoutIcon, SettingsIcon, UserIcon, UsersIcon } from './icons';
+import { GridIcon, LogoutIcon, SettingsIcon, UserIcon, UsersIcon } from './icons';
 
-/** Dropdown do avatar (rail): perfil, empresa, usuários (admin) e limpar sessão. */
+/** Dropdown do avatar (rail): perfil, usuários e administração (admin) e limpar sessão. */
 export function UserMenu() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -71,11 +71,11 @@ export function UserMenu() {
             <button className="user-menu-item" onClick={() => go('/profile')}>
               <UserIcon size={16} /> Meus Dados
             </button>
-            <button className="user-menu-item" onClick={() => go('/company')}>
-              <BuildingIcon size={16} /> Dados da Empresa
-            </button>
             {user.role === 'ADMIN' && (
               <>
+                <button className="user-menu-item" onClick={() => go('/admin')}>
+                  <GridIcon size={16} /> Administração
+                </button>
                 <button className="user-menu-item" onClick={() => go('/users')}>
                   <UsersIcon size={16} /> Gerenciar Usuários
                 </button>

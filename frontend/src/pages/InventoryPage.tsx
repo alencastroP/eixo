@@ -257,7 +257,11 @@ export function InventoryPage() {
             )}
           </div>
         )}
-        {loading && items.length === 0 && <div className="veh-empty">Carregando estoque…</div>}
+        {loading &&
+          items.length === 0 &&
+          Array.from({ length: 6 }, (_, i) => (
+            <span key={`sk-${i}`} className="ds-skeleton" style={{ height: 268, borderRadius: 14 }} aria-hidden="true" />
+          ))}
       </div>
 
       {total > items.length && <p className="muted small">Exibindo {items.length} de {total} veículos.</p>}

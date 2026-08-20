@@ -17,8 +17,9 @@ import { logger } from '../../lib/logger';
 import { prisma } from '../../lib/prisma';
 import type { NormalizedLead } from '../../integrations/core/types';
 import { dispatchOutboundReply } from '../../integrations/outbound';
-import { buildSystemPrompt } from './prompt';
-import { AGENT_TOOLS, executeAgentTool, type AgentToolContext } from './tools';
+import { buildStablePrefix, buildTurnContext } from './prompt';
+import { buildAgentTools, executeAgentTool, type AgentToolContext } from './tools';
+import { readLeadProfile, resolveAgentProfile, resolveKnowledge } from './context.service';
 
 const toJson = (value: unknown) => value as Prisma.InputJsonValue;
 
@@ -29,7 +30,22 @@ function getClient(): Anthropic | null {
   return client;
 }
 
-const HISTORY_LIMIT = 10;
+const HISTORY_LIMIT = 24;
+
+/**
+ * Observabilidade do cache. Sem isto, um cache que parou de funcionar é
+ * invisível: a API não dá erro, só cobra preço cheio. `cache_read` zerado em
+ * chamadas repetidas significa que algo passou a variar dentro do prefixo.
+ */
+function logCacheUsage(ticketId: string, usage: Anthropic.Usage): void {
+  logger.info('IA: uso de tokens', {
+    ticketId,
+    input: usage.input_tokens,
+    output: usage.output_tokens,
+    cacheWrite: usage.cache_creation_input_tokens ?? 0,
+    cacheRead: usage.cache_read_input_tokens ?? 0,
+  });
+}
 const FALLBACK_REPLY =
   'Obrigado pela mensagem! Já estou verificando com a equipe e um vendedor vai te dar sequência em instantes. 🙂';
 
@@ -129,17 +145,32 @@ export async function handleInboundMessage(ticketId: string): Promise<void> {
     });
     if (last?.type !== InteractionType.CUSTOMER_MESSAGE) return;
 
+    // Persona e conhecimento DA LOJA dona do ticket.
+    const [profile, knowledge] = await Promise.all([
+      resolveAgentProfile(ticket.accountId),
+      resolveKnowledge(ticket.accountId),
+    ]);
+    if (!profile.enabled) return; // agente desligado para esta conta
+
     const messages = await buildHistory(ticketId);
     if (messages.length === 0) return;
 
     const vehicleRef = (ticket.vehicleRefExternal as NormalizedLead['vehicle']) ?? undefined;
-    const system = buildSystemPrompt({
+
+    // O contexto volátil (lead, veículo, perfil) entra como MENSAGEM, depois do
+    // prefixo cacheado — interpolá-lo no system prompt invalidaria o cache em
+    // toda conversa, silenciosamente.
+    const turnContext = buildTurnContext({
       leadName: ticket.lead.name,
       vehicleTitle: (vehicleRef?.title as string | undefined) ?? null,
       vehiclePrice: typeof vehicleRef?.price === 'number' ? vehicleRef.price : null,
       platform: ticket.platform,
+      profile: readLeadProfile(ticket.lead.profile),
     });
-    const ctx: AgentToolContext = { ticketId, leadId: ticket.leadId };
+    messages.unshift({ role: 'user', content: turnContext });
+
+    const tools = buildAgentTools(profile, knowledge.useRetrieval);
+    const ctx: AgentToolContext = { ticketId, leadId: ticket.leadId, accountId: ticket.accountId };
 
     // ── Loop de tool-use manual (interceptável) ──
     let finalText = '';
@@ -148,10 +179,22 @@ export async function handleInboundMessage(ticketId: string): Promise<void> {
       const response = await anthropic.messages.create({
         model: env.ai.model,
         max_tokens: env.ai.maxTokens,
-        system,
-        tools: AGENT_TOOLS,
+        // O breakpoint vai no ÚLTIMO bloco do system: a ordem de renderização é
+        // tools -> system -> messages, então ele cacheia ferramentas e persona
+        // juntas. Este prefixo é idêntico byte a byte para toda conversa desta
+        // conta, que é o que torna o cache possível.
+        system: [
+          {
+            type: 'text',
+            text: buildStablePrefix(profile, knowledge.injected),
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
+        tools,
         messages,
       });
+
+      logCacheUsage(ticketId, response.usage);
 
       const turnText = textOf(response.content);
       if (turnText) finalText = turnText;

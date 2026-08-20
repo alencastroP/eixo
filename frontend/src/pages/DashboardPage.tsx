@@ -214,7 +214,13 @@ export function DashboardPage() {
         </>
       )}
 
-      {loading && !metrics && <div className="dash-loading">Carregando painel…</div>}
+      {loading && !metrics && (
+        <div className="ds-loading-block" aria-busy="true" aria-label="Carregando painel">
+          <span className="ds-skeleton" style={{ height: 108 }} />
+          <span className="ds-skeleton" style={{ height: 108 }} />
+          <span className="ds-skeleton" style={{ height: 240 }} />
+        </div>
+      )}
     </div>
   );
 }

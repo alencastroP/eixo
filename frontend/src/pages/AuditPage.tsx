@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { PageHeader } from '../components/PageHeader';
-import { HistoryIcon, SearchDataIcon, SearchIcon } from '../components/icons';
+import { SearchDataIcon, SearchIcon } from '../components/icons';
 import { avatarColor, initials } from '../utils/format';
 import { AuditInspectModal } from './audit/AuditInspectModal';
 import {
@@ -33,8 +33,8 @@ export function AuditPage() {
   return (
     <div className="dash audit-page">
       <PageHeader
-        icon={<HistoryIcon size={19} />}
-        eyebrow="Segurança & Conformidade"
+        back={{ to: '/admin', label: 'Voltar à Administração' }}
+        eyebrow="Administração · Segurança & Conformidade"
         title="Trilha de Auditoria"
         subtitle="Histórico completo de criações, edições e exclusões dos últimos 30 dias."
         actions={<span className="audit-count">{rows.length} registros</span>}
@@ -81,7 +81,7 @@ export function AuditPage() {
 
       {/* Tabela de logs */}
       <div className="card table-wrap">
-        <table className="fin-table audit-table">
+        <table className="fin-table audit-table ds-table-cards">
           <thead>
             <tr>
               <th>Horário</th>
@@ -95,8 +95,8 @@ export function AuditPage() {
           <tbody>
             {rows.map((e) => (
               <tr key={e.id}>
-                <td className="audit-time mono">{formatTimestamp(e.at)}</td>
-                <td>
+                <td className="audit-time mono ds-cell-title">{formatTimestamp(e.at)}</td>
+                <td data-label="Usuário">
                   <div className="audit-user">
                     <span className="audit-avatar" style={{ background: avatarColor(e.user.name) }}>
                       {initials(e.user.name)}
@@ -107,15 +107,17 @@ export function AuditPage() {
                     </div>
                   </div>
                 </td>
-                <td>
+                <td data-label="Módulo / Entidade">
                   <span className="audit-module">{e.moduleLabel}</span>
                   <span className="audit-entity">{e.entityLabel}</span>
                 </td>
-                <td>
+                <td data-label="Operação">
                   <span className={`audit-op audit-op-${e.operation}`}>{operationLabel(e.operation)}</span>
                 </td>
-                <td className="audit-summary">{e.summary}</td>
-                <td className="right">
+                <td className="audit-summary" data-label="Resumo da alteração">
+                  {e.summary}
+                </td>
+                <td className="right ds-cell-actions">
                   <button className="audit-inspect" onClick={() => setInspecting(e)}>
                     <SearchDataIcon size={14} /> Inspecionar
                   </button>

@@ -476,7 +476,7 @@ export function VehicleFormPage() {
           )}
         </section>
 
-        <div className="form-footer">
+        <div className="form-footer ds-sticky-action">
           <Link to="/inventory" className="btn btn-ghost">
             Cancelar
           </Link>

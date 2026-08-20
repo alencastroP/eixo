@@ -108,7 +108,10 @@ export function CashFlowTab() {
           <span className="fin-kpi-value warn">{summary ? formatBRL(summary.payableMonth) : '—'}</span>
           <span className="fin-kpi-sub">
             {summary && summary.overdueCount > 0 ? (
-              <span className="danger">{summary.overdueCount} em atraso</span>
+              <span className="fin-kpi-alert">
+                <span className="fin-kpi-alert-dot ds-pulse" />
+                {summary.overdueCount} em atraso
+              </span>
             ) : (
               'despesas previstas'
             )}
@@ -118,7 +121,7 @@ export function CashFlowTab() {
 
       {/* toolbar */}
       <div className="fin-toolbar">
-        <div className="fin-filters">
+        <div className="fin-filters ds-filter-rail">
           <select value={filters.type} onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value }))}>
             <option value="">Tipo</option>
             <option value="RECEIVABLE">A Receber</option>
@@ -148,7 +151,7 @@ export function CashFlowTab() {
 
       {/* tabela */}
       <div className="card table-wrap">
-        <table className="fin-table">
+        <table className="fin-table ds-table-cards">
           <thead>
             <tr>
               <th>Descrição</th>
@@ -163,20 +166,29 @@ export function CashFlowTab() {
           <tbody>
             {entries.map((e) => (
               <tr key={e.id} className={e.status === 'OVERDUE' ? 'row-overdue' : ''}>
-                <td>
+                <td className="ds-cell-title">
                   <span className={`fin-flow-dot ${e.type === 'RECEIVABLE' ? 'in' : 'out'}`} />
                   {e.description}
                 </td>
-                <td className="muted">{e.category}</td>
-                <td className="muted">{e.vehicle ? `${e.vehicle.brand} ${e.vehicle.model}` : '—'}</td>
-                <td>{formatDate(e.dueDate)}</td>
-                <td className={`right amount ${e.type === 'RECEIVABLE' ? 'in' : 'out'}`}>
+                <td className="muted" data-label="Categoria">
+                  {e.category}
+                </td>
+                <td className="muted" data-label="Veículo">
+                  {e.vehicle ? `${e.vehicle.brand} ${e.vehicle.model}` : '—'}
+                </td>
+                <td data-label="Vencimento" className="ds-num">
+                  {formatDate(e.dueDate)}
+                </td>
+                <td
+                  className={`right amount ${e.type === 'RECEIVABLE' ? 'in' : 'out'}`}
+                  data-label="Valor"
+                >
                   {e.type === 'RECEIVABLE' ? '+' : '−'} {formatBRL(e.amount)}
                 </td>
-                <td>
+                <td data-label="Status">
                   <FinancialStatusBadge status={e.status} />
                 </td>
-                <td className="right">
+                <td className="right ds-cell-actions">
                   <div className="row-actions">
                     <button
                       className={`icon-btn sm ${e.status === 'PAID' ? 'active' : ''}`}
@@ -199,13 +211,15 @@ export function CashFlowTab() {
                 </td>
               </tr>
             )}
-            {loading && entries.length === 0 && (
-              <tr>
-                <td colSpan={7} className="empty-row">
-                  Carregando…
-                </td>
-              </tr>
-            )}
+            {loading &&
+              entries.length === 0 &&
+              Array.from({ length: 4 }, (_, i) => (
+                <tr key={`sk-${i}`} aria-hidden="true">
+                  <td colSpan={7} className="ds-skeleton-row">
+                    <span className="ds-skeleton" style={{ height: 18 }} />
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>

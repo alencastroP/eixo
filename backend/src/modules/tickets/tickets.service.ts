@@ -7,6 +7,7 @@ import type { NormalizedLead } from '../../integrations/core/types';
 import { dispatchOutboundReply } from '../../integrations/outbound';
 import { handleInboundMessage } from '../aiAgent/agent.service';
 import { writeAudit } from '../audit/audit.service';
+import { rescheduleTicket } from '../flow/flow.service';
 
 export interface CurrentUser {
   id: string;
@@ -474,6 +475,8 @@ export async function updateTicket(id: string, patch: UpdateTicketInput, user: C
     await tx.ticket.update({ where: { id: ticket.id }, data });
   });
 
+  // Fechar/reabrir muda quando (ou se) a próxima ação automática vence.
+  await rescheduleTicket(id);
   return getTicket(id, user);
 }
 
@@ -576,6 +579,10 @@ export async function addInteraction(id: string, input: AddInteractionInput, use
     // updatedAt é @updatedAt — qualquer update o toca; garante que o ticket suba na lista
     await tx.ticket.update({ where: { id: ticket.id }, data });
   });
+
+  // Um humano respondeu: a escada de follow-up automático recomeça a contar a
+  // partir do silêncio do cliente, não do momento da resposta anterior.
+  if (input.type === 'AGENT_REPLY') await rescheduleTicket(ticket.id);
 
   // Comunicação bidirecional: replica a resposta do operador de volta à plataforma
   // de origem (ex.: OLX), se a integração estiver conectada e com sync ativa.

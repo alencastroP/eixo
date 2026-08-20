@@ -521,3 +521,42 @@ export interface WebhookSecret {
   /** Header em que a plataforma envia o segredo (ex.: x-olx-token). */
   header: string | null;
 }
+
+// ─── Agente de IA e motor de fluxo (config por loja) ─────────────────────────
+
+export interface AgentProfileConfig {
+  enabled: boolean;
+  /** Sempre preenchido pela API — cai no nome da conta quando não configurado. */
+  storeName: string | null;
+  persona: string | null;
+  rules: string | null;
+  canSearchInventory: boolean;
+  canQuoteCredit: boolean;
+  canScheduleVisit: boolean;
+  knowledge: {
+    docCount: number;
+    /** 'injected' = tudo vai no prompt; 'retrieval' = busca sob demanda. */
+    mode: 'injected' | 'retrieval';
+    budgetChars: number;
+  };
+}
+
+export interface KnowledgeDoc {
+  id: string;
+  title: string;
+  content: string;
+  enabled: boolean;
+  updatedAt: string;
+}
+
+export interface FlowPolicyConfig {
+  enabled: boolean;
+  followUpDelaysMin: number[];
+  autoCloseAfterMin: number;
+  quietHoursStart: number;
+  quietHoursEnd: number;
+  timezone: string;
+  businessDaysOnly: boolean;
+  slaFirstResponseMin: number;
+  followUpMode: 'ai' | 'template';
+}

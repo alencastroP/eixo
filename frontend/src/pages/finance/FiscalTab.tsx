@@ -235,7 +235,12 @@ export function FiscalTab() {
           </div>
 
           <div className="invoice-list">
-            {invoices.length === 0 && <p className="muted small">Nenhuma nota emitida ainda.</p>}
+            {invoices.length === 0 && (
+              <div className="ds-empty">
+                <strong>Nenhuma nota emitida</strong>
+                <span className="muted small">As notas aparecem aqui assim que a primeira for emitida ao lado.</span>
+              </div>
+            )}
             {invoices.map((inv) => (
               <div key={inv.id} className="invoice-item">
                 <div className="invoice-top">

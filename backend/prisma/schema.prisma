@@ -191,6 +191,12 @@ model Lead {
   document String? // CPF/CNPJ do cliente (dígitos) — usado na consulta rápida
   extra    Json? // campos personalizados do formulário (config em Setting "leadForm")
 
+  /// Perfil de compra coletado pelo agente ao longo da conversa (orçamento, carro
+  /// na troca, forma de pagamento, urgência, preferências). Vai no prefixo do
+  /// prompt para o agente parar de reperguntar o que já foi respondido.
+  /// É PII de preferência comercial — segue as mesmas regras de anonimização.
+  profile  Json?
+
   tickets       Ticket[]
   creditQueries CreditQuery[]
 
@@ -235,12 +241,25 @@ model Ticket {
   firstResponseAt       DateTime? // base do SLA de primeira resposta (calculado na API)
   lastCustomerMessageAt DateTime?
   closedAt              DateTime?
+
+  /// Relógio do motor de fluxo. Em vez de uma tabela de jobs agendados, o próprio
+  /// ticket carrega QUANDO a próxima ação vence; o worker consulta um índice em
+  /// `nextActionAt`. Trocar a política passa a valer na hora, para todos os
+  /// tickets, sem reescrever linhas agendadas.
+  nextActionAt   DateTime?
+  followUpCount  Int       @default(0)
+  lastFollowUpAt DateTime?
+  /// Por que fechou (ex.: "sem_resposta"), quando o fechamento foi automático.
+  closeReason    String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
   interactions TicketInteraction[]
 
   @@index([accountId, status])
+  /// Consulta do motor de fluxo: "o que venceu?" — parcial na prática, já que a
+  /// maioria dos tickets tem nextActionAt nulo.
+  @@index([nextActionAt])
   @@index([accountId, assignedToId])
   @@index([accountId, platform])
   @@index([accountId, createdAt])
@@ -449,10 +468,109 @@ model Account {
   tickets       Ticket[]
   webhookEvents WebhookEvent[]
   integrations  Integration[]
+  // Agente de IA e automação de atendimento, configuráveis por lojista.
+  agentProfile  AgentProfile?
+  knowledgeDocs KnowledgeDoc[]
+  flowPolicy    FlowPolicy?
 
   @@index([status])
   @@index([trialEndsAt])
   @@map("accounts")
+}
+
+/// Persona e limites do Agente de Pré-Venda, POR LOJA.
+///
+/// Antes existia um único system prompt fixo no código, que dizia "loja de
+/// veículos premium" para toda conta. Num SaaS multi-loja isso é errado duas
+/// vezes: o tom não é da loja e as regras comerciais (o que pode prometer sobre
+/// preço, prazo, garantia) variam de lojista para lojista.
+model AgentProfile {
+  accountId String  @id
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  enabled   Boolean @default(true)
+  /// Como o agente se apresenta ("a Washington Veículos"). Sem valor, usa o nome da conta.
+  storeName String?
+  /// Tom e estilo em uma ou duas frases ("consultivo e direto, sem formalidade excessiva").
+  persona   String?
+  /// Regras comerciais próprias da loja, em texto livre — entram no prompt como invioláveis.
+  rules     String?
+
+  /// Capacidades ligáveis. Desligar remove a ferramenta do agente, não só a menção
+  /// no prompt: o modelo não pode chamar o que não recebe.
+  canSearchInventory Boolean @default(true)
+  canQuoteCredit     Boolean @default(true)
+  canScheduleVisit   Boolean @default(true)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("agent_profiles")
+}
+
+/// Base de conhecimento da loja (garantia, financiamento, troca, horários...).
+///
+/// Estratégia de uso, decidida em tempo de execução pelo tamanho do corpus:
+///  - corpus pequeno (o caso normal de uma loja): TODOS os documentos entram no
+///    prefixo cacheado do system prompt. O modelo vê tudo, sem chunking e sem o
+///    modo de falha clássico do RAG (o trecho certo não ser recuperado);
+///  - corpus grande: a injeção é trocada por recuperação sob demanda via a
+///    ferramenta `consultar_conhecimento`, que hoje usa busca textual do Postgres.
+///
+/// `embedding` fica reservado para quando/se a busca vetorial (pgvector) valer a
+/// pena — a interface da ferramenta não muda, só o corpo da busca.
+model KnowledgeDoc {
+  id        String  @id @default(cuid())
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  title   String
+  content String
+  enabled Boolean @default(true)
+  /// Reservado para busca vetorial futura; nulo enquanto a recuperação for lexical.
+  embedding Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([accountId, enabled])
+  @@map("knowledge_docs")
+}
+
+/// Automação de tempo do atendimento (follow-up e encerramento), POR LOJA.
+///
+/// `enabled` nasce FALSE de propósito: mandar mensagem automática para cliente é
+/// ação externa e irreversível. Ligar isso para todas as contas numa migration
+/// faria o sistema começar a falar com clientes sem ninguém ter pedido.
+model FlowPolicy {
+  accountId String  @id
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  enabled Boolean @default(false)
+
+  /// Minutos de silêncio DO CLIENTE até cada follow-up, em ordem. O tamanho da
+  /// lista é o número máximo de tentativas.
+  followUpDelaysMin Json @default("[30, 240, 1440]")
+  /// Silêncio total até encerrar como perdido (minutos). 4320 = 72 h.
+  autoCloseAfterMin Int  @default(4320)
+
+  /// Janela de silêncio: nada é enviado entre quietHoursStart e quietHoursEnd
+  /// (hora local da loja). Follow-up às 3 da manhã destrói a conversa.
+  quietHoursStart  Int     @default(20)
+  quietHoursEnd    Int     @default(8)
+  timezone         String  @default("America/Sao_Paulo")
+  businessDaysOnly Boolean @default(false)
+
+  /// SLA de primeira resposta HUMANA (minutos). Era env global; vira por conta.
+  /// Este é o outro ramo do fluxo: aqui quem está devendo resposta é a loja,
+  /// então a ação é alertar a equipe — nunca cutucar o cliente.
+  slaFirstResponseMin Int @default(30)
+
+  /// "ai" gera a mensagem a partir da conversa; "template" usa texto fixo.
+  followUpMode String @default("ai")
+
+  updatedAt DateTime @updatedAt
+
+  @@map("flow_policies")
 }
 
 /// Vitrine pública (landing page) da conta — um site por lojista, alimentado

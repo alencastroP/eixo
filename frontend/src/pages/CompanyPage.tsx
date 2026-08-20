@@ -3,7 +3,6 @@ import { settingsApi } from '../api/endpoints';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { PageHeader } from '../components/PageHeader';
-import { BuildingIcon } from '../components/icons';
 import type { CompanySettings } from '../types';
 import { formatDocumentInput } from '../utils/format';
 
@@ -58,8 +57,8 @@ export function CompanyPage() {
   return (
     <div className="dash settings-page">
       <PageHeader
-        icon={<BuildingIcon size={19} />}
-        eyebrow="Configurações"
+        back={{ to: '/admin', label: 'Voltar à Administração' }}
+        eyebrow="Administração"
         title="Dados da Empresa"
         subtitle="CNPJ, endereço e dados de faturamento da loja."
       />

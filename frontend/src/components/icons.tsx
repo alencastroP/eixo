@@ -113,6 +113,14 @@ export const PlugIcon = (p: IconProps) => (
   </svg>
 );
 
+/** Agente de IA: faísca dupla — a convenção visual de "assistido por IA". */
+export const SparkIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M14 3 15.6 7.4 20 9l-4.4 1.6L14 15l-1.6-4.4L8 9l4.4-1.6L14 3z" />
+    <path d="M6 14l.9 2.1L9 17l-2.1.9L6 20l-.9-2.1L3 17l2.1-.9L6 14z" />
+  </svg>
+);
+
 export const CheckIcon = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M20 6 9 17l-5-5" />
@@ -396,5 +404,39 @@ export const SortIcon = (p: IconProps) => (
 export const ArrowLeftIcon = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M19 12H5M12 19l-7-7 7-7" />
+  </svg>
+);
+
+export const MoreIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    <circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+export const GridIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="3" y="3" width="7.5" height="7.5" rx="1.6" />
+    <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6" />
+    <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6" />
+    <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6" />
+  </svg>
+);
+
+export const BotIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="4" y="8" width="16" height="12" rx="3.5" />
+    <path d="M12 4.5V8M2.5 13.5h1.5M20 13.5h1.5" />
+    <circle cx="9.2" cy="13.6" r="1.15" fill="currentColor" stroke="none" />
+    <circle cx="14.8" cy="13.6" r="1.15" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="3.6" r="1.1" />
+  </svg>
+);
+
+export const CreditCardIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="2.5" y="5" width="19" height="14" rx="2.6" />
+    <path d="M2.5 10h19M6.5 14.8h4" />
   </svg>
 );
