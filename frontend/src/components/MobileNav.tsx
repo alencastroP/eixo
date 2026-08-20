@@ -4,7 +4,6 @@ import type { ReactNode } from 'react';
 import {
   BarChartIcon,
   CarIcon,
-  ColumnsIcon,
   GaugeIcon,
   GridIcon,
   InboxIcon,
@@ -31,11 +30,10 @@ interface Item {
   admin?: boolean;
 }
 
-/** Os 5 destinos que cabem na barra — o resto vai para "Mais". */
+/** Os destinos que cabem na barra — o resto vai para "Mais". */
 const PRIMARY: Item[] = [
   { to: '/dashboard', label: 'Painel', icon: <GaugeIcon size={20} /> },
   { to: '/tickets', label: 'Atendimento', icon: <InboxIcon size={20} /> },
-  { to: '/kanban', label: 'Kanban', icon: <ColumnsIcon size={20} /> },
   { to: '/inventory', label: 'Estoque', icon: <CarIcon size={20} /> },
   { to: '/credit', label: 'Crédito', icon: <ShieldIcon size={20} /> },
 ];
@@ -90,16 +88,20 @@ export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
   return (
     <>
       <nav className="mobile-nav" aria-label="Navegação principal">
-        {PRIMARY.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) => `mobile-nav-btn ${isActive ? 'active' : ''}`}
-          >
-            {item.icon}
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
+        {PRIMARY.map((item) => {
+          // O Kanban não tem botão próprio (é o dropdown dentro da Caixa de
+          // entrada), mas o botão "Atendimento" continua aceso nele.
+          const active =
+            item.to === '/tickets'
+              ? pathname.startsWith('/tickets') || pathname.startsWith('/kanban')
+              : pathname.startsWith(item.to);
+          return (
+            <NavLink key={item.to} to={item.to} className={() => `mobile-nav-btn ${active ? 'active' : ''}`}>
+              {item.icon}
+              <span>{item.label}</span>
+            </NavLink>
+          );
+        })}
         <button
           type="button"
           className={`mobile-nav-btn ${inSheet || sheetOpen ? 'active' : ''}`}

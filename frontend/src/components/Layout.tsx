@@ -9,7 +9,6 @@ import { ADMIN_ROUTES } from '../pages/AdminPage';
 import {
   BarChartIcon,
   CarIcon,
-  ColumnsIcon,
   GaugeIcon,
   GridIcon,
   InboxIcon,
@@ -26,6 +25,9 @@ export function ProtectedLayout() {
   const { pathname } = useLocation();
   // as telas da central não têm alvo próprio no rail: o botão dela fica aceso
   const inAdmin = ADMIN_ROUTES.some((p) => pathname.startsWith(p));
+  // Kanban não tem botão próprio: é um submódulo acessado pelo dropdown dentro
+  // da Caixa de entrada — mas o rail continua aceso nas duas rotas.
+  const inTickets = pathname.startsWith('/tickets') || pathname.startsWith('/kanban');
 
   if (initializing) {
     return (
@@ -55,13 +57,10 @@ export function ProtectedLayout() {
         </NavLink>
         <NavLink
           to="/tickets"
-          className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`}
+          className={() => `rail-btn ${inTickets ? 'active' : ''}`}
           title="Caixa de entrada"
         >
           <InboxIcon />
-        </NavLink>
-        <NavLink to="/kanban" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Kanban">
-          <ColumnsIcon />
         </NavLink>
         <NavLink to="/inventory" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Estoque">
           <CarIcon />

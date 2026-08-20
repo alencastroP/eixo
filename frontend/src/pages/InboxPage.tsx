@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ticketsApi, usersApi, type TicketListParams } from '../api/endpoints';
 import { useAuth } from '../auth/AuthContext';
@@ -6,6 +6,8 @@ import { PriorityBadge, StatusDot } from '../components/badges';
 import { ConversationPane } from '../components/ConversationPane';
 import { InboxIcon, PlusIcon, SearchIcon } from '../components/icons';
 import { NewTicketModal } from '../components/NewTicketModal';
+import { TicketScopeFilter, type TicketScope } from '../components/TicketScopeFilter';
+import { TicketsViewSwitcher } from '../components/TicketsViewSwitcher';
 import {
   STATUS_LABELS,
   STATUS_ORDER,
@@ -22,7 +24,7 @@ import { avatarColor, initials, timeAgo } from '../utils/format';
 const PLATFORMS = ['olx', 'mercadolivre', 'webmotors', 'manual'];
 const PAGE_SIZE = 30;
 
-type ViewKey = 'all' | 'me' | 'unassigned';
+type ViewKey = TicketScope;
 
 function previewOf(t: Ticket): string {
   if (t.lastMessage) {
@@ -49,9 +51,11 @@ export function InboxPage() {
   const { id: selectedId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [view, setView] = useState<ViewKey>('all');
+  // Escopo (Todos/Meus/Não atribuídos) vive na URL — assim persiste ao trocar
+  // para o Kanban e voltar, em vez de resetar a cada navegação de submódulo.
+  const view = (searchParams.get('scope') as ViewKey | null) ?? 'all';
   // filtros iniciais podem vir da URL (drill-down do dashboard: ?status= / ?platform=)
   const [filters, setFilters] = useState({
     status: searchParams.get('status') ?? '',
@@ -129,7 +133,12 @@ export function InboxPage() {
   };
 
   const changeView = (v: ViewKey) => {
-    setView(v);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (v === 'all') next.delete('scope');
+      else next.set('scope', v);
+      return next;
+    });
     setFilters((f) => ({ ...f, agentId: '' }));
     setPage(1);
   };
@@ -151,41 +160,28 @@ export function InboxPage() {
 
   const hasMore = items.length < total;
   const newCount = stats?.byStatus.NEW ?? 0;
-
-  const views = useMemo(
-    () =>
-      [
-        { key: 'all' as ViewKey, label: 'Todos', count: stats?.total },
-        { key: 'me' as ViewKey, label: 'Meus', count: undefined },
-        { key: 'unassigned' as ViewKey, label: 'Não atribuídos', count: stats?.unassigned },
-      ] satisfies Array<{ key: ViewKey; label: string; count: number | undefined }>,
-    [stats],
-  );
+  const scopeQuery = view !== 'all' ? `scope=${view}` : undefined;
 
   return (
     <div className={`inbox ${selectedId ? 'has-selection' : ''}`}>
       <section className="inbox-list">
         <header className="inbox-list-header">
           <div className="inbox-title-row">
-            <h1>Caixa de entrada</h1>
+            <TicketsViewSwitcher active="inbox" scopeQuery={scopeQuery} />
             {newCount > 0 && <span className="new-count">{newCount} novos</span>}
             <button className="icon-btn" title="Novo ticket manual" onClick={() => setModalOpen(true)}>
               <PlusIcon size={18} />
             </button>
           </div>
 
-          <div className="views-row">
-            {views.map((v) => (
-              <button
-                key={v.key}
-                className={`view-chip ${view === v.key && !filters.agentId ? 'active' : ''}`}
-                onClick={() => changeView(v.key)}
-              >
-                {v.label}
-                {v.count !== undefined && <span className="view-count">{v.count}</span>}
-              </button>
-            ))}
-          </div>
+          <TicketScopeFilter
+            // filtro de atendente específico (admin) é um 4º eixo, independente
+            // deste; nenhum chip fica ativo enquanto ele estiver em uso.
+            value={filters.agentId ? ('' as TicketScope) : view}
+            onChange={changeView}
+            totalCount={stats?.total}
+            unassignedCount={stats?.unassigned}
+          />
 
           <div className="inbox-search">
             <SearchIcon size={15} />

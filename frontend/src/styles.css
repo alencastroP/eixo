@@ -940,6 +940,88 @@ select option {
   font-size: 10.5px;
   opacity: 0.85;
 }
+
+/* ─── Seletor de submódulo (Caixa de entrada ⇄ Kanban) ────────────────────── */
+.view-switcher {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.view-switcher-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  cursor: pointer;
+  border-radius: 6px;
+  max-width: 100%;
+}
+.view-switcher-trigger:hover {
+  background: var(--hover);
+}
+.view-switcher-trigger h1 {
+  margin: 0;
+}
+.view-switcher-chevron {
+  color: var(--text-2);
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.view-switcher-chevron.open {
+  transform: rotate(180deg);
+}
+.view-switcher-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  min-width: 200px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.view-switcher-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+.view-switcher-option:hover {
+  background: var(--hover);
+}
+.view-switcher-option.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+/* ─── Cabeçalho do Kanban (mesmo padrão da Caixa de entrada) ──────────────── */
+.kanban-header {
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.kanban-header .inbox-title-row {
+  margin-bottom: 11px;
+}
+.kanban-header .scope-filter {
+  margin-bottom: 0;
+}
 .inbox-search {
   position: relative;
   margin-bottom: 8px;

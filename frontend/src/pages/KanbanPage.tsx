@@ -1,36 +1,55 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ticketsApi } from '../api/endpoints';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ticketsApi, type TicketListParams } from '../api/endpoints';
 import { PriorityBadge } from '../components/badges';
-import { ColumnsIcon, RefreshIcon } from '../components/icons';
-import { PageHeader } from '../components/PageHeader';
-import { STATUS_LABELS, STATUS_ORDER, platformLabel, type Ticket, type TicketStatus } from '../types';
+import { RefreshIcon } from '../components/icons';
+import { TicketScopeFilter, type TicketScope } from '../components/TicketScopeFilter';
+import { TicketsViewSwitcher } from '../components/TicketsViewSwitcher';
+import { STATUS_LABELS, STATUS_ORDER, platformLabel, type Ticket, type TicketStats, type TicketStatus } from '../types';
 import { avatarColor, initials, timeAgo } from '../utils/format';
 
+const PAGE_SIZE = 100;
+
+/** Submódulo do Atendimento — mesmo escopo (Todos/Meus/Não atribuídos) da Caixa de entrada. */
 export function KanbanPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = (searchParams.get('scope') as TicketScope | null) ?? 'all';
+
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState<TicketStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<TicketStatus | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
-    ticketsApi
-      .list({ page: 1, pageSize: 100 })
-      .then((res) => {
-        setTickets(res.items);
-        setTotal(res.total);
+    const assignedTo = view === 'all' ? undefined : view;
+    const params: TicketListParams = { page: 1, pageSize: PAGE_SIZE, assignedTo };
+    Promise.all([ticketsApi.list(params), ticketsApi.stats()])
+      .then(([list, s]) => {
+        setTickets(list.items);
+        setTotal(list.total);
+        setStats(s);
         setError(null);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Falha ao carregar o painel'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [view]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const changeView = (v: TicketScope) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (v === 'all') next.delete('scope');
+      else next.set('scope', v);
+      return next;
+    });
+  };
 
   const byStatus = useMemo(() => {
     const map = Object.fromEntries(STATUS_ORDER.map((s) => [s, [] as Ticket[]])) as Record<TicketStatus, Ticket[]>;
@@ -51,20 +70,25 @@ export function KanbanPage() {
     }
   };
 
+  const scopeQuery = view !== 'all' ? `scope=${view}` : undefined;
+
   return (
     <div className="kanban-page">
-      <PageHeader
-        icon={<ColumnsIcon size={19} />}
-        eyebrow="Atendimento"
-        title="Painel Kanban"
-        subtitle="Arraste os cards entre as colunas para mudar o status."
-        actions={
+      <header className="kanban-header">
+        <div className="inbox-title-row">
+          <TicketsViewSwitcher active="kanban" scopeQuery={scopeQuery} />
           <button className="btn btn-ghost btn-sm" onClick={load} disabled={loading}>
             <RefreshIcon size={15} />
             {loading ? 'Atualizando…' : 'Atualizar'}
           </button>
-        }
-      />
+        </div>
+        <TicketScopeFilter
+          value={view}
+          onChange={changeView}
+          totalCount={stats?.total}
+          unassignedCount={stats?.unassigned}
+        />
+      </header>
 
       {error && <div className="alert alert-error">{error}</div>}
       {total > tickets.length && (

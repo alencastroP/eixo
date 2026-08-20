@@ -121,6 +121,12 @@ export const SparkIcon = (p: IconProps) => (
   </svg>
 );
 
+export const ChevronDownIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+
 export const CheckIcon = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M20 6 9 17l-5-5" />
