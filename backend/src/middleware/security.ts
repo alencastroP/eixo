@@ -99,6 +99,23 @@ export const siteChatRateLimit = rateLimit({
   },
 });
 
+/**
+ * Limite da CONSULTA por novas mensagens (o widget pergunta de tempos em tempos
+ * se o atendente respondeu). Precisa de janela por minuto, e não por hora: o
+ * teto do envio existe para conter custo de modelo, enquanto aqui cada chamada é
+ * uma leitura indexada. Reaproveitar o limite do envio secaria a entrega das
+ * respostas do atendente no meio da conversa.
+ */
+export const siteChatPollRateLimit = rateLimit({
+  windowMs: 60_000,
+  limit: env.rateLimit.siteChatPollPerMinute,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: {
+    error: { message: 'Muitas consultas em sequência. Aguarde um instante.', code: 'SITE_CHAT_POLL_RATE_LIMITED' },
+  },
+});
+
 /** Limite para a recepção de webhooks (por plataforma/IP) — evita inundar a fila. */
 export const webhookRateLimit = rateLimit({
   windowMs: 60_000,

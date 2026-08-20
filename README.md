@@ -230,10 +230,13 @@ localhost:5173/loja/washington-veiculos  → mesma vitrine (dev e pré-visualiza
 | `GET /api/site/:slug/vehicles/:id` | detalhe público do veículo |
 | `POST /api/site/:slug/leads` | formulário do site → lead + ticket |
 | `POST /api/site/:slug/chat` | chat com o Agente de IA → cria/continua o ticket e devolve a resposta |
+| `GET /api/site/:slug/chat/messages` | novas mensagens da loja desde o cursor (é por aqui que a resposta do atendente chega ao site) |
 
 Vitrine despublicada, conta bloqueada (inadimplente/expirada) ou slug inexistente respondem **404** igualmente, para não revelar a existência de contas.
 
-**Atendimento por IA na vitrine.** O botão flutuante abre um chat com o mesmo Agente de Pré-Venda que atende OLX e Mercado Livre. A primeira mensagem pede nome e WhatsApp (é o que cria o lead), liga o bot naquele ticket e devolve a resposta; as seguintes usam um token assinado (HMAC) — o visitante nunca manda um id de ticket. O atendente vê a conversa na Caixa de Entrada e assume quando quiser: a partir daí o widget orienta o cliente pelo WhatsApp. Sem `ANTHROPIC_API_KEY` o botão continua registrando o lead e avisa que a equipe responde em seguida.
+**Atendimento por IA na vitrine.** O botão flutuante abre um chat com o mesmo Agente de Pré-Venda que atende OLX e Mercado Livre. A primeira mensagem pede nome e WhatsApp (é o que cria o lead), liga o bot naquele ticket e devolve a resposta; as seguintes usam um token assinado (HMAC) — o visitante nunca manda um id de ticket. O atendente vê a conversa na Caixa de Entrada e assume quando quiser.
+
+**Caminho de volta (atendente → site).** A vitrine não é uma plataforma externa: não há adapter de outbound para onde despachar a resposta, então o widget CONSULTA `GET /chat/messages` de tempos em tempos (4s aberto, 20s minimizado) levando o `cursor` da última interação vista. O que o atendente escreve na Caixa de Entrada aparece no site em segundos, assinado com o primeiro nome dele — e a Caixa de Entrada, do outro lado, atualiza a conversa aberta a cada 10s. Nota interna nunca sai. Sem o cursor a API devolve o histórico, que é como a conversa sobrevive a um reload. O transbordo passa o atendimento para uma pessoa; o WhatsApp segue oferecido como atalho, nunca como saída obrigatória. Prova ponta a ponta: `npm run verify:site-chat`. Sem `ANTHROPIC_API_KEY` o botão continua registrando o lead e avisa que a equipe responde em seguida.
 
 **Design.** Papel e tinta, cantos retos, Archivo + JetBrains Mono — o layout de referência está em `Washington Veiculos.dc.html`. A cor da loja entra por `--sf-accent` e aparece só em detalhes. Os emblemas das montadoras na faixa de marcas são SVG desenhados no próprio projeto (`storefront/brandLogos.tsx`), sem requisição externa; marca sem emblema cai no monograma.
 

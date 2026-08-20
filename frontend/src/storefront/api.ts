@@ -2,6 +2,7 @@ import type { Paged } from '../types';
 import type {
   ChatInput,
   ChatReply,
+  ChatTranscript,
   SiteLeadInput,
   SitePayload,
   SiteVehicle,
@@ -65,6 +66,13 @@ export const siteApi = {
 
   /** Conversa com o Agente de Pré-Venda IA (cria/continua um ticket no CRM). */
   chat: (slug: string, input: ChatInput) => post<ChatReply>(`/${slug}/chat`, input),
+
+  /**
+   * Novas mensagens da loja desde `after`. Sem `after` volta o histórico —
+   * é assim que a conversa reaparece depois de um reload da página.
+   */
+  chatMessages: (slug: string, token: string, after?: string) =>
+    get<ChatTranscript>(`/${slug}/chat/messages`, { token, after }),
 
   async lead(slug: string, input: SiteLeadInput): Promise<void> {
     const res = await fetch(`${BASE}/site/${slug}/leads`, {

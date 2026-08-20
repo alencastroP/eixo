@@ -43,14 +43,16 @@ realidade, menos frustração no atendimento.
 ## 4. Atendimento por IA (botão inferior direito)
 
 Funciona ponta a ponta: a conversa vira um **ticket real** no CRM (plataforma `site`,
-campanha `site:<slug>:chat`), o bot responde e o atendente assume quando quiser.
+campanha `site:<slug>:chat`), o bot responde e o atendente assume quando quiser — e o que
+ele responde pela Caixa de Entrada volta para o site em segundos (`GET /chat/messages`).
 
 Pendências operacionais:
 
 - **`ANTHROPIC_API_KEY` em produção** — em desenvolvimento a chave existe e a IA respondeu
   nos testes. No Render, a variável está marcada como `sync: false`, ou seja, precisa ser
   preenchida no dashboard. **Sem a chave o botão continua funcionando**: o lead é registrado
-  e o visitante recebe "nossa equipe responde pelo WhatsApp em instantes".
+  e o visitante recebe "nossa equipe já vai responder por aqui" — o atendente responde pela
+  Caixa de Entrada e a mensagem chega ao widget normalmente.
 - **Revisar o prompt do agente** (`backend/src/modules/aiAgent/prompt.ts`) com as regras da
   loja: o que pode prometer sobre preço, desconto, reserva e agendamento. Hoje o agente é
   conservador e transfere para humano quando não tem certeza — o que é seguro, mas pode ser

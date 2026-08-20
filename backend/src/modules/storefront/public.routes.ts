@@ -2,11 +2,11 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { VehicleType } from '@prisma/client';
 import { ah } from '../../lib/errors';
-import { siteChatRateLimit, siteLeadRateLimit } from '../../middleware/security';
+import { siteChatPollRateLimit, siteChatRateLimit, siteLeadRateLimit } from '../../middleware/security';
 import { normalizePhone } from '../../integrations/core/verify';
 import { ingestNormalizedLead } from '../tickets/ingest.service';
 import * as storefront from './storefront.service';
-import { sendChatMessage } from './chat.service';
+import { fetchChatMessages, sendChatMessage } from './chat.service';
 
 /**
  * Rotas ABERTAS da vitrine — servem visitantes anônimos do site da loja.
@@ -128,6 +128,7 @@ publicSiteRouter.post(
  */
 const chatSchema = z.object({
   token: z.string().trim().max(200).optional(),
+  after: z.string().trim().max(60).optional(),
   name: z.string().trim().max(80).optional(),
   phone: z.string().trim().max(40).optional(),
   message: z.string().trim().min(1, 'Escreva uma mensagem').max(1000),
@@ -139,5 +140,27 @@ publicSiteRouter.post(
   siteChatRateLimit,
   ah(async (req, res) => {
     res.json(await sendChatMessage(req.params.slug, chatSchema.parse(req.body)));
+  }),
+);
+
+/**
+ * Canal de VOLTA da conversa: o widget pergunta o que a loja respondeu desde o
+ * cursor. É por aqui que a resposta do atendente humano chega ao site — depois
+ * do transbordo a IA está desligada, então o POST acima não tem o que devolver.
+ *
+ * Limite próprio (por minuto): esta rota é uma leitura indexada e é chamada em
+ * intervalo curto, ao contrário do envio, que custa uma chamada ao modelo.
+ */
+const chatPollSchema = z.object({
+  token: z.string().trim().min(1).max(200),
+  after: z.string().trim().max(60).optional(),
+});
+
+publicSiteRouter.get(
+  '/:slug/chat/messages',
+  siteChatPollRateLimit,
+  ah(async (req, res) => {
+    const { token, after } = chatPollSchema.parse(req.query);
+    res.json(await fetchChatMessages(req.params.slug, token, after));
   }),
 );

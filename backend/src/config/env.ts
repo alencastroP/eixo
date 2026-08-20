@@ -56,6 +56,7 @@ export const env = {
     trialPerHour: toInt(process.env.RATE_LIMIT_TRIAL_PER_HOUR, 5),
     siteLeadPerHour: toInt(process.env.RATE_LIMIT_SITE_LEAD_PER_HOUR, 15),
     siteChatPerHour: toInt(process.env.RATE_LIMIT_SITE_CHAT_PER_HOUR, 60),
+    siteChatPollPerMinute: toInt(process.env.RATE_LIMIT_SITE_CHAT_POLL_PER_MIN, 60),
   },
 
   // Janela de retenção (LGPD — expurgo). Ver scripts/purge.ts.

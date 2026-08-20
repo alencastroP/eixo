@@ -24,6 +24,9 @@ function metaStr(metadata: Record<string, unknown> | null, key: string): string 
   return typeof v === 'string' ? v : null;
 }
 
+/** De quanto em quanto tempo a conversa aberta se atualiza sozinha. */
+const REFRESH_MS = 10_000;
+
 const statusLabel = (v: string | null) => (v ? (STATUS_LABELS[v as TicketStatus] ?? v) : '—');
 const priorityLabel = (v: string | null) => (v ? (PRIORITY_LABELS[v as TicketPriority] ?? v) : '—');
 
@@ -161,6 +164,47 @@ export function ConversationPane({ ticketId, onTicketUpdated }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Espelhos para o timer abaixo: ele não pode ser recriado a cada tecla nem
+  // depender da identidade das props.
+  const ticketRef = useRef<TicketDetail | null>(null);
+  const busyRef = useRef(false);
+  const notifyRef = useRef(onTicketUpdated);
+  ticketRef.current = ticket;
+  busyRef.current = sending || mutating;
+  notifyRef.current = onTicketUpdated;
+
+  /**
+   * Atualização periódica da conversa aberta.
+   *
+   * O chat da vitrine é ao vivo: o visitante escreve e espera resposta na hora.
+   * Sem isto o atendente só veria a réplica do cliente recarregando a página —
+   * e a conversa, que do outro lado parece um messenger, viraria um monólogo.
+   * Só troca o estado quando algo de fato mudou, para não repintar a tela (nem
+   * a lista de tickets) de dez em dez segundos à toa.
+   */
+  useEffect(() => {
+    const refresh = async () => {
+      if (document.hidden || busyRef.current) return;
+      try {
+        const detail = await ticketsApi.get(ticketId);
+        const current = ticketRef.current;
+        const changed =
+          !current ||
+          current.interactions.length !== detail.interactions.length ||
+          current.status !== detail.status ||
+          current.assignedTo?.id !== detail.assignedTo?.id;
+        if (!changed) return;
+        setTicket(detail);
+        notifyRef.current(detail);
+      } catch {
+        // falha de rede é passageira: a próxima rodada tenta de novo
+      }
+    };
+
+    const timer = window.setInterval(() => void refresh(), REFRESH_MS);
+    return () => window.clearInterval(timer);
+  }, [ticketId]);
 
   useEffect(() => {
     if (isAdmin) {

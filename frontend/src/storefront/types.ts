@@ -127,15 +127,42 @@ export interface SiteLeadInput {
   website?: string; // honeypot
 }
 
+/** Uma bolha da conversa. `agent` é gente da loja; `bot`, o agente de IA. */
+export interface ChatMessage {
+  id: string;
+  from: 'customer' | 'bot' | 'agent';
+  author: string | null;
+  text: string;
+  at: string;
+}
+
 export interface ChatReply {
   token: string;
-  reply: string | null;
+  /** id da última interação conhecida — devolvido no próximo envio/consulta */
+  cursor: string | null;
+  messages: ChatMessage[];
   aiEnabled: boolean;
+  handedOff: boolean;
+  /**
+   * Formato antigo (uma resposta solta, sem id). Frontend e API sobem em
+   * serviços separados — Cloudflare e Render —, então existe uma janela em que
+   * este widget fala com a API anterior. Some quando o deploy da API alcançar.
+   */
+  reply?: string | null;
+}
+
+/** Resposta da consulta por novas mensagens (o canal de volta do atendente). */
+export interface ChatTranscript {
+  cursor: string | null;
+  messages: ChatMessage[];
+  /** true = veio a conversa inteira (substitui a tela em vez de anexar) */
+  history: boolean;
   handedOff: boolean;
 }
 
 export interface ChatInput {
   token?: string;
+  after?: string;
   name?: string;
   phone?: string;
   message: string;
