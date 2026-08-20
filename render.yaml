@@ -23,7 +23,11 @@ services:
     # roda as migrations pendentes antes de subir o processo. `migrate deploy`
     # usa lock consultivo no Postgres — seguro mesmo se os dois serviços
     # reiniciarem ao mesmo tempo.
-    dockerCommand: sh -c "npm run prisma:deploy && node dist/server.js"
+    # ATENÇÃO: sem aspas nem `&&` aqui. O Render quebra o dockerCommand em
+    # tokens sem interpretar shell, então `sh -c "a && b"` faz o sh receber
+    # `"a` como comando e sair com 127 (command not found). O encadeamento
+    # (migrations + boot) mora no script npm `start:prod`, do backend.
+    dockerCommand: npm run start:prod
     envVars:
       - key: NODE_ENV
         value: production
