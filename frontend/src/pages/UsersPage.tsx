@@ -3,7 +3,7 @@ import { usersApi } from '../api/endpoints';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { PageHeader } from '../components/PageHeader';
-import { PlusIcon, UsersIcon } from '../components/icons';
+import { PlusIcon } from '../components/icons';
 import { ROLE_LABELS, type Role, type UserListItem } from '../types';
 import { avatarColor, initials } from '../utils/format';
 
@@ -76,8 +76,8 @@ export function UsersPage() {
   return (
     <div className="dash settings-page users-page">
       <PageHeader
-        icon={<UsersIcon size={19} />}
-        eyebrow="Configurações"
+        back={{ to: '/admin', label: 'Voltar à Administração' }}
+        eyebrow="Administração · Usuários"
         title="Gerenciar Usuários"
         subtitle="Crie, edite ou revogue o acesso dos funcionários da loja."
         actions={

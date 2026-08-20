@@ -14,7 +14,6 @@ import {
   ShieldIcon,
   SunIcon,
   UserIcon,
-  UsersIcon,
   WalletIcon,
 } from './icons';
 import { ADMIN_ROUTES } from '../pages/AdminPage';
@@ -44,7 +43,6 @@ const SECONDARY: Item[] = [
   { to: '/reports', label: 'Relatórios', icon: <BarChartIcon size={20} />, admin: true },
   { to: '/admin', label: 'Administração', icon: <GridIcon size={20} />, admin: true },
   { to: '/profile', label: 'Meus dados', icon: <UserIcon size={20} /> },
-  { to: '/users', label: 'Usuários', icon: <UsersIcon size={20} />, admin: true },
   { to: '/settings', label: 'Configurações', icon: <SettingsIcon size={20} />, admin: true },
 ];
 

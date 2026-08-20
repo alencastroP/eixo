@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { ROLE_LABELS } from '../types';
 import { avatarColor, initials } from '../utils/format';
-import { GridIcon, LogoutIcon, SettingsIcon, UserIcon, UsersIcon } from './icons';
+import { GridIcon, LogoutIcon, SettingsIcon, UserIcon } from './icons';
 
 /** Dropdown do avatar (rail): perfil, usuários e administração (admin) e limpar sessão. */
 export function UserMenu() {
@@ -75,9 +75,6 @@ export function UserMenu() {
               <>
                 <button className="user-menu-item" onClick={() => go('/admin')}>
                   <GridIcon size={16} /> Administração
-                </button>
-                <button className="user-menu-item" onClick={() => go('/users')}>
-                  <UsersIcon size={16} /> Gerenciar Usuários
                 </button>
                 <button className="user-menu-item" onClick={() => go('/settings')}>
                   <SettingsIcon size={16} /> Configurações

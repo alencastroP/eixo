@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { PageHeader } from '../components/PageHeader';
 import {
-  BotIcon,
   BuildingIcon,
   ChevronRightIcon,
   CreditCardIcon,
@@ -10,7 +9,9 @@ import {
   GridIcon,
   HistoryIcon,
   PlugIcon,
+  ShieldIcon,
   SparkIcon,
+  UsersIcon,
 } from '../components/icons';
 
 interface Tile {
@@ -69,6 +70,23 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    title: 'Usuários',
+    hint: 'Quem acessa a conta e o que cada um pode fazer.',
+    tiles: [
+      {
+        to: '/users',
+        label: 'Gerenciar Usuários',
+        desc: 'Crie, edite ou revogue o acesso dos funcionários da loja.',
+        icon: <UsersIcon size={20} />,
+      },
+      {
+        label: 'Perfis & Permissões',
+        desc: 'Defina o que cada papel pode ver e fazer em cada módulo do sistema.',
+        icon: <ShieldIcon size={20} />,
+      },
+    ],
+  },
+  {
     title: 'Controle',
     hint: 'Rastreabilidade do que acontece na conta.',
     tiles: [
@@ -84,11 +102,6 @@ const SECTIONS: Section[] = [
     title: 'Plataforma',
     hint: 'Em construção — os módulos abaixo abrem em breve.',
     tiles: [
-      {
-        label: 'Agente de IA',
-        desc: 'Comportamento, tom de voz e limites do agente que atende seus clientes.',
-        icon: <BotIcon size={20} />,
-      },
       {
         label: 'Pagamentos',
         desc: 'Plano, forma de pagamento, faturas e acompanhamento do consumo da conta.',
