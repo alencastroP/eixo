@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate } from '../../middleware/auth';
+import { currentUser } from '../../lib/current-user';
 import { ah } from '../../lib/errors';
 import * as credit from './credit.service';
 
@@ -14,7 +15,7 @@ creditRouter.post(
   '/queries',
   ah(async (req, res) => {
     const { document } = querySchema.parse(req.body);
-    res.status(201).json(await credit.runQuery(document, req.user!));
+    res.status(201).json(await credit.runQuery(document, currentUser(req)));
   }),
 );
 
@@ -38,6 +39,6 @@ creditRouter.post(
   '/queries/:id/link',
   ah(async (req, res) => {
     const { leadId } = linkSchema.parse(req.body);
-    res.json(await credit.linkToLead(req.params.id, leadId, req.user!));
+    res.json(await credit.linkToLead(req.params.id, leadId, currentUser(req)));
   }),
 );

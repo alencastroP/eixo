@@ -19,16 +19,28 @@ export interface IngestResult {
  * transforma em ticket — criando um novo ou anexando a mensagem a um ticket
  * aberto recente do mesmo lead na mesma plataforma (deduplicação).
  *
- * Usado pelo worker de webhooks e pelo seed; não conhece payloads de plataforma.
+ * Usado pelo worker de webhooks, pela vitrine e pelo seed; não conhece payloads
+ * de plataforma.
+ *
+ * `accountId` é o primeiro parâmetro por ser a fronteira do tenant: TODA busca
+ * de deduplicação é feita dentro da conta. Sem isso, o mesmo cliente falando
+ * com duas lojas seria deduplicado no mesmo lead e uma veria a conversa da
+ * outra — o vazamento que este módulo existe para impedir.
  */
-export async function ingestNormalizedLead(platform: string, n: NormalizedLead): Promise<IngestResult> {
+export async function ingestNormalizedLead(
+  accountId: string,
+  platform: string,
+  n: NormalizedLead,
+): Promise<IngestResult> {
   return prisma.$transaction(async (tx) => {
     // 1) localizar ou criar o lead (dedup por externalId; fallback telefone/e-mail)
     let lead: Lead | null = null;
 
     if (n.externalLeadId) {
       lead = await tx.lead.findUnique({
-        where: { platform_externalId: { platform, externalId: n.externalLeadId } },
+        where: {
+          accountId_platform_externalId: { accountId, platform, externalId: n.externalLeadId },
+        },
       });
     }
     if (!lead && (n.phone || n.email)) {
@@ -36,7 +48,7 @@ export async function ingestNormalizedLead(platform: string, n: NormalizedLead):
       if (n.phone) or.push({ phone: n.phone });
       if (n.email) or.push({ email: n.email });
       lead = await tx.lead.findFirst({
-        where: { platform, anonymizedAt: null, OR: or },
+        where: { accountId, platform, anonymizedAt: null, OR: or },
         orderBy: { createdAt: 'desc' },
       });
     }
@@ -59,6 +71,7 @@ export async function ingestNormalizedLead(platform: string, n: NormalizedLead):
           email: n.email,
           platform,
           externalId: n.externalLeadId,
+          accountId,
         },
       });
     }
@@ -74,6 +87,7 @@ export async function ingestNormalizedLead(platform: string, n: NormalizedLead):
     const windowStart = new Date(Date.now() - env.rules.dedupWindowHours * 3_600_000);
     const existing = await tx.ticket.findFirst({
       where: {
+        accountId,
         leadId: lead.id,
         platform,
         status: { notIn: CLOSED_STATUSES },
@@ -125,6 +139,7 @@ export async function ingestNormalizedLead(platform: string, n: NormalizedLead):
     // 3) novo ticket
     const ticket = await tx.ticket.create({
       data: {
+        accountId,
         leadId: lead.id,
         platform,
         campaign: n.campaign,

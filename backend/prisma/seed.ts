@@ -130,6 +130,16 @@ async function backdateTicket(ticketId: string, hoursAgo: number) {
 }
 
 async function main() {
+  // A conta é a raiz de tudo agora: leads e tickets não existem sem tenant.
+  // O seed adota a conta mais antiga; se não houver nenhuma, orienta e sai.
+  const seedAccount = await prisma.account.findFirst({ orderBy: { createdAt: 'asc' }, select: { id: true } });
+  if (!seedAccount) {
+    console.error('Nenhuma conta encontrada. Rode antes: npm run create:admin -- <email> "<loja>"');
+    process.exitCode = 1;
+    return;
+  }
+  const accountId = seedAccount.id;
+
   const admin = await upsertUser('Administrador', 'admin@crm.local', 'Admin@123', UserRole.ADMIN);
   const carlos = await upsertUser('Carlos Andrade', 'carlos@crm.local', 'Vendedor@123', UserRole.AGENT);
   const ana = await upsertUser('Ana Souza', 'ana@crm.local', 'Vendedor@123', UserRole.AGENT);
@@ -139,6 +149,7 @@ async function main() {
     role: u.role as CurrentUser['role'],
     name: u.name,
     email: u.email,
+    accountId,
   });
 
   await seedVehicles();
@@ -150,7 +161,7 @@ async function main() {
   }
 
   // ── OLX: lead novo, sem resposta há horas (SLA estourado) + dedup de 2ª mensagem
-  const t1 = await ingestNormalizedLead('olx', {
+  const t1 = await ingestNormalizedLead(accountId, 'olx', {
     externalLeadId: 'olx-1001',
     name: 'João Pereira',
     phone: '11987654321',
@@ -160,7 +171,7 @@ async function main() {
     campaign: 'olx-destaque',
   });
   await backdateTicket(t1.ticketId, 3);
-  await ingestNormalizedLead('olx', {
+  await ingestNormalizedLead(accountId, 'olx', {
     externalLeadId: 'olx-1001',
     name: 'João Pereira',
     phone: '11987654321',
@@ -168,7 +179,7 @@ async function main() {
   }); // mesma plataforma + mesmo lead dentro da janela → anexa ao ticket t1
 
   // ── OLX: em atendimento, aguardando retorno do cliente
-  const t2 = await ingestNormalizedLead('olx', {
+  const t2 = await ingestNormalizedLead(accountId, 'olx', {
     externalLeadId: 'olx-1002',
     name: 'Fernanda Lima',
     phone: '21999887766',
@@ -185,7 +196,7 @@ async function main() {
   await tickets.updateTicket(t2.ticketId, { status: TicketStatus.WAITING_CUSTOMER }, asUser(carlos));
 
   // ── Mercado Livre: negociação que virou venda
-  const t3 = await ingestNormalizedLead('mercadolivre', {
+  const t3 = await ingestNormalizedLead(accountId, 'mercadolivre', {
     externalLeadId: 'ml-501',
     name: 'Maria Santos',
     phone: '31988776655',
@@ -204,7 +215,7 @@ async function main() {
     { type: 'INTERNAL_NOTE', body: 'Cliente pré-aprovada no financiamento. Agendou test ride para quinta.' },
     asUser(carlos),
   );
-  await ingestNormalizedLead('mercadolivre', {
+  await ingestNormalizedLead(accountId, 'mercadolivre', {
     externalLeadId: 'ml-501',
     name: 'Maria Santos',
     message: 'Fechado! Ficou ótima a condição. Confirmo a retirada no sábado.',
@@ -212,7 +223,7 @@ async function main() {
   await tickets.updateTicket(t3.ticketId, { status: TicketStatus.CONVERTED }, asUser(carlos));
 
   // ── Mercado Livre: novo, prioridade alta definida pelo admin
-  const t4 = await ingestNormalizedLead('mercadolivre', {
+  const t4 = await ingestNormalizedLead(accountId, 'mercadolivre', {
     externalLeadId: 'ml-502',
     name: 'Roberto Alves',
     phone: '41977665544',
@@ -222,7 +233,7 @@ async function main() {
   await tickets.updateTicket(t4.ticketId, { priority: TicketPriority.HIGH }, asUser(admin));
 
   // ── Webmotors: atribuído pelo admin à Ana, negociação perdida
-  const t5 = await ingestNormalizedLead('webmotors', {
+  const t5 = await ingestNormalizedLead(accountId, 'webmotors', {
     externalLeadId: 'wm-9001',
     name: 'Carlos Eduardo Braga',
     phone: '47966554433',
@@ -246,7 +257,7 @@ async function main() {
   await tickets.updateTicket(t5.ticketId, { status: TicketStatus.LOST }, asUser(ana));
 
   // ── Webmotors: novo, livre para ser assumido
-  await ingestNormalizedLead('webmotors', {
+  await ingestNormalizedLead(accountId, 'webmotors', {
     externalLeadId: 'wm-9002',
     name: 'Juliana Costa',
     phone: '11955443322',
@@ -266,7 +277,7 @@ async function main() {
   );
 
   // ── OLX: antigo e arquivado
-  const t8 = await ingestNormalizedLead('olx', {
+  const t8 = await ingestNormalizedLead(accountId, 'olx', {
     externalLeadId: 'olx-1003',
     name: 'Ricardo Nunes',
     phone: '85933221100',

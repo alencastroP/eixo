@@ -8,6 +8,8 @@ import { generateReport, type CreditReport } from './bureau.mock';
 interface Actor {
   id: string;
   name: string;
+  /** Conta do operador — usada para não vincular consulta a titular de outra loja. */
+  accountId: string;
 }
 
 function serialize(row: {
@@ -86,10 +88,12 @@ export async function getQuery(id: string) {
 export async function linkToLead(id: string, leadId: string, actor: Actor) {
   const [query, lead] = await Promise.all([
     prisma.creditQuery.findUnique({ where: { id } }),
-    prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, name: true } }),
+    prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, name: true, accountId: true } }),
   ]);
   if (!query) throw notFound('Consulta não encontrada');
-  if (!lead) throw badRequest('Lead não encontrado');
+  // Vincular exige que o titular seja da mesma loja: caso contrário daria para
+  // descobrir o nome de um lead de outra conta chutando ids.
+  if (!lead || lead.accountId !== actor.accountId) throw badRequest('Lead não encontrado');
 
   const row = await prisma.creditQuery.update({
     where: { id },

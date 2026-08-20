@@ -45,7 +45,9 @@ export async function processPendingEvents(): Promise<number> {
     try {
       const adapter = getAdapter(event.platform);
       const normalized = adapter.normalize(event.payload);
-      const result = await ingestNormalizedLead(event.platform, normalized);
+      // A conta já veio carimbada na recepção (webhookKey → integração → conta);
+      // o worker nunca precisa inferir o tenant a partir do payload.
+      const result = await ingestNormalizedLead(event.accountId, event.platform, normalized);
 
       await prisma.webhookEvent.update({
         where: { id },

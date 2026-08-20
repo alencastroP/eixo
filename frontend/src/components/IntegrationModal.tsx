@@ -6,6 +6,7 @@ import {
   platformLabel,
   type Integration,
   type IntegrationDetail,
+  type WebhookSecret,
 } from '../types';
 import { formatDateTime, timeAgo } from '../utils/format';
 import { PlatformLogo } from './PlatformLogo';
@@ -21,9 +22,13 @@ interface Props {
 export function IntegrationModal({ integration, onClose, onChanged }: Props) {
   const [detail, setDetail] = useState<IntegrationDetail | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState<null | 'connect' | 'test' | 'sync' | 'disconnect'>(null);
+  const [busy, setBusy] = useState<null | 'connect' | 'test' | 'sync' | 'disconnect' | 'secret' | 'rotate'>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // O segredo só existe em memória enquanto o modal está aberto e o usuário
+  // pediu para ver — nunca vem no carregamento normal da tela.
+  const [secret, setSecret] = useState<WebhookSecret | null>(null);
+  const [copied, setCopied] = useState<null | 'url' | 'secret'>(null);
 
   const isConnected = detail ? detail.status === 'CONNECTED' || detail.status === 'DISABLED' : false;
   const hasAuthError = detail?.status === 'AUTH_ERROR';
@@ -47,6 +52,43 @@ export function IntegrationModal({ integration, onClose, onChanged }: Props) {
   const apply = (d: IntegrationDetail) => {
     setDetail(d);
     onChanged(d);
+  };
+
+  const copy = async (value: string, what: 'url' | 'secret') => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(what);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      setError('Não foi possível copiar. Selecione o texto e copie manualmente.');
+    }
+  };
+
+  const revealSecret = async () => {
+    if (secret) return setSecret(null); // segundo clique esconde
+    setBusy('secret');
+    setError(null);
+    try {
+      setSecret(await integrationsApi.revealSecret(integration.platform));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Falha ao obter o segredo');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const rotateSecret = async () => {
+    if (!window.confirm('Gerar um novo segredo invalida o atual imediatamente. A recepção de leads falha até você atualizar o valor no painel da plataforma. Continuar?')) return;
+    setBusy('rotate');
+    setError(null);
+    try {
+      setSecret(await integrationsApi.rotateSecret(integration.platform));
+      apply(await integrationsApi.get(integration.platform));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Falha ao gerar novo segredo');
+    } finally {
+      setBusy(null);
+    }
   };
 
   const connect = async (e: FormEvent) => {
@@ -214,6 +256,55 @@ export function IntegrationModal({ integration, onClose, onChanged }: Props) {
                   <span className="switch-knob" />
                 </button>
               </div>
+
+              {/* Endpoint exclusivo desta loja */}
+              {detail.webhookUrl && (
+                <div className="webhook-box">
+                  <div className="flow-title">Endereço de recepção desta loja</div>
+                  <p className="muted small">
+                    Cole esta URL no painel da {detail.displayName}. Ela é exclusiva da sua conta — os
+                    leads que chegarem por ela entram somente no seu funil.
+                  </p>
+                  <div className="webhook-field">
+                    <code className="mono webhook-url">{detail.webhookUrl}</code>
+                    <button className="btn btn-ghost btn-sm" onClick={() => copy(detail.webhookUrl!, 'url')}>
+                      {copied === 'url' ? 'Copiado!' : 'Copiar'}
+                    </button>
+                  </div>
+
+                  <div className="webhook-field">
+                    {secret ? (
+                      <code className="mono webhook-url">{secret.secret}</code>
+                    ) : (
+                      <span className="muted small">
+                        Segredo de autenticação {detail.hasInboundSecret ? '(oculto)' : '(não gerado)'}
+                      </span>
+                    )}
+                    <button className="btn btn-ghost btn-sm" onClick={revealSecret} disabled={busy === 'secret'}>
+                      {busy === 'secret' ? 'Aguarde…' : secret ? 'Ocultar' : 'Mostrar'}
+                    </button>
+                    {secret && (
+                      <button className="btn btn-ghost btn-sm" onClick={() => copy(secret.secret, 'secret')}>
+                        {copied === 'secret' ? 'Copiado!' : 'Copiar'}
+                      </button>
+                    )}
+                  </div>
+
+                  {secret?.header && (
+                    <p className="muted small">
+                      A plataforma deve enviar este valor no header <code className="mono">{secret.header}</code>.
+                    </p>
+                  )}
+
+                  <button className="btn btn-ghost btn-sm" onClick={rotateSecret} disabled={busy === 'rotate'}>
+                    {busy === 'rotate' ? 'Gerando…' : 'Gerar novo segredo'}
+                  </button>
+                  <p className="muted small">
+                    Gerar um novo invalida o anterior na hora: os leads falham até você atualizar o valor no
+                    painel da plataforma. A URL não muda.
+                  </p>
+                </div>
+              )}
 
               {/* Fluxo visualizado */}
               {health && (

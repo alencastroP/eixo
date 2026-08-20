@@ -4,6 +4,7 @@ import { TicketPriority, TicketStatus } from '@prisma/client';
 import { authenticate } from '../../middleware/auth';
 import { ah } from '../../lib/errors';
 import * as tickets from './tickets.service';
+import { currentUser } from '../../lib/current-user';
 
 export const ticketsRouter = Router();
 ticketsRouter.use(authenticate);
@@ -23,14 +24,14 @@ ticketsRouter.get(
   '/',
   ah(async (req, res) => {
     const params = listQuerySchema.parse(req.query);
-    res.json(await tickets.listTickets(params, req.user!));
+    res.json(await tickets.listTickets(params, currentUser(req)));
   }),
 );
 
 ticketsRouter.get(
   '/stats',
   ah(async (req, res) => {
-    res.json(await tickets.ticketStats(req.user!));
+    res.json(await tickets.ticketStats(currentUser(req)));
   }),
 );
 
@@ -42,7 +43,7 @@ ticketsRouter.get(
   '/metrics',
   ah(async (req, res) => {
     const { windowDays } = metricsQuerySchema.parse(req.query);
-    res.json(await tickets.ticketMetrics(req.user!, windowDays));
+    res.json(await tickets.ticketMetrics(currentUser(req), windowDays));
   }),
 );
 
@@ -63,14 +64,14 @@ ticketsRouter.post(
   '/',
   ah(async (req, res) => {
     const input = createSchema.parse(req.body);
-    res.status(201).json(await tickets.createManualTicket(input, req.user!));
+    res.status(201).json(await tickets.createManualTicket(input, currentUser(req)));
   }),
 );
 
 ticketsRouter.get(
   '/:id',
   ah(async (req, res) => {
-    res.json(await tickets.getTicket(req.params.id, req.user!));
+    res.json(await tickets.getTicket(req.params.id, currentUser(req)));
   }),
 );
 
@@ -86,7 +87,7 @@ ticketsRouter.patch(
   '/:id',
   ah(async (req, res) => {
     const patch = updateSchema.parse(req.body);
-    res.json(await tickets.updateTicket(req.params.id, patch, req.user!));
+    res.json(await tickets.updateTicket(req.params.id, patch, currentUser(req)));
   }),
 );
 
@@ -96,7 +97,7 @@ ticketsRouter.patch(
   '/:id/bot',
   ah(async (req, res) => {
     const { enabled } = botSchema.parse(req.body);
-    res.json(await tickets.setBotEnabled(req.params.id, enabled, req.user!));
+    res.json(await tickets.setBotEnabled(req.params.id, enabled, currentUser(req)));
   }),
 );
 
@@ -109,6 +110,6 @@ ticketsRouter.post(
   '/:id/interactions',
   ah(async (req, res) => {
     const input = interactionSchema.parse(req.body);
-    res.status(201).json(await tickets.addInteraction(req.params.id, input, req.user!));
+    res.status(201).json(await tickets.addInteraction(req.params.id, input, currentUser(req)));
   }),
 );

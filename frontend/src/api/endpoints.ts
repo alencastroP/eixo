@@ -9,6 +9,7 @@ import type {
   FiscalKind,
   Integration,
   IntegrationDetail,
+  WebhookSecret,
   LeadFormSettings,
   LeadSearchResult,
   Paged,
@@ -165,6 +166,12 @@ export const integrationsApi = {
     api<IntegrationDetail>(`/integrations/${platform}/sync`, { method: 'PATCH', body: { syncEnabled } }),
   disconnect: (platform: string) =>
     api<IntegrationDetail>(`/integrations/${platform}/disconnect`, { method: 'POST' }),
+  // POST (e não GET) de propósito: o segredo não deve entrar em log de query
+  // string, histórico do navegador nem cache intermediário.
+  revealSecret: (platform: string) =>
+    api<WebhookSecret>(`/integrations/${platform}/reveal-secret`, { method: 'POST' }),
+  rotateSecret: (platform: string) =>
+    api<WebhookSecret>(`/integrations/${platform}/rotate-secret`, { method: 'POST' }),
 };
 
 export const creditApi = {

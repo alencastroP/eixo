@@ -89,8 +89,10 @@ publicSiteRouter.post(
     if (input.website) return res.status(202).json({ ok: true }); // honeypot
 
     const slug = req.params.slug;
-    // resolve antes de qualquer escrita: vitrine despublicada não gera lead
-    await storefront.resolveAccountId(slug);
+    // resolve antes de qualquer escrita: vitrine despublicada não gera lead.
+    // O slug é o que define a conta dona deste lead — visitante anônimo nunca
+    // informa tenant, ele é derivado do site em que a pessoa está navegando.
+    const accountId = await storefront.resolveAccountId(slug);
 
     // veículo referenciado: só o que é público (evita sondar o estoque oculto)
     let vehicle: { externalId: string; title: string; price?: number } | undefined;
@@ -107,7 +109,7 @@ publicSiteRouter.post(
     if (vehicle) parts.push(`Veículo: ${vehicle.title}`);
     if (input.message) parts.push(input.message);
 
-    const result = await ingestNormalizedLead('site', {
+    const result = await ingestNormalizedLead(accountId, 'site', {
       name: input.name,
       phone: normalizePhone(input.phone),
       email: input.email || undefined,

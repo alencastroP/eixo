@@ -81,7 +81,7 @@ async function lastReplyId(ticketId: string): Promise<string | null> {
 
 export async function sendChatMessage(slug: string, input: ChatInput): Promise<ChatResult> {
   // valida a vitrine antes de qualquer escrita (despublicada não abre conversa)
-  await resolveAccountId(slug);
+  const accountId = await resolveAccountId(slug);
 
   const message = input.message.trim();
   if (!message) throw badRequest('Escreva uma mensagem');
@@ -90,8 +90,17 @@ export async function sendChatMessage(slug: string, input: ChatInput): Promise<C
 
   if (input.token) {
     ticketId = readToken(input.token);
-    const ticket = await prisma.ticket.findUnique({ where: { id: ticketId }, select: { id: true } });
-    if (!ticket) throw forbidden('Conversa inválida', 'CHAT_TOKEN_INVALID');
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      select: { id: true, accountId: true },
+    });
+    // A assinatura HMAC prova que o token foi emitido por nós, mas não diz por
+    // QUAL loja. Sem conferir a conta, um token legítimo obtido no site de uma
+    // loja seguiria valendo no site de outra, injetando mensagens no funil
+    // alheio. O token só vale na vitrine que o emitiu.
+    if (!ticket || ticket.accountId !== accountId) {
+      throw forbidden('Conversa inválida', 'CHAT_TOKEN_INVALID');
+    }
 
     await prisma.ticketInteraction.create({
       data: { ticketId, type: InteractionType.CUSTOMER_MESSAGE, body: message },
@@ -112,7 +121,7 @@ export async function sendChatMessage(slug: string, input: ChatInput): Promise<C
       };
     }
 
-    const ingested = await ingestNormalizedLead('site', {
+    const ingested = await ingestNormalizedLead(accountId, 'site', {
       name: input.name.trim(),
       phone,
       message,

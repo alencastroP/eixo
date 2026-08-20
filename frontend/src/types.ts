@@ -185,6 +185,9 @@ export interface Integration {
   lastError: string | null;
   hasCredentials: boolean;
   maskedCredentials: Array<{ key: string; masked: string }>;
+  /** Endpoint exclusivo desta loja (null enquanto a plataforma não for conectada). */
+  webhookUrl: string | null;
+  hasInboundSecret: boolean;
 }
 
 export type DispatchStatus = 'SENT' | 'FAILED' | 'SKIPPED';
@@ -509,3 +512,12 @@ const PLATFORM_LABELS: Record<string, string> = {
 };
 
 export const platformLabel = (slug: string): string => PLATFORM_LABELS[slug] ?? slug;
+
+/** Credencial de recepção de webhook de UMA loja (revelada sob demanda). */
+export interface WebhookSecret {
+  platform: string;
+  webhookUrl: string;
+  secret: string;
+  /** Header em que a plataforma envia o segredo (ex.: x-olx-token). */
+  header: string | null;
+}

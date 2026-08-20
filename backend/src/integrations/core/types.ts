@@ -92,8 +92,15 @@ export interface LeadSourceAdapter {
   /** true = suporta enviar respostas de volta ao cliente (comunicação bidirecional). */
   readonly supportsOutbound?: boolean;
 
-  /** Autenticação da requisição (token compartilhado, HMAC etc. — específico da plataforma). */
-  verifyRequest(req: Request): VerifyResult;
+  /**
+   * Autenticação da requisição (token no header, HMAC do corpo etc.).
+   *
+   * `secret` é o segredo DAQUELA CONTA, já decifrado pela rota a partir da
+   * integração resolvida pela webhookKey da URL. O adapter não lê variável de
+   * ambiente: se lesse, o segredo voltaria a ser único para toda a instalação —
+   * era exatamente esse o defeito que a separação por conta corrige.
+   */
+  verifyRequest(req: Request, secret: string): VerifyResult;
   /** Converte o payload bruto para o formato interno. Lança AdapterPayloadError se inválido. */
   normalize(payload: unknown): NormalizedLead;
 

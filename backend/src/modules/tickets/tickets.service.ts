@@ -13,6 +13,9 @@ export interface CurrentUser {
   role: 'ADMIN' | 'AGENT';
   name: string;
   email: string;
+  /** Tenant do usuário. Vem de `req.account!.id` (relido do banco pelo guard de
+   *  tenant), NUNCA de entrada do cliente nem do JWT diretamente. */
+  accountId: string;
 }
 
 export const CLOSED_STATUSES: TicketStatus[] = [
@@ -117,15 +120,28 @@ export function serializeTicketDetail(t: TicketDetailRow) {
 
 // ─── Escopo por papel ────────────────────────────────────────────────────────
 
-/** Atendente enxerga apenas tickets próprios ou não atribuídos; admin vê tudo. */
+/**
+ * Escopo de leitura, em DUAS camadas que não se substituem:
+ *
+ *  1. TENANT (`accountId`) — fronteira rígida. Vale inclusive para o ADMIN:
+ *     administrador é dono da própria loja, não da instalação.
+ *  2. PAPEL — dentro da conta, o atendente vê só os próprios tickets e os
+ *     livres; o admin vê todos os da conta dele.
+ *
+ * A ordem importa: aplicar apenas o filtro de papel deixaria um ADMIN de uma
+ * loja enxergando o funil de todas as outras.
+ */
 function scopeFor(user: CurrentUser): Prisma.TicketWhereInput {
-  if (user.role === 'ADMIN') return {};
-  return { OR: [{ assignedToId: user.id }, { assignedToId: null }] };
+  const tenant: Prisma.TicketWhereInput = { accountId: user.accountId };
+  if (user.role === 'ADMIN') return tenant;
+  return { AND: [tenant, { OR: [{ assignedToId: user.id }, { assignedToId: null }] }] };
 }
 
 async function getScopedTicket(id: string, user: CurrentUser): Promise<TicketDetailRow> {
   const ticket = await prisma.ticket.findUnique({ where: { id }, include: detailInclude });
-  if (!ticket) throw notFound('Ticket não encontrado');
+  // Ticket de outra conta responde "não encontrado", e não "proibido": a
+  // diferença revelaria que aquele id existe em algum lugar do sistema.
+  if (!ticket || ticket.accountId !== user.accountId) throw notFound('Ticket não encontrado');
   if (user.role !== 'ADMIN' && ticket.assignedToId && ticket.assignedToId !== user.id) {
     throw forbidden('Este ticket está atribuído a outro atendente');
   }
@@ -307,11 +323,13 @@ export async function createManualTicket(input: CreateManualTicketInput, user: C
         document: input.lead.document ? input.lead.document.replace(/\D/g, '') : null,
         extra: extraClean && Object.keys(extraClean).length > 0 ? (extraClean as Prisma.InputJsonValue) : undefined,
         platform: 'manual',
+        accountId: user.accountId,
       },
     });
 
     const ticket = await tx.ticket.create({
       data: {
+        accountId: user.accountId,
         leadId: lead.id,
         platform: 'manual',
         priority: input.priority ?? TicketPriority.NORMAL,
@@ -368,9 +386,13 @@ export async function updateTicket(id: string, patch: UpdateTicketInput, user: C
     if (patch.assignedToId) {
       const found = await prisma.user.findUnique({
         where: { id: patch.assignedToId },
-        select: { id: true, name: true, active: true },
+        select: { id: true, name: true, active: true, accountId: true },
       });
-      if (!found || !found.active) throw badRequest('Usuário de destino inválido ou inativo');
+      // O destinatário precisa ser da MESMA conta: sem esta checagem daria para
+      // empurrar um ticket (e a PII do titular) para um atendente de outra loja.
+      if (!found || !found.active || found.accountId !== user.accountId) {
+        throw badRequest('Usuário de destino inválido ou inativo');
+      }
       targetUser = { id: found.id, name: found.name };
     }
   }
@@ -561,6 +583,7 @@ export async function addInteraction(id: string, input: AddInteractionInput, use
   if (input.type === 'AGENT_REPLY' && replyInteractionId) {
     const vehicle = (ticket.vehicleRefExternal as NormalizedLead['vehicle']) ?? undefined;
     await dispatchOutboundReply({
+      accountId: ticket.accountId,
       platform: ticket.platform,
       ticketId: ticket.id,
       interactionId: replyInteractionId,

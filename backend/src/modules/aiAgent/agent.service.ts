@@ -69,7 +69,7 @@ async function buildHistory(ticketId: string): Promise<Anthropic.MessageParam[]>
 
 /** Registra a resposta da IA como AGENT_REPLY (autor nulo, marcada ai) e replica à plataforma. */
 async function postAiReply(
-  ticket: { id: string; status: TicketStatus; firstResponseAt: Date | null; platform: string },
+  ticket: { id: string; status: TicketStatus; firstResponseAt: Date | null; platform: string; accountId: string },
   lead: { name: string; externalId: string | null },
   vehicle: NormalizedLead['vehicle'] | undefined,
   body: string,
@@ -94,6 +94,7 @@ async function postAiReply(
 
   // comunicação bidirecional: replica a resposta da IA de volta ao canal (OLX etc.)
   await dispatchOutboundReply({
+    accountId: ticket.accountId,
     platform: ticket.platform,
     ticketId: ticket.id,
     interactionId,
@@ -174,7 +175,13 @@ export async function handleInboundMessage(ticketId: string): Promise<void> {
 
     const reply = finalText || FALLBACK_REPLY;
     await postAiReply(
-      { id: ticket.id, status: ticket.status, firstResponseAt: ticket.firstResponseAt, platform: ticket.platform },
+      {
+        id: ticket.id,
+        status: ticket.status,
+        firstResponseAt: ticket.firstResponseAt,
+        platform: ticket.platform,
+        accountId: ticket.accountId,
+      },
       { name: ticket.lead.name, externalId: ticket.lead.externalId },
       vehicleRef,
       reply,

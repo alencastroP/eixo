@@ -73,12 +73,16 @@ export const env = {
     inline: (process.env.WORKER_INLINE ?? 'true') !== 'false',
   },
 
-  // Credenciais de webhook por plataforma — consumidas apenas pelos adapters.
-  integrations: {
-    olxWebhookToken: process.env.OLX_WEBHOOK_TOKEN,
-    mercadoLivreWebhookSecret: process.env.MERCADOLIVRE_WEBHOOK_SECRET,
-    webmotorsWebhookToken: process.env.WEBMOTORS_WEBHOOK_TOKEN,
-  },
+  /**
+   * Host público do serviço de webhooks — usado só para MONTAR a URL que o
+   * lojista cola no painel da plataforma (`/webhooks/:platform/:webhookKey`).
+   *
+   * Os segredos de webhook não moram mais aqui: cada conta tem o seu, cifrado
+   * em `integrations.inboundSecret`. As antigas OLX_WEBHOOK_TOKEN,
+   * MERCADOLIVRE_WEBHOOK_SECRET e WEBMOTORS_WEBHOOK_TOKEN eram únicas para toda
+   * a instalação — qualquer lojista podia forjar lead no funil de outro.
+   */
+  webhookPublicUrl: process.env.WEBHOOK_PUBLIC_URL ?? 'http://localhost:3002',
 
   // Agente de Pré-Venda IA (Claude). Sem apiKey, o bot fica indisponível e as
   // conversas seguem 100% humanas (o toggle no front aparece desabilitado).

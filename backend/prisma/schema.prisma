@@ -183,16 +183,22 @@ model Lead {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  /// Tenant dono do lead — fronteira de privacidade do SaaS. Sem ele, o mesmo
+  /// titular contatando duas lojas viraria UM registro compartilhado entre elas.
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
   document String? // CPF/CNPJ do cliente (dígitos) — usado na consulta rápida
   extra    Json? // campos personalizados do formulário (config em Setting "leadForm")
 
   tickets       Ticket[]
   creditQueries CreditQuery[]
 
-  @@unique([platform, externalId])
-  @@index([phone])
-  @@index([email])
-  @@index([name])
+  /// Dedup por conta: o mesmo externalId em lojas diferentes são leads distintos.
+  @@unique([accountId, platform, externalId])
+  @@index([accountId, phone])
+  @@index([accountId, email])
+  @@index([accountId, name])
   @@map("leads")
 }
 
@@ -206,6 +212,11 @@ model Ticket {
 
   assignedToId String?
   assignedTo   User?   @relation("TicketAssignee", fields: [assignedToId], references: [id])
+
+  /// Tenant dono do atendimento. Todo acesso a ticket é filtrado por ele ANTES
+  /// da regra de papel (ver scopeFor em tickets.service.ts).
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   platform String // origem do ticket (slug)
   campaign String? // campanha/mídia, quando a plataforma informa
@@ -229,10 +240,10 @@ model Ticket {
 
   interactions TicketInteraction[]
 
-  @@index([status])
-  @@index([assignedToId])
-  @@index([platform])
-  @@index([createdAt])
+  @@index([accountId, status])
+  @@index([accountId, assignedToId])
+  @@index([accountId, platform])
+  @@index([accountId, createdAt])
   @@index([leadId])
   @@map("tickets")
 }
@@ -286,17 +297,24 @@ model WebhookEvent {
   receivedAt    DateTime           @default(now())
   processedAt   DateTime?
 
+  /// Conta resolvida já na RECEPÇÃO, pela webhookKey da URL. O worker só
+  /// processa o que já chegou carimbado — nunca precisa adivinhar o tenant.
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
   @@index([status, receivedAt])
+  @@index([accountId, receivedAt])
   @@map("webhook_events")
 }
 
-/// Estado de conexão de uma plataforma no Módulo de Integrações.
-/// Uma linha por plataforma (slug do adapter). As credenciais de API ficam
-/// CIFRADAS em repouso (AES-256-GCM, ver src/lib/crypto.ts) — o valor bruto
-/// nunca trafega de volta para o front (a API devolve apenas uma máscara).
+/// Estado de conexão de uma plataforma PARA UMA CONTA no Módulo de Integrações.
+/// Uma linha por (conta, plataforma): cada lojista conecta a própria conta da
+/// OLX/ML/Webmotors, com credenciais próprias. As credenciais de API e o segredo
+/// de webhook ficam CIFRADOS em repouso (AES-256-GCM, ver src/lib/crypto.ts) —
+/// o valor bruto nunca trafega de volta para o front (a API devolve máscara).
 model Integration {
   id            String            @id @default(cuid())
-  platform      String            @unique // slug do adapter (olx, mercadolivre, ...)
+  platform      String // slug do adapter (olx, mercadolivre, ...)
   status        IntegrationStatus @default(AVAILABLE)
   syncEnabled   Boolean           @default(true) // sincronização de mensagens (in/out)
   credentials   Json? // { iv, tag, data } — payload cifrado; nunca em texto claro
@@ -307,8 +325,26 @@ model Integration {
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  /// Identificador OPACO que roteia o webhook até esta conta:
+  ///   POST /webhooks/:platform/:webhookKey
+  /// Não é credencial — quem autentica é `inboundSecret`. Existe porque a URL
+  /// precisa dizer de qual loja é o lead ANTES de qualquer verificação, e
+  /// descobrir isso testando o segredo contra todas as contas seria O(n) e
+  /// vulnerável a timing attack.
+  webhookKey String @unique
+
+  /// Segredo que a plataforma envia no header (token ou chave HMAC), próprio de
+  /// cada loja. Cifrado; { iv, tag, data }. Substitui os antigos
+  /// OLX_WEBHOOK_TOKEN / MERCADOLIVRE_WEBHOOK_SECRET / WEBMOTORS_WEBHOOK_TOKEN,
+  /// que eram únicos para toda a instalação.
+  inboundSecret Json?
+
   dispatches IntegrationDispatch[]
 
+  @@unique([accountId, platform])
   @@map("integrations")
 }
 
@@ -408,6 +444,11 @@ model Account {
   trialCpf     TrialCpfRegistry?
   vehicles     Vehicle[]
   storefront   Storefront?
+  // Isolamento do atendimento: cada conta enxerga só o próprio funil.
+  leads         Lead[]
+  tickets       Ticket[]
+  webhookEvents WebhookEvent[]
+  integrations  Integration[]
 
   @@index([status])
   @@index([trialEndsAt])

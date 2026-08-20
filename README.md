@@ -96,9 +96,11 @@ npm run dev                 # http://localhost:5173 (proxy /api → :3001)
 ### Simulando um lead chegando
 
 ```bash
-curl -X POST http://localhost:3002/webhooks/olx ^
+# A URL carrega a chave da loja; pegue-a em CRM → Integrações → OLX
+# (ou: SELECT platform, "webhookKey" FROM integrations;)
+curl -X POST http://localhost:3002/webhooks/olx/wh_SUA_CHAVE ^
   -H "Content-Type: application/json" ^
-  -H "x-olx-token: dev-olx-token" ^
+  -H "x-olx-token: SEGREDO_DA_LOJA" ^
   -d @backend/samples/olx-lead.json
 ```
 Em ~2 s o worker processa e o ticket aparece no CRM. Envie duas vezes e veja a deduplicação (mesmo ticket, duas mensagens). Há exemplos prontos para as três plataformas em `backend/samples/` e um `backend/requests.http` para a extensão REST Client do VS Code (o webhook do Mercado Livre exige assinatura HMAC — instruções no próprio arquivo).
@@ -111,6 +113,8 @@ Em ~2 s o worker processa e o ticket aparece no CRM. Envie duas vezes e veja a d
 | `npm run db:dev` | Postgres embutido de desenvolvimento (porta 5433) |
 | `npm run db:reset-data` | Esvazia os dados (mantém schema) — combine com `npm run seed` |
 | `npm run backfill:storefronts` | Pós-migration da vitrine: adota o estoque órfão na conta default e cria uma vitrine (despublicada) por conta |
+| `npm run create:admin -- <email> "<loja>"` | Cria conta + administrador com senha forte (produção; o `seed` usa senhas de demonstração) |
+| `npm run verify:isolation` | Prova, pelos serviços reais, que uma conta não enxerga o funil da outra |
 | `npm run seed:washington` | Provisiona a conta Washington Veículos com vitrine publicada e estoque inicial |
 | `npm run prisma:migrate` | Cria/aplica migrations em dev |
 | `npm run build` / `start` / `start:webhooks` / `start:worker` | Build e execução de produção |
@@ -243,7 +247,8 @@ Vitrine despublicada, conta bloqueada (inadimplente/expirada) ou slug inexistent
 
 - **PII nunca em logs:** o logger (`lib/logger.ts`) redige recursivamente chaves sensíveis (telefone, e-mail, CPF, senha, token) e mascara padrões de e-mail/telefone em strings livres. Os access logs registram só método/rota/status/ids.
 - **Senhas** com bcrypt (custo 10). **Refresh tokens** guardados apenas como SHA-256, com rotação a cada uso e revogação em logout.
-- **Credenciais de plataforma** exclusivamente via variáveis de ambiente; sem segredo configurado, o webhook é rejeitado em produção (em dev aceita com aviso, para facilitar testes).
+- **Credenciais de plataforma por conta:** cada loja tem o próprio segredo de webhook, cifrado em repouso (AES-256-GCM) em `integrations.inboundSecret`, e a própria URL de recepção (`/webhooks/:platform/:webhookKey`). Não há segredo global de plataforma — com um único token de ambiente, qualquer lojista poderia forjar leads no funil de outro.
+- **Isolamento de tenant:** `leads`, `tickets`, `webhook_events` e `integrations` carregam `accountId`. O escopo de leitura aplica a conta **antes** da regra de papel, então nem um ADMIN enxerga o funil de outra loja — ele é dono da própria conta, não da instalação. Verificável com `npm run verify:isolation`.
 - **Direito ao esquecimento (art. 18):** `POST /api/leads/:id/anonymize` (admin) remove nome/telefone/e-mail do lead, apaga o conteúdo das mensagens recebidas e os payloads brutos de webhook associados — preservando métricas (status, tempos, contagens) para relatórios.
 - **Autorização por papel:** atendente enxerga/edita apenas tickets próprios ou livres (pode assumir); admin vê tudo e reatribui. Regras aplicadas no serviço (não só na UI).
 

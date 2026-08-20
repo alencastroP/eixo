@@ -1,6 +1,5 @@
 import type { Request } from 'express';
 import { z } from 'zod';
-import { env } from '../../config/env';
 import { logger } from '../../lib/logger';
 import {
   AdapterPayloadError,
@@ -19,7 +18,7 @@ import { normalizePhone, safeEqual } from '../core/verify';
  *
  * A integração real depende de parceria comercial com a OLX; o shape abaixo
  * segue o formato de lead do OLX Autos/Lead Manager. Autenticação: token
- * compartilhado no header `x-olx-token` (env OLX_WEBHOOK_TOKEN).
+ * compartilhado no header `x-olx-token`, próprio de cada conta (Integration.inboundSecret).
  *
  * Payload de exemplo: backend/samples/olx-lead.json
  */
@@ -112,9 +111,8 @@ export const olxAdapter: LeadSourceAdapter = {
   validateCredentials: validateOlxCredentials,
   sendReply: sendOlxReply,
 
-  verifyRequest(req: Request): VerifyResult {
-    const secret = env.integrations.olxWebhookToken;
-    if (!secret) return { ok: false, configured: false, reason: 'OLX_WEBHOOK_TOKEN não configurado' };
+  verifyRequest(req: Request, secret: string): VerifyResult {
+    if (!secret) return { ok: false, configured: false, reason: 'segredo de webhook não configurado para esta conta' };
     const token = req.header('x-olx-token');
     if (token && safeEqual(token, secret)) return { ok: true };
     return { ok: false, configured: true, reason: 'header x-olx-token ausente ou inválido' };

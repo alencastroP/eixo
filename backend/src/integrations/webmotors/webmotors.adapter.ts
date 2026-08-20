@@ -1,13 +1,12 @@
 import type { Request } from 'express';
 import { z } from 'zod';
-import { env } from '../../config/env';
 import { AdapterPayloadError, type LeadSourceAdapter, type NormalizedLead, type VerifyResult } from '../core/types';
 import { normalizePhone, safeEqual } from '../core/verify';
 
 /**
  * Adapter Webmotors (mock estruturado — API real exige credenciamento de lojista).
  * Payload em PascalCase, como as APIs .NET da Webmotors/Santander.
- * Autenticação: token compartilhado no header `x-webmotors-token`.
+ * Autenticação: token no header `x-webmotors-token`, próprio de cada conta.
  * Payload de exemplo: backend/samples/webmotors-lead.json
  */
 const webmotorsPayloadSchema = z
@@ -52,9 +51,8 @@ export const webmotorsAdapter: LeadSourceAdapter = {
     },
   ],
 
-  verifyRequest(req: Request): VerifyResult {
-    const secret = env.integrations.webmotorsWebhookToken;
-    if (!secret) return { ok: false, configured: false, reason: 'WEBMOTORS_WEBHOOK_TOKEN não configurado' };
+  verifyRequest(req: Request, secret: string): VerifyResult {
+    if (!secret) return { ok: false, configured: false, reason: 'segredo de webhook não configurado para esta conta' };
     const token = req.header('x-webmotors-token');
     if (token && safeEqual(token, secret)) return { ok: true };
     return { ok: false, configured: true, reason: 'header x-webmotors-token ausente ou inválido' };

@@ -6,6 +6,8 @@ import { findAdapter } from './core/registry';
 import type { NormalizedLead, PlatformCredentials } from './core/types';
 
 interface DispatchArgs {
+  /** Conta dona do ticket — define de QUAL loja são as credenciais usadas. */
+  accountId: string;
   platform: string;
   ticketId: string;
   interactionId: string;
@@ -48,8 +50,12 @@ export async function dispatchOutboundReply(args: DispatchArgs): Promise<void> {
     // Plataforma sem suporte a envio (ex.: 'manual', ou adapters somente-recepção): nada a fazer.
     if (!adapter?.sendReply || !adapter.supportsOutbound) return;
 
-    const integration = await prisma.integration.findUnique({ where: { platform: args.platform } });
-    if (!integration) return; // integração nunca configurada
+    // Credenciais DA LOJA dona do ticket. Sem o filtro por conta, a resposta de
+    // um lojista sairia autenticada com a chave de API de outro.
+    const integration = await prisma.integration.findUnique({
+      where: { accountId_platform: { accountId: args.accountId, platform: args.platform } },
+    });
+    if (!integration) return; // integração nunca configurada nesta conta
 
     if (integration.status !== 'CONNECTED' || !integration.syncEnabled) {
       await record(integration.id, args, DispatchStatus.SKIPPED, 'integração não conectada ou sincronização desativada');

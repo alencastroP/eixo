@@ -20,8 +20,11 @@ leadsRouter.get(
   '/',
   ah(async (req, res) => {
     const { search, limit } = searchSchema.parse(req.query);
+    // accountId sempre presente: a busca nunca atravessa a fronteira da loja.
+    const accountId = req.account!.id;
     const where = search
       ? {
+          accountId,
           anonymizedAt: null,
           OR: [
             { name: { contains: search, mode: 'insensitive' as const } },
@@ -29,7 +32,7 @@ leadsRouter.get(
             { phone: { contains: search.replace(/\D/g, '') } },
           ],
         }
-      : { anonymizedAt: null };
+      : { accountId, anonymizedAt: null };
     const leads = await prisma.lead.findMany({
       where,
       select: { id: true, name: true, phone: true, email: true, platform: true },
@@ -66,7 +69,9 @@ leadsRouter.get(
         },
       },
     });
-    if (!lead) throw notFound('Lead não encontrado');
+    // Titular de outra conta responde "não encontrado" (e não 403): a distinção
+    // já confirmaria que aquele id existe em alguma loja da instalação.
+    if (!lead || lead.accountId !== req.account!.id) throw notFound('Lead não encontrado');
 
     logger.info('exportação de dados do titular (LGPD)', { leadId: lead.id, actor: req.user!.id });
     await writeAudit(prisma, {
@@ -117,7 +122,7 @@ leadsRouter.post(
       where: { id: req.params.id },
       include: { tickets: { select: { id: true } } },
     });
-    if (!lead) throw notFound('Lead não encontrado');
+    if (!lead || lead.accountId !== req.account!.id) throw notFound('Lead não encontrado');
 
     const ticketIds = lead.tickets.map((t) => t.id);
 

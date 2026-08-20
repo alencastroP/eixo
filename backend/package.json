@@ -19,6 +19,8 @@
     "prisma:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
     "create:admin": "tsx scripts/create-admin.ts",
+    "verify:isolation": "tsx scripts/verify-isolation.ts",
+    "accounts": "tsx scripts/accounts-overview.ts",
     "seed:washington": "tsx prisma/seed-washington.ts",
     "purge": "tsx scripts/purge.ts",
     "backfill:accounts": "tsx scripts/backfill-accounts.ts",

@@ -1,6 +1,5 @@
 import type { Request } from 'express';
 import { z } from 'zod';
-import { env } from '../../config/env';
 import { AdapterPayloadError, type LeadSourceAdapter, type NormalizedLead, type VerifyResult } from '../core/types';
 import { hmacSha256Hex, normalizePhone, safeEqual } from '../core/verify';
 
@@ -13,7 +12,7 @@ import { hmacSha256Hex, normalizePhone, safeEqual } from '../core/verify';
  * dentro deste adapter, sem tocar no core.
  *
  * Autenticação: HMAC-SHA256 do corpo bruto no header `x-signature`
- * (env MERCADOLIVRE_WEBHOOK_SECRET). Payload de exemplo: backend/samples/mercadolivre-lead.json
+ * próprio de cada conta (Integration.inboundSecret). Exemplo: backend/samples/mercadolivre-lead.json
  */
 const mlPayloadSchema = z
   .object({
@@ -70,9 +69,8 @@ export const mercadoLivreAdapter: LeadSourceAdapter = {
     },
   ],
 
-  verifyRequest(req: Request): VerifyResult {
-    const secret = env.integrations.mercadoLivreWebhookSecret;
-    if (!secret) return { ok: false, configured: false, reason: 'MERCADOLIVRE_WEBHOOK_SECRET não configurado' };
+  verifyRequest(req: Request, secret: string): VerifyResult {
+    if (!secret) return { ok: false, configured: false, reason: 'segredo de webhook não configurado para esta conta' };
     const signature = req.header('x-signature');
     if (!signature) return { ok: false, configured: true, reason: 'header x-signature ausente' };
     if (!req.rawBody) return { ok: false, configured: true, reason: 'corpo bruto indisponível para verificação HMAC' };

@@ -20,7 +20,10 @@ webhookEventsRouter.get(
   '/',
   ah(async (req, res) => {
     const q = listSchema.parse(req.query);
+    // A fila é observável apenas dentro da própria conta: o payload bruto de um
+    // lead contém PII do titular daquela loja.
     const where = {
+      accountId: req.account!.id,
       ...(q.status ? { status: q.status } : {}),
       ...(q.platform ? { platform: q.platform } : {}),
     };
@@ -41,7 +44,7 @@ webhookEventsRouter.post(
   '/:id/retry',
   ah(async (req, res) => {
     const event = await prisma.webhookEvent.findUnique({ where: { id: req.params.id } });
-    if (!event) throw notFound('Evento não encontrado');
+    if (!event || event.accountId !== req.account!.id) throw notFound('Evento não encontrado');
     if (event.status !== WebhookEventStatus.FAILED) {
       throw badRequest('Apenas eventos com falha podem ser reprocessados');
     }
