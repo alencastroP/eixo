@@ -110,6 +110,8 @@ Em ~2 s o worker processa e o ticket aparece no CRM. Envie duas vezes e veja a d
 | `npm run dev` / `dev:webhooks` / `dev:worker` | API / webhooks / worker standalone em watch |
 | `npm run db:dev` | Postgres embutido de desenvolvimento (porta 5433) |
 | `npm run db:reset-data` | Esvazia os dados (mantém schema) — combine com `npm run seed` |
+| `npm run backfill:storefronts` | Pós-migration da vitrine: adota o estoque órfão na conta default e cria uma vitrine (despublicada) por conta |
+| `npm run seed:washington` | Provisiona a conta Washington Veículos com vitrine publicada e estoque inicial |
 | `npm run prisma:migrate` | Cria/aplica migrations em dev |
 | `npm run build` / `start` / `start:webhooks` / `start:worker` | Build e execução de produção |
 
@@ -137,6 +139,7 @@ backend/
     │   ├── users/             # CRUD de usuários (admin)
     │   ├── tickets/           # serviço de tickets + ingestão normalizada + rotas
     │   ├── leads/             # anonimização LGPD
+    │   ├── storefront/        # ★ vitrine pública: config (CRM) + rotas abertas do site
     │   └── audit/             # trilha de auditoria
     ├── webhooks/              # rota genérica /webhooks/:platform + admin da fila
     └── workers/lead-processor.ts  # consumidor da fila (retry, backoff, claim atômico)
@@ -146,6 +149,7 @@ frontend/
     ├── api/                   # client fetch com refresh automático + endpoints tipados
     ├── auth/AuthContext.tsx
     ├── components/            # layout, badges, modal de ticket manual
+    ├── storefront/            # ★ vitrine pública (CSS e client próprios, carregada sob demanda)
     └── pages/                 # Login · Lista (filtros/busca/SLA) · Kanban (drag-and-drop) · Detalhe (timeline)
 ```
 
@@ -201,6 +205,39 @@ registerAdapter(facebookAdapter);
 3. **Configure a credencial** no `.env` (`FACEBOOK_WEBHOOK_TOKEN=...`) — nunca hardcoded.
 
 Pronto: `POST /webhooks/facebook` já aceita, enfileira e processa leads; o slug aparece em tickets, filtros e relatórios futuros. Se a plataforma enviar notificações "magras" (id para buscar via API, como o Mercado Livre real), esse fetch também fica dentro do adapter.
+
+## Vitrine pública (site da loja)
+
+Cada conta tem uma **landing page própria alimentada pelo seu estoque**. O lojista configura tudo em `Vitrine` no CRM (identidade, cores, textos, contato, quais seções aparecem) e publica com um toggle. O que o visitante vê sai direto de `vehicles` — sem cadastro duplicado.
+
+```
+washington-veiculos.eixo.com.br          → vitrine da loja (subdomínio = slug)
+localhost:5173/loja/washington-veiculos  → mesma vitrine (dev e pré-visualização)
+```
+
+**Como o veículo chega ao site:** status `Disponível` ou `Reservado` **e** o toggle *Exibir na vitrine* ligado (no cadastro do veículo). *Destaque da semana* o promove ao bloco superior. O que a rota pública devolve é serializado à parte (`storefront.service.ts`) — custo de compra, margem, gastos, placa, chassi e renavam **nunca** saem por ela.
+
+**Contato vira ticket:** todo formulário do site (interesse em veículo, financiamento, venda do usado, contato) passa pelo mesmo `ingestNormalizedLead` dos leads de OLX/ML, com `platform = site` e `campaign = site:<slug>` — dedup, timeline, SLA e auditoria idênticos. Proteções: rate limit por IP (`RATE_LIMIT_SITE_LEAD_PER_HOUR`) e honeypot no formulário.
+
+| Rota pública (sem autenticação) | Retorno |
+| --- | --- |
+| `GET /api/site/:slug` | configuração da vitrine + destaques + filtros disponíveis |
+| `GET /api/site/:slug/vehicles` | estoque visível, com busca/filtros/ordenação/paginação |
+| `GET /api/site/:slug/vehicles/:id` | detalhe público do veículo |
+| `POST /api/site/:slug/leads` | formulário do site → lead + ticket |
+| `POST /api/site/:slug/chat` | chat com o Agente de IA → cria/continua o ticket e devolve a resposta |
+
+Vitrine despublicada, conta bloqueada (inadimplente/expirada) ou slug inexistente respondem **404** igualmente, para não revelar a existência de contas.
+
+**Atendimento por IA na vitrine.** O botão flutuante abre um chat com o mesmo Agente de Pré-Venda que atende OLX e Mercado Livre. A primeira mensagem pede nome e WhatsApp (é o que cria o lead), liga o bot naquele ticket e devolve a resposta; as seguintes usam um token assinado (HMAC) — o visitante nunca manda um id de ticket. O atendente vê a conversa na Caixa de Entrada e assume quando quiser: a partir daí o widget orienta o cliente pelo WhatsApp. Sem `ANTHROPIC_API_KEY` o botão continua registrando o lead e avisa que a equipe responde em seguida.
+
+**Design.** Papel e tinta, cantos retos, Archivo + JetBrains Mono — o layout de referência está em `Washington Veiculos.dc.html`. A cor da loja entra por `--sf-accent` e aparece só em detalhes. Os emblemas das montadoras na faixa de marcas são SVG desenhados no próprio projeto (`storefront/brandLogos.tsx`), sem requisição externa; marca sem emblema cai no monograma.
+
+**Publicando em subdomínio:** aponte um DNS curinga (`*.seudominio.com.br`) para o Worker do Cloudflare que serve o frontend — o `not_found_handling = "single-page-application"` do `wrangler.toml` já cobre o roteamento. Some o curinga ao `CORS_ORIGIN` da API (`https://*.seudominio.com.br`), já que cada loja passa a ser uma origem distinta.
+
+**Pendências da loja piloto** (fotos, logotipos oficiais, dados que faltam): ver [PENDENCIAS-VITRINE.md](PENDENCIAS-VITRINE.md).
+
+**Isolamento:** `vehicles.accountId` (migration `storefront_module`) é a chave — o CRM lista só o pátio da própria conta e a rota pública só o da loja dona do slug. Depois de aplicar a migration em uma base existente, rode `npm run backfill:storefronts` uma vez.
 
 ## Segurança & LGPD
 

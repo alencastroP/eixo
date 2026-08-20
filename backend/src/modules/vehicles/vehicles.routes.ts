@@ -5,7 +5,11 @@ import { authenticate, requireRole } from '../../middleware/auth';
 import { ah } from '../../lib/errors';
 import * as vehicles from './vehicles.service';
 
-/** Módulo de Estoque. Leitura para autenticados; escrita restrita a ADMIN (lojista). */
+/**
+ * Módulo de Estoque. Leitura para autenticados; escrita restrita a ADMIN (lojista).
+ * Toda operação é escopada por `req.account` (populado pelo guard de tenant em
+ * app.ts) — o estoque de uma loja nunca é visível para outra.
+ */
 export const vehiclesRouter = Router();
 vehiclesRouter.use(authenticate);
 
@@ -23,14 +27,14 @@ const listSchema = z.object({
 vehiclesRouter.get(
   '/',
   ah(async (req, res) => {
-    res.json(await vehicles.listVehicles(listSchema.parse(req.query)));
+    res.json(await vehicles.listVehicles(req.account!.id, listSchema.parse(req.query)));
   }),
 );
 
 vehiclesRouter.get(
   '/facets',
-  ah(async (_req, res) => {
-    res.json(await vehicles.vehicleFacets());
+  ah(async (req, res) => {
+    res.json(await vehicles.vehicleFacets(req.account!.id));
   }),
 );
 
@@ -48,7 +52,7 @@ vehiclesRouter.post(
 vehiclesRouter.get(
   '/:id',
   ah(async (req, res) => {
-    res.json(await vehicles.getVehicle(req.params.id));
+    res.json(await vehicles.getVehicle(req.account!.id, req.params.id));
   }),
 );
 
@@ -72,6 +76,9 @@ const vehicleSchema = z.object({
   optionals: z.array(z.string()).default([]),
   notes: z.string().trim().optional().nullable(),
   description: z.string().trim().optional().nullable(),
+  // vitrine pública
+  showOnSite: z.boolean().default(true),
+  featured: z.boolean().default(false),
 });
 
 const generateDescSchema = z.object({ extraNotes: z.string().trim().max(600).optional() });
@@ -81,7 +88,7 @@ vehiclesRouter.post(
   requireRole(UserRole.ADMIN),
   ah(async (req, res) => {
     const { extraNotes } = generateDescSchema.parse(req.body);
-    res.json(await vehicles.generateDescription(req.params.id, extraNotes));
+    res.json(await vehicles.generateDescription(req.account!.id, req.params.id, extraNotes));
   }),
 );
 
@@ -89,7 +96,7 @@ vehiclesRouter.post(
   '/',
   requireRole(UserRole.ADMIN),
   ah(async (req, res) => {
-    res.status(201).json(await vehicles.createVehicle(vehicleSchema.parse(req.body)));
+    res.status(201).json(await vehicles.createVehicle(req.account!.id, vehicleSchema.parse(req.body)));
   }),
 );
 
@@ -97,7 +104,7 @@ vehiclesRouter.put(
   '/:id',
   requireRole(UserRole.ADMIN),
   ah(async (req, res) => {
-    res.json(await vehicles.updateVehicle(req.params.id, vehicleSchema.parse(req.body)));
+    res.json(await vehicles.updateVehicle(req.account!.id, req.params.id, vehicleSchema.parse(req.body)));
   }),
 );
 
@@ -105,7 +112,7 @@ vehiclesRouter.delete(
   '/:id',
   requireRole(UserRole.ADMIN),
   ah(async (req, res) => {
-    await vehicles.deleteVehicle(req.params.id);
+    await vehicles.deleteVehicle(req.account!.id, req.params.id);
     res.status(204).end();
   }),
 );
@@ -121,7 +128,7 @@ vehiclesRouter.post(
   requireRole(UserRole.ADMIN),
   ah(async (req, res) => {
     const { images } = photosSchema.parse(req.body);
-    res.status(201).json(await vehicles.addPhotos(req.params.id, images));
+    res.status(201).json(await vehicles.addPhotos(req.account!.id, req.params.id, images));
   }),
 );
 
@@ -135,7 +142,7 @@ vehiclesRouter.patch(
   requireRole(UserRole.ADMIN),
   ah(async (req, res) => {
     const { order, coverId } = reorderSchema.parse(req.body);
-    res.json(await vehicles.reorderPhotos(req.params.id, order, coverId));
+    res.json(await vehicles.reorderPhotos(req.account!.id, req.params.id, order, coverId));
   }),
 );
 
@@ -143,7 +150,7 @@ vehiclesRouter.delete(
   '/:id/photos/:photoId',
   requireRole(UserRole.ADMIN),
   ah(async (req, res) => {
-    res.json(await vehicles.deletePhoto(req.params.id, req.params.photoId));
+    res.json(await vehicles.deletePhoto(req.account!.id, req.params.id, req.params.photoId));
   }),
 );
 
@@ -160,7 +167,7 @@ vehiclesRouter.post(
   '/:id/costs',
   requireRole(UserRole.ADMIN),
   ah(async (req, res) => {
-    res.status(201).json(await vehicles.addCost(req.params.id, costSchema.parse(req.body)));
+    res.status(201).json(await vehicles.addCost(req.account!.id, req.params.id, costSchema.parse(req.body)));
   }),
 );
 
@@ -168,6 +175,6 @@ vehiclesRouter.delete(
   '/:id/costs/:costId',
   requireRole(UserRole.ADMIN),
   ah(async (req, res) => {
-    res.json(await vehicles.deleteCost(req.params.id, req.params.costId));
+    res.json(await vehicles.deleteCost(req.account!.id, req.params.id, req.params.costId));
   }),
 );

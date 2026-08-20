@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" role="img" aria-label="Washington Veículos">
+  <title>Washington Veículos</title>
+  <!-- Escudo (anel): contorno externo + recorte interno pela regra evenodd -->
+  <path fill="#ffffff" fill-rule="evenodd"
+        d="M3 6h114l-7 26-50 52-50-52z
+           M17 18h86l-4 15-39 40-39-40z" />
+  <!-- W: quatro lâminas separadas, como no logotipo -->
+  <g fill="#ffffff">
+    <path d="M26 24h10l13 28h-6z" />
+    <path d="M52 24h10L50 52h-6z" />
+    <path d="M58 24h10l8 28h-6z" />
+    <path d="M84 24h10L77 52h-6z" />
+  </g>
+</svg>

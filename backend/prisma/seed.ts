@@ -28,10 +28,17 @@ import type { CurrentUser } from '../src/modules/tickets/tickets.service';
 
 const HOUR = 3_600_000;
 
-/** Estoque de demonstração (sem fotos — adicionadas pela UI via upload). */
+/**
+ * Estoque de demonstração (sem fotos — adicionadas pela UI via upload).
+ *
+ * O estoque é escopado por conta: se já houver uma conta no banco (ordem
+ * habitual do setup: seed → backfill:accounts), o demo nasce vinculado a ela.
+ * Caso contrário fica sem dono e `npm run backfill:storefronts` o adota.
+ */
 async function seedVehicles() {
   if ((await prisma.vehicle.count()) > 0) return;
   const D = (n: number) => new Prisma.Decimal(n);
+  const account = await prisma.account.findFirst({ orderBy: { createdAt: 'asc' }, select: { id: true } });
 
   const rows: Prisma.VehicleCreateInput[] = [
     {
@@ -78,7 +85,9 @@ async function seedVehicles() {
     },
   ];
 
-  for (const data of rows) await prisma.vehicle.create({ data });
+  for (const data of rows) {
+    await prisma.vehicle.create({ data: account ? { ...data, account: { connect: { id: account.id } } } : data });
+  }
   console.log(`Seed: ${rows.length} veículos de demonstração criados.`);
 }
 

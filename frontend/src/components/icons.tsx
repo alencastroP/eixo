@@ -146,6 +146,15 @@ export const ExternalIcon = (p: IconProps) => (
   </svg>
 );
 
+/** Vitrine pública da loja (site). */
+export const GlobeIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3 12h18" />
+    <path d="M12 3c2.5 2.6 3.8 5.6 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z" />
+  </svg>
+);
+
 export const CarIcon = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13" />

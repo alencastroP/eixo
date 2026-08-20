@@ -18,6 +18,10 @@ ENV NODE_ENV=production
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+# scripts/ roda via tsx (não é compilado para dist): backfill pós-migration,
+# expurgo de retenção (LGPD) e expiração de trials. Sem esta cópia, os
+# `npm run backfill:* / purge / expire-trials` falham no shell do Render.
+COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/package.json ./package.json
 
 # server.ts escuta 3001, webhook-server.ts escuta 3002 — o comando real

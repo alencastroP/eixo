@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { vehiclesApi, type VehicleListParams } from '../api/endpoints';
 import { useAuth } from '../auth/AuthContext';
 import { VehicleStatusBadge } from '../components/badges';
-import { CameraIcon, CarIcon, PlusIcon, SearchIcon, XIcon } from '../components/icons';
+import { CameraIcon, CarIcon, GlobeIcon, PlusIcon, SearchIcon, StarIcon, XIcon } from '../components/icons';
 import { PageHeader } from '../components/PageHeader';
 import { VehicleCostsModal } from '../components/VehicleCostsModal';
 import {
@@ -198,6 +198,13 @@ export function InventoryPage() {
                 </div>
               )}
               <VehicleStatusBadge status={v.status} />
+              {/* espelha a vitrine: destaque tem precedência sobre "no site" */}
+              {v.showOnSite && (
+                <span className={`veh-site-flag ${v.featured ? 'featured' : ''}`}>
+                  {v.featured ? <StarIcon size={11} /> : <GlobeIcon size={11} />}
+                  {v.featured ? 'Destaque' : 'Na vitrine'}
+                </span>
+              )}
               {v.photoCount > 0 && (
                 <span className="veh-photo-count">
                   <CameraIcon size={12} /> {v.photoCount}

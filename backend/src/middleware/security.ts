@@ -69,6 +69,36 @@ export const trialRateLimit = rateLimit({
   },
 });
 
+/**
+ * Limite para o formulário da vitrine pública. A rota é aberta e escreve no
+ * banco (lead + ticket), então precisa de teto próprio por IP — junto com o
+ * honeypot do formulário, mantém spam de bot fora do funil de atendimento.
+ */
+export const siteLeadRateLimit = rateLimit({
+  windowMs: 60 * 60_000,
+  limit: env.rateLimit.siteLeadPerHour,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: {
+    error: { message: 'Muitos envios em sequência. Tente novamente mais tarde.', code: 'SITE_LEAD_RATE_LIMITED' },
+  },
+});
+
+/**
+ * Limite do chat com a IA na vitrine. Mais folgado que o do formulário (é uma
+ * conversa, não um envio único), porém finito: cada mensagem custa uma chamada
+ * ao modelo, então o teto protege o custo além do abuso.
+ */
+export const siteChatRateLimit = rateLimit({
+  windowMs: 60 * 60_000,
+  limit: env.rateLimit.siteChatPerHour,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: {
+    error: { message: 'Muitas mensagens em sequência. Continue pelo WhatsApp.', code: 'SITE_CHAT_RATE_LIMITED' },
+  },
+});
+
 /** Limite para a recepção de webhooks (por plataforma/IP) — evita inundar a fila. */
 export const webhookRateLimit = rateLimit({
   windowMs: 60_000,

@@ -54,6 +54,8 @@ export const env = {
     authPer15Min: toInt(process.env.RATE_LIMIT_AUTH_PER_15MIN, 20),
     webhookPerMinute: toInt(process.env.RATE_LIMIT_WEBHOOK_PER_MIN, 120),
     trialPerHour: toInt(process.env.RATE_LIMIT_TRIAL_PER_HOUR, 5),
+    siteLeadPerHour: toInt(process.env.RATE_LIMIT_SITE_LEAD_PER_HOUR, 15),
+    siteChatPerHour: toInt(process.env.RATE_LIMIT_SITE_CHAT_PER_HOUR, 60),
   },
 
   // Janela de retenção (LGPD — expurgo). Ver scripts/purge.ts.
@@ -93,3 +95,22 @@ export const env = {
 
 /** true quando o Agente de IA está configurado (há API key). */
 export const aiEnabled = () => Boolean(env.ai.apiKey);
+
+/**
+ * Verifica se uma origem tem permissão de CORS.
+ *
+ * Cada vitrine de loja mora em um subdomínio próprio (washington.eixo.com.br) e
+ * consome esta mesma API, então CORS_ORIGIN aceita entradas com curinga de
+ * subdomínio — `https://*.eixo.com.br`. O curinga cobre UM nível de rótulo e
+ * não vale para o domínio nu, que precisa ser listado à parte se for usado.
+ */
+export function isAllowedOrigin(origin: string): boolean {
+  return env.corsOrigins.some((allowed) => {
+    if (!allowed.includes('*')) return allowed === origin;
+    const [scheme, host] = allowed.split('://');
+    if (!host?.startsWith('*.')) return false;
+    const suffix = host.slice(1); // ".eixo.com.br"
+    const originHost = origin.startsWith(`${scheme}://`) ? origin.slice(scheme.length + 3) : null;
+    return Boolean(originHost && originHost.endsWith(suffix) && !originHost.slice(0, -suffix.length).includes('.'));
+  });
+}

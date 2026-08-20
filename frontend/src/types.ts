@@ -247,6 +247,8 @@ export interface VehicleCard {
   fuel: string | null;
   status: VehicleStatus;
   salePrice: number | null;
+  showOnSite: boolean;
+  featured: boolean;
   coverUrl: string | null;
   photoCount: number;
   createdAt: string;
@@ -273,6 +275,8 @@ export interface VehicleDetail {
   optionals: string[];
   notes: string | null;
   description: string | null;
+  showOnSite: boolean;
+  featured: boolean;
   margin: number | null;
   totalCosts: number;
   photos: VehiclePhoto[];
@@ -454,6 +458,15 @@ export interface CompanySettings {
   city: string;
   state: string;
   logoUrl: string | null;
+}
+
+/** Configuração da vitrine pública da conta (ver storefront/types.ts para o
+ *  lado consumidor — aqui é o contrato da tela de administração). */
+export interface StorefrontSettings {
+  slug: string;
+  published: boolean;
+  config: import('./storefront/types').StorefrontConfig;
+  updatedAt: string;
 }
 
 export interface LeadFormField {

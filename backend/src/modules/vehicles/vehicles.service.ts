@@ -39,6 +39,8 @@ export function serializeVehicleCard(v: VehicleListRow) {
     fuel: v.fuel,
     status: v.status,
     salePrice: dec(v.salePrice),
+    showOnSite: v.showOnSite,
+    featured: v.featured,
     coverUrl: coverUrl(v.photos),
     photoCount: v.photos.length,
     createdAt: v.createdAt,
@@ -70,6 +72,8 @@ export function serializeVehicleDetail(v: VehicleDetailRow) {
     optionals: (v.optionals as string[]) ?? [],
     notes: v.notes,
     description: v.description,
+    showOnSite: v.showOnSite,
+    featured: v.featured,
     // margem: venda − custo de compra − gastos acumulados
     margin: salePrice != null ? salePrice - (costPrice ?? 0) - totalCosts : null,
     totalCosts,
@@ -99,8 +103,13 @@ export interface ListVehiclesParams {
   pageSize: number;
 }
 
-export async function listVehicles(params: ListVehiclesParams) {
-  const and: Prisma.VehicleWhereInput[] = [];
+/**
+ * Todas as consultas do estoque são escopadas pela conta (tenant). O
+ * `accountId` vem sempre de `req.account` (guard de tenant), nunca do cliente —
+ * é o que impede uma loja de ler ou alterar o pátio de outra.
+ */
+export async function listVehicles(accountId: string, params: ListVehiclesParams) {
+  const and: Prisma.VehicleWhereInput[] = [{ accountId }];
   if (params.brand) and.push({ brand: { equals: params.brand, mode: 'insensitive' } });
   if (params.model) and.push({ model: { contains: params.model, mode: 'insensitive' } });
   if (params.status) and.push({ status: params.status });
@@ -134,11 +143,12 @@ export async function listVehicles(params: ListVehiclesParams) {
 }
 
 /** Opções para os filtros rápidos (marcas distintas + faixa de anos). */
-export async function vehicleFacets() {
+export async function vehicleFacets(accountId: string) {
+  const where: Prisma.VehicleWhereInput = { accountId };
   const [brands, years, statusGroups] = await Promise.all([
-    prisma.vehicle.findMany({ distinct: ['brand'], select: { brand: true }, orderBy: { brand: 'asc' } }),
-    prisma.vehicle.findMany({ distinct: ['yearModel'], select: { yearModel: true }, orderBy: { yearModel: 'desc' } }),
-    prisma.vehicle.groupBy({ by: ['status'], _count: true }),
+    prisma.vehicle.findMany({ where, distinct: ['brand'], select: { brand: true }, orderBy: { brand: 'asc' } }),
+    prisma.vehicle.findMany({ where, distinct: ['yearModel'], select: { yearModel: true }, orderBy: { yearModel: 'desc' } }),
+    prisma.vehicle.groupBy({ by: ['status'], where, _count: true }),
   ]);
   const byStatus = Object.fromEntries(Object.values(VehicleSaleStatus).map((s) => [s, 0])) as Record<
     VehicleSaleStatus,
@@ -153,8 +163,8 @@ export async function vehicleFacets() {
   };
 }
 
-export async function getVehicle(id: string) {
-  const v = await prisma.vehicle.findUnique({ where: { id }, include: detailInclude });
+export async function getVehicle(accountId: string, id: string) {
+  const v = await prisma.vehicle.findFirst({ where: { id, accountId }, include: detailInclude });
   if (!v) throw notFound('Veículo não encontrado');
   return serializeVehicleDetail(v);
 }
@@ -181,9 +191,11 @@ export interface VehicleInput {
   optionals: string[];
   notes?: string | null;
   description?: string | null;
+  showOnSite: boolean;
+  featured: boolean;
 }
 
-function toData(input: VehicleInput): Prisma.VehicleUncheckedCreateInput {
+function toData(input: VehicleInput): Omit<Prisma.VehicleUncheckedCreateInput, 'accountId'> {
   return {
     type: input.type,
     brand: input.brand.trim(),
@@ -204,31 +216,37 @@ function toData(input: VehicleInput): Prisma.VehicleUncheckedCreateInput {
     optionals: input.optionals as Prisma.InputJsonValue,
     notes: input.notes?.trim() || null,
     description: input.description?.trim() || null,
+    showOnSite: input.showOnSite,
+    featured: input.featured,
   };
 }
 
-async function assertPlateFree(plate: string | null | undefined, ignoreId?: string) {
+/** Placa é única DENTRO da conta — duas lojas podem ter cadastrado o mesmo carro. */
+async function assertPlateFree(accountId: string, plate: string | null | undefined, ignoreId?: string) {
   if (!plate) return;
-  const existing = await prisma.vehicle.findUnique({ where: { plate: plate.trim().toUpperCase() } });
+  const existing = await prisma.vehicle.findFirst({
+    where: { accountId, plate: plate.trim().toUpperCase() },
+    select: { id: true },
+  });
   if (existing && existing.id !== ignoreId) throw badRequest('Já existe um veículo com esta placa');
 }
 
-export async function createVehicle(input: VehicleInput) {
-  await assertPlateFree(input.plate);
-  const v = await prisma.vehicle.create({ data: toData(input), include: detailInclude });
+export async function createVehicle(accountId: string, input: VehicleInput) {
+  await assertPlateFree(accountId, input.plate);
+  const v = await prisma.vehicle.create({ data: { ...toData(input), accountId }, include: detailInclude });
   return serializeVehicleDetail(v);
 }
 
-export async function updateVehicle(id: string, input: VehicleInput) {
-  const exists = await prisma.vehicle.findUnique({ where: { id }, select: { id: true } });
+export async function updateVehicle(accountId: string, id: string, input: VehicleInput) {
+  const exists = await prisma.vehicle.findFirst({ where: { id, accountId }, select: { id: true } });
   if (!exists) throw notFound('Veículo não encontrado');
-  await assertPlateFree(input.plate, id);
+  await assertPlateFree(accountId, input.plate, id);
   await prisma.vehicle.update({ where: { id }, data: toData(input) });
-  return getVehicle(id);
+  return getVehicle(accountId, id);
 }
 
-export async function deleteVehicle(id: string) {
-  const v = await prisma.vehicle.findUnique({ where: { id }, include: { photos: true } });
+export async function deleteVehicle(accountId: string, id: string) {
+  const v = await prisma.vehicle.findFirst({ where: { id, accountId }, include: { photos: true } });
   if (!v) throw notFound('Veículo não encontrado');
   for (const p of v.photos) deleteByPublicUrl(p.url);
   await prisma.vehicle.delete({ where: { id } });
@@ -236,9 +254,9 @@ export async function deleteVehicle(id: string) {
 
 // ─── Fotos ───────────────────────────────────────────────────────────────────
 
-export async function addPhotos(vehicleId: string, images: string[]) {
-  const v = await prisma.vehicle.findUnique({
-    where: { id: vehicleId },
+export async function addPhotos(accountId: string, vehicleId: string, images: string[]) {
+  const v = await prisma.vehicle.findFirst({
+    where: { id: vehicleId, accountId },
     include: { photos: { orderBy: { position: 'asc' } } },
   });
   if (!v) throw notFound('Veículo não encontrado');
@@ -252,12 +270,15 @@ export async function addPhotos(vehicleId: string, images: string[]) {
     });
     position++;
   }
-  return getVehicle(vehicleId);
+  return getVehicle(accountId, vehicleId);
 }
 
 /** Reordena a galeria e/ou define a capa. `order` são os ids na nova ordem. */
-export async function reorderPhotos(vehicleId: string, order: string[], coverId?: string) {
-  const photos = await prisma.vehiclePhoto.findMany({ where: { vehicleId }, select: { id: true } });
+export async function reorderPhotos(accountId: string, vehicleId: string, order: string[], coverId?: string) {
+  const photos = await prisma.vehiclePhoto.findMany({
+    where: { vehicleId, vehicle: { accountId } },
+    select: { id: true },
+  });
   const known = new Set(photos.map((p) => p.id));
   if (order.some((id) => !known.has(id))) throw badRequest('Lista de ordenação inválida');
 
@@ -272,11 +293,11 @@ export async function reorderPhotos(vehicleId: string, order: string[], coverId?
         ]
       : []),
   ]);
-  return getVehicle(vehicleId);
+  return getVehicle(accountId, vehicleId);
 }
 
-export async function deletePhoto(vehicleId: string, photoId: string) {
-  const photo = await prisma.vehiclePhoto.findFirst({ where: { id: photoId, vehicleId } });
+export async function deletePhoto(accountId: string, vehicleId: string, photoId: string) {
+  const photo = await prisma.vehiclePhoto.findFirst({ where: { id: photoId, vehicleId, vehicle: { accountId } } });
   if (!photo) throw notFound('Foto não encontrada');
   deleteByPublicUrl(photo.url);
   await prisma.vehiclePhoto.delete({ where: { id: photoId } });
@@ -286,13 +307,13 @@ export async function deletePhoto(vehicleId: string, photoId: string) {
     const next = await prisma.vehiclePhoto.findFirst({ where: { vehicleId }, orderBy: { position: 'asc' } });
     if (next) await prisma.vehiclePhoto.update({ where: { id: next.id }, data: { isCover: true } });
   }
-  return getVehicle(vehicleId);
+  return getVehicle(accountId, vehicleId);
 }
 
 // ─── Co-piloto de descrição (IA) ─────────────────────────────────────────────
 
-export async function generateDescription(vehicleId: string, extraNotes?: string) {
-  const v = await prisma.vehicle.findUnique({ where: { id: vehicleId } });
+export async function generateDescription(accountId: string, vehicleId: string, extraNotes?: string) {
+  const v = await prisma.vehicle.findFirst({ where: { id: vehicleId, accountId } });
   if (!v) throw notFound('Veículo não encontrado');
   const description = generateVehicleDescription({
     type: v.type,
@@ -319,8 +340,8 @@ export interface CostInput {
   incurredAt?: string;
 }
 
-export async function addCost(vehicleId: string, input: CostInput) {
-  const v = await prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { id: true } });
+export async function addCost(accountId: string, vehicleId: string, input: CostInput) {
+  const v = await prisma.vehicle.findFirst({ where: { id: vehicleId, accountId }, select: { id: true } });
   if (!v) throw notFound('Veículo não encontrado');
   await prisma.vehicleCost.create({
     data: {
@@ -331,14 +352,14 @@ export async function addCost(vehicleId: string, input: CostInput) {
       incurredAt: input.incurredAt ? new Date(input.incurredAt) : undefined,
     },
   });
-  return getVehicle(vehicleId);
+  return getVehicle(accountId, vehicleId);
 }
 
-export async function deleteCost(vehicleId: string, costId: string) {
-  const cost = await prisma.vehicleCost.findFirst({ where: { id: costId, vehicleId } });
+export async function deleteCost(accountId: string, vehicleId: string, costId: string) {
+  const cost = await prisma.vehicleCost.findFirst({ where: { id: costId, vehicleId, vehicle: { accountId } } });
   if (!cost) throw notFound('Gasto não encontrado');
   await prisma.vehicleCost.delete({ where: { id: costId } });
-  return getVehicle(vehicleId);
+  return getVehicle(accountId, vehicleId);
 }
 
 // ─── Consulta de placa (mock — integrará com API de placas no futuro) ────────

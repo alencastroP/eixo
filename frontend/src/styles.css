@@ -2517,6 +2517,31 @@ select option {
   top: 10px;
   left: 10px;
 }
+/* Sinaliza no card do estoque o que está exposto na vitrine pública. */
+.veh-site-flag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  background: rgb(0 0 0 / 0.55);
+  border: 1px solid var(--border-strong);
+  padding: 3px 8px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+}
+.veh-site-flag.featured {
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 .veh-photo-count {
   position: absolute;
   bottom: 10px;

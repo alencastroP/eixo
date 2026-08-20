@@ -17,8 +17,10 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
+    "seed:washington": "tsx prisma/seed-washington.ts",
     "purge": "tsx scripts/purge.ts",
     "backfill:accounts": "tsx scripts/backfill-accounts.ts",
+    "backfill:storefronts": "tsx scripts/backfill-storefronts.ts",
     "expire-trials": "tsx scripts/expire-trials.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },

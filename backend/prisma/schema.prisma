@@ -406,10 +406,34 @@ model Account {
   users        User[]
   subscription Subscription?
   trialCpf     TrialCpfRegistry?
+  vehicles     Vehicle[]
+  storefront   Storefront?
 
   @@index([status])
   @@index([trialEndsAt])
   @@map("accounts")
+}
+
+/// Vitrine pública (landing page) da conta — um site por lojista, alimentado
+/// pelo próprio estoque. O endereço é o subdomínio derivado do `slug`
+/// (washington-veiculos.eixo.com.br); `/loja/:slug` funciona sempre, para
+/// desenvolvimento e pré-visualização.
+///
+/// `config` é JSON pela mesma razão de `settings`: a vitrine ganha campos novos
+/// (seções, cores, textos) sem exigir migration. O shape é validado e
+/// preenchido com defaults em modules/storefront/storefront.service.ts.
+model Storefront {
+  id        String  @id @default(cuid())
+  accountId String  @unique
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  slug      String  @unique
+  published Boolean @default(false)
+  config    Json    @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("storefronts")
 }
 
 /// Assinatura da conta (1:1). Guarda o estado de billing e os pontos de extensão
@@ -460,6 +484,13 @@ model Vehicle {
   id   String      @id @default(cuid())
   type VehicleType @default(CAR)
 
+  /// Conta (tenant) dona do veículo. Nullable apenas por compatibilidade de
+  /// migração — a aplicação sempre popula (scripts/backfill-storefronts.ts
+  /// vincula o estoque pré-existente à conta default). É a chave de isolamento
+  /// da vitrine pública: um lojista nunca vê/expõe o estoque de outro.
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id])
+
   // identificação
   brand           String // marca
   model           String
@@ -469,7 +500,7 @@ model Vehicle {
   color           String?
   fuel            String? // Flex, Gasolina, Diesel, Etanol, Elétrico, Híbrido, GNV
   km              Int      @default(0)
-  plate           String?  @unique
+  plate           String? // única DENTRO da conta (ver @@unique abaixo)
   chassi          String?
   renavam         String?
 
@@ -483,6 +514,11 @@ model Vehicle {
   notes       String?
   description String? // texto de anúncio (gerado pelo co-piloto de IA, editável)
 
+  /// Vitrine pública: exibir este veículo no site da loja (o lojista pode
+  /// esconder unidades pontuais) e destacá-lo no topo da página.
+  showOnSite Boolean @default(true) @map("show_on_site")
+  featured   Boolean @default(false)
+
   /// ids do anúncio em cada plataforma — casa com Ticket.vehicle_ref_external
   /// no plano de migração (backfill futuro liga tickets a veículos por aqui).
   externalRefs Json?
@@ -495,6 +531,10 @@ model Vehicle {
   financialEntries FinancialEntry[]
   fiscalInvoices  FiscalInvoice[]
 
+  /// Placa é única por conta, não globalmente: duas lojas diferentes podem ter
+  /// registrado o mesmo veículo (consignado que trocou de pátio, por exemplo).
+  @@unique([accountId, plate])
+  @@index([accountId, status])
   @@index([status])
   @@index([type])
   @@index([brand])

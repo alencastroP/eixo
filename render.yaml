@@ -6,15 +6,15 @@
 # (segredos externos: connection string do Neon, chave da Anthropic, tokens de
 # webhook) — elas não ficam versionadas aqui.
 #
-# Compartilhamento de segredos entre os serviços: o eixo-api é a fonte
-# (gera/recebe os valores) e o eixo-webhooks os puxa via `fromService`. Env var
+# Compartilhamento de segredos entre os serviços: o eixo-crm-api é a fonte
+# (gera/recebe os valores) e o eixo-crm-webhooks os puxa via `fromService`. Env var
 # groups NÃO servem aqui porque o spec do Render proíbe `sync: false` e
 # `generateValue` dentro de grupos — só aceitam valores literais.
 
 services:
   # ─── API principal (autenticada) — FONTE dos segredos compartilhados ─────
   - type: web
-    name: eixo-api
+    name: eixo-crm-api
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
@@ -35,7 +35,7 @@ services:
         sync: false
       - key: DIRECT_URL
         sync: false
-      # Gerados uma vez pelo Render, aqui. O eixo-webhooks puxa os MESMOS
+      # Gerados uma vez pelo Render, aqui. O eixo-crm-webhooks puxa os MESMOS
       # valores via fromService — CREDENTIALS_SECRET precisa bater entre os
       # dois (cifra credenciais de integração no banco); JWT/pepper são
       # exigidos no boot dos dois processos (config/env.ts os lê sempre).
@@ -45,10 +45,16 @@ services:
         generateValue: true
       - key: TRIAL_CPF_PEPPER
         generateValue: true
-      # URL pública do frontend (Cloudflare Worker) — libera CORS. Não é
-      # segredo, por isso vai literal.
+      # URLs públicas do frontend — libera CORS. Não é segredo, por isso vai
+      # literal. Ao publicar as vitrines em subdomínio próprio, acrescente o
+      # curinga do domínio (ex.: ",https://*.eixo.com.br"): cada loja é um host
+      # diferente chamando esta mesma API.
       - key: CORS_ORIGIN
         value: https://eixo.pedrovalencastro.workers.dev
+      - key: RATE_LIMIT_SITE_LEAD_PER_HOUR
+        value: "15"
+      - key: RATE_LIMIT_SITE_CHAT_PER_HOUR
+        value: "60"
       - key: JWT_ACCESS_TTL
         value: 15m
       - key: JWT_REFRESH_TTL_DAYS
@@ -82,7 +88,7 @@ services:
 
   # ─── Recepção de webhooks + worker de leads (processo independente) ────
   - type: web
-    name: eixo-webhooks
+    name: eixo-crm-webhooks
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
@@ -99,27 +105,27 @@ services:
         value: "3002"
       - key: WEBHOOK_PORT
         value: "3002"
-      # puxa os MESMOS valores gerados/definidos no eixo-api (não precisa
+      # puxa os MESMOS valores gerados/definidos no eixo-crm-api (não precisa
       # redigitar nada no dashboard). O webhook-server não roda migrations,
       # então DIRECT_URL é desnecessário aqui.
       - key: DATABASE_URL
         fromService:
-          name: eixo-api
+          name: eixo-crm-api
           type: web
           envVarKey: DATABASE_URL
       - key: JWT_ACCESS_SECRET
         fromService:
-          name: eixo-api
+          name: eixo-crm-api
           type: web
           envVarKey: JWT_ACCESS_SECRET
       - key: CREDENTIALS_SECRET
         fromService:
-          name: eixo-api
+          name: eixo-crm-api
           type: web
           envVarKey: CREDENTIALS_SECRET
       - key: TRIAL_CPF_PEPPER
         fromService:
-          name: eixo-api
+          name: eixo-crm-api
           type: web
           envVarKey: TRIAL_CPF_PEPPER
       # worker embutido no mesmo processo (mantém 1 serviço em vez de 2 no

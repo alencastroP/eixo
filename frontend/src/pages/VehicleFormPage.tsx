@@ -40,6 +40,8 @@ type FormState = {
   optionals: string[];
   notes: string;
   description: string;
+  showOnSite: boolean;
+  featured: boolean;
 };
 
 const EMPTY: FormState = {
@@ -62,6 +64,8 @@ const EMPTY: FormState = {
   optionals: [],
   notes: '',
   description: '',
+  showOnSite: true,
+  featured: false,
 };
 
 function fromDetail(v: VehicleDetail): FormState {
@@ -85,6 +89,8 @@ function fromDetail(v: VehicleDetail): FormState {
     optionals: v.optionals,
     notes: v.notes ?? '',
     description: v.description ?? '',
+    showOnSite: v.showOnSite,
+    featured: v.featured,
   };
 }
 
@@ -185,6 +191,8 @@ export function VehicleFormPage() {
     optionals: form.optionals,
     notes: form.notes || null,
     description: form.description || null,
+    showOnSite: form.showOnSite,
+    featured: form.featured,
   });
 
   const submit = async (e: FormEvent) => {
@@ -330,6 +338,40 @@ export function VehicleFormPage() {
                 ))}
               </select>
             </label>
+          </div>
+
+          {/* Vitrine: só entra no site quem está Disponível/Reservado E marcado aqui. */}
+          <div className="field-toggles" style={{ marginTop: 16 }}>
+            <div className={`field-toggle ${form.showOnSite ? 'on' : ''}`}>
+              <div className="field-toggle-main">
+                <span className="field-toggle-label">Exibir na vitrine</span>
+                <button
+                  type="button"
+                  className={`switch ${form.showOnSite ? 'on blue' : ''}`}
+                  onClick={() => set('showOnSite', !form.showOnSite)}
+                  role="switch"
+                  aria-checked={form.showOnSite}
+                >
+                  <span className="switch-knob" />
+                </button>
+              </div>
+              <p className="muted small">Aparece no site da loja quando o status for Disponível ou Reservado.</p>
+            </div>
+            <div className={`field-toggle ${form.featured ? 'on' : ''}`}>
+              <div className="field-toggle-main">
+                <span className="field-toggle-label">Destaque da semana</span>
+                <button
+                  type="button"
+                  className={`switch ${form.featured ? 'on blue' : ''}`}
+                  onClick={() => set('featured', !form.featured)}
+                  role="switch"
+                  aria-checked={form.featured}
+                >
+                  <span className="switch-knob" />
+                </button>
+              </div>
+              <p className="muted small">Sobe para o bloco de destaques, no topo da vitrine.</p>
+            </div>
           </div>
         </section>
 

@@ -9,6 +9,7 @@ import {
   CarIcon,
   ColumnsIcon,
   GaugeIcon,
+  GlobeIcon,
   HistoryIcon,
   InboxIcon,
   MoonIcon,
@@ -87,6 +88,13 @@ export function ProtectedLayout() {
               title="Trilha de Auditoria"
             >
               <HistoryIcon />
+            </NavLink>
+            <NavLink
+              to="/storefront"
+              className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`}
+              title="Vitrine (site da loja)"
+            >
+              <GlobeIcon />
             </NavLink>
             <NavLink
               to="/integrations"

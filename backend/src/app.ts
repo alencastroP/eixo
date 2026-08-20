@@ -1,6 +1,6 @@
 import cors from 'cors';
 import express from 'express';
-import { env } from './config/env';
+import { env, isAllowedOrigin } from './config/env';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { requestLog } from './middleware/request-log';
 import { globalRateLimit, securityHeaders } from './middleware/security';
@@ -18,6 +18,8 @@ import { creditRouter } from './modules/credit/credit.routes';
 import { financeRouter } from './modules/finance/finance.routes';
 import { fiscalRouter } from './modules/fiscal/fiscal.routes';
 import { settingsRouter } from './modules/settings/settings.routes';
+import { storefrontRouter } from './modules/storefront/storefront.routes';
+import { publicSiteRouter } from './modules/storefront/public.routes';
 import { webhookEventsRouter } from './webhooks/webhook-events.routes';
 
 /** API principal do CRM (autenticada). A recepção de webhooks vive em outro processo. */
@@ -27,7 +29,10 @@ export function createApiApp() {
   // atrás de proxy/LB em produção: confia no X-Forwarded-* para IP real (rate limit)
   if (env.isProd) app.set('trust proxy', 1);
   app.use(securityHeaders);
-  app.use(cors({ origin: env.corsOrigins }));
+  // origem por função: além do painel, cada vitrine de loja tem seu próprio
+  // subdomínio (ver isAllowedOrigin). Requisições sem Origin (curl, health
+  // check do Render) seguem liberadas — CORS só governa chamadas de navegador.
+  app.use(cors({ origin: (origin, cb) => cb(null, !origin || isAllowedOrigin(origin)) }));
   // limite generoso: uploads de fotos do estoque chegam como data URL base64 no JSON
   app.use(express.json({ limit: '30mb' }));
   app.use(requestLog);
@@ -38,9 +43,11 @@ export function createApiApp() {
   // fotos do estoque servidas estaticamente (em produção, trocar por bucket/CDN)
   app.use(UPLOADS_PUBLIC_PREFIX, express.static(UPLOADS_ROOT));
 
-  // Rotas públicas (sem conta): autenticação e cadastro de trial.
+  // Rotas públicas (sem conta): autenticação, cadastro de trial e a vitrine
+  // das lojas — esta última resolve o tenant pelo slug do site publicado.
   app.use('/api/auth', authRouter);
   app.use('/api/trial', trialRouter);
+  app.use('/api/site', publicSiteRouter);
 
   // Portão do SaaS: rotas de negócio exigem conta ATIVA (trial válido ou paga).
   // `authenticate` roda aqui para popular req.user antes do guard de tenant;
@@ -55,6 +62,7 @@ export function createApiApp() {
   app.use('/api/finance', tenant, financeRouter);
   app.use('/api/fiscal', tenant, fiscalRouter);
   app.use('/api/settings', tenant, settingsRouter);
+  app.use('/api/storefront', tenant, storefrontRouter);
   app.use('/api/webhook-events', tenant, webhookEventsRouter);
 
   app.use(notFoundHandler);

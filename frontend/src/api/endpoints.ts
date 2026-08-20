@@ -13,6 +13,7 @@ import type {
   LeadSearchResult,
   Paged,
   PublicUser,
+  StorefrontSettings,
   Ticket,
   TicketDetail,
   TicketMetrics,
@@ -120,6 +121,8 @@ export interface VehiclePayload {
   optionals: string[];
   notes?: string | null;
   description?: string | null;
+  showOnSite: boolean;
+  featured: boolean;
 }
 
 export interface PlateLookupResult {
@@ -175,6 +178,14 @@ export const creditApi = {
 export const leadsApi = {
   search: (search: string) =>
     api<LeadSearchResult[]>('/leads', { query: { search: search || undefined, limit: 10 } }),
+};
+
+export const storefrontApi = {
+  get: () => api<StorefrontSettings>('/storefront'),
+  save: (input: { slug?: string; published?: boolean; config?: StorefrontSettings['config'] }) =>
+    api<StorefrontSettings>('/storefront', { method: 'PUT', body: input }),
+  uploadImage: (kind: 'logo' | 'hero', image: string) =>
+    api<{ kind: string; url: string }>('/storefront/images', { method: 'POST', body: { kind, image } }),
 };
 
 export const settingsApi = {
