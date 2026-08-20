@@ -22,6 +22,20 @@ function generatePassword(): string {
   return randomBytes(24).toString('base64url').replace(/[-_]/g, '');
 }
 
+/**
+ * Senha própria via ADMIN_PASSWORD (e não por argumento de linha de comando:
+ * argv fica visível no histórico do shell e em `ps` para outros processos).
+ * Sem a variável, uma senha forte é gerada.
+ */
+function resolvePassword(): { password: string; generated: boolean } {
+  const provided = process.env.ADMIN_PASSWORD;
+  if (provided && provided.length > 0) {
+    if (provided.length < 12) throw new Error('ADMIN_PASSWORD deve ter ao menos 12 caracteres.');
+    return { password: provided, generated: false };
+  }
+  return { password: generatePassword(), generated: true };
+}
+
 async function main() {
   const email = process.argv[2]?.trim().toLowerCase();
   const accountName = process.argv[3]?.trim() || 'Minha Loja';
@@ -52,7 +66,7 @@ async function main() {
   });
 
   // 3) usuário admin
-  const password = generatePassword();
+  const { password, generated } = resolvePassword();
   const user = await prisma.user.upsert({
     where: { email },
     update: { passwordHash: hashPassword(password), role: UserRole.ADMIN, active: true },
@@ -71,9 +85,14 @@ async function main() {
   console.log('──────────────────────────────────────────────');
   console.log(`  Conta:   ${account.name} (${account.id})`);
   console.log(`  E-mail:  ${user.email}`);
-  console.log(`  Senha:   ${password}`);
-  console.log('──────────────────────────────────────────────');
-  console.log('  Anote agora: esta senha não será exibida de novo.\n');
+  if (generated) {
+    console.log(`  Senha:   ${password}`);
+    console.log('──────────────────────────────────────────────');
+    console.log('  Anote agora: esta senha não será exibida de novo.\n');
+  } else {
+    console.log('  Senha:   (a que você definiu em ADMIN_PASSWORD)');
+    console.log('──────────────────────────────────────────────\n');
+  }
 }
 
 main()
