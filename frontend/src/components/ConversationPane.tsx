@@ -134,7 +134,7 @@ interface Props {
 }
 
 export function ConversationPane({ ticketId, onTicketUpdated }: Props) {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const [ticket, setTicket] = useState<TicketDetail | null>(null);
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +146,10 @@ export function ConversationPane({ ticketId, onTicketUpdated }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  const isAdmin = user?.role === 'ADMIN';
+  // distribuir leads é permissão própria: sem ela, o atendente só assume os
+  // livres ou libera os que já são dele
+  const canAssign = can('tickets.assign');
+  const canReply = can('tickets.reply');
   const mine = ticket?.assignedTo?.id === user?.id;
 
   const load = useCallback(async () => {
@@ -207,13 +210,13 @@ export function ConversationPane({ ticketId, onTicketUpdated }: Props) {
   }, [ticketId]);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (canAssign) {
       usersApi
         .list()
         .then(setUsers)
         .catch(() => setUsers([]));
     }
-  }, [isAdmin]);
+  }, [canAssign]);
 
   useEffect(() => {
     const el = bodyRef.current;
@@ -322,7 +325,7 @@ export function ConversationPane({ ticketId, onTicketUpdated }: Props) {
               ))}
             </select>
 
-            {isAdmin ? (
+            {canAssign ? (
               <select
                 className="control-sm"
                 value={ticket.assignedTo?.id ?? ''}
@@ -369,6 +372,9 @@ export function ConversationPane({ ticketId, onTicketUpdated }: Props) {
           ))}
         </div>
 
+        {/* Sem permissão de responder, a conversa fica em modo leitura: o
+            compositor sai de cena em vez de existir para dar erro no envio. */}
+        {canReply ? (
         <div className="composer-wrap">
           <div className={`composer-card ${composerType === 'INTERNAL_NOTE' ? 'note-mode' : ''}`}>
             <div className="composer-tabs">
@@ -410,12 +416,19 @@ export function ConversationPane({ ticketId, onTicketUpdated }: Props) {
             </div>
           </div>
         </div>
+        ) : (
+          <div className="composer-wrap">
+            <p className="muted small composer-readonly">
+              Seu perfil de acesso não permite responder nem anotar nesta conversa.
+            </p>
+          </div>
+        )}
       </section>
 
       {sidebarOpen && (
         <aside className="conv-sidebar">
-          <CoPilotPanel ticket={ticket} onUpdated={applyUpdate} />
-          <QuickAnalysisBlock leadDocument={ticket.lead.document} />
+          <CoPilotPanel ticket={ticket} onUpdated={applyUpdate} canToggle={can('tickets.bot')} />
+          <QuickAnalysisBlock leadId={ticket.lead.id} leadDocument={ticket.lead.document} />
 
           <details open className="side-sec">
             <summary>Lead</summary>

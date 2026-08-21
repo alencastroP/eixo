@@ -1,12 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { UserRole } from '@prisma/client';
-import { authenticate, requireRole } from '../../middleware/auth';
+import { requirePermission } from '../../middleware/permissions';
 import { ah } from '../../lib/errors';
 import * as settings from './settings.service';
 
 export const settingsRouter = Router();
-settingsRouter.use(authenticate);
 
 // leitura liberada a autenticados (o formulário de leads precisa da config);
 // escrita restrita a ADMIN.
@@ -30,7 +28,7 @@ const companySchema = z.object({
 
 settingsRouter.put(
   '/company',
-  requireRole(UserRole.ADMIN),
+  requirePermission('company.manage'),
   ah(async (req, res) => res.json(await settings.setCompany(companySchema.parse(req.body)))),
 );
 
@@ -45,7 +43,7 @@ const leadFormSchema = z.object({
 
 settingsRouter.put(
   '/lead-form',
-  requireRole(UserRole.ADMIN),
+  requirePermission('company.manage'),
   ah(async (req, res) => {
     const { config } = leadFormSchema.parse(req.body);
     res.json(await settings.setLeadForm(config as never));

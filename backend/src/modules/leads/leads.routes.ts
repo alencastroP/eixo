@@ -1,14 +1,12 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { UserRole } from '@prisma/client';
-import { authenticate, requireRole } from '../../middleware/auth';
+import { requirePermission } from '../../middleware/permissions';
 import { ah, notFound } from '../../lib/errors';
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../lib/logger';
 import { writeAudit } from '../audit/audit.service';
 
 export const leadsRouter = Router();
-leadsRouter.use(authenticate);
 
 const searchSchema = z.object({
   search: z.string().trim().optional(),
@@ -18,6 +16,9 @@ const searchSchema = z.object({
 /** Busca de leads por nome/telefone/e-mail - usada para vincular consultas de crédito. */
 leadsRouter.get(
   '/',
+  // serve a duas telas com donos diferentes: vincular consulta de credito e
+  // buscar o titular no funil - qualquer uma das permissoes basta
+  requirePermission('tickets.view', 'credit.view'),
   ah(async (req, res) => {
     const { search, limit } = searchSchema.parse(req.query);
     // accountId sempre presente: a busca nunca atravessa a fronteira da loja.
@@ -51,7 +52,7 @@ leadsRouter.get(
  */
 leadsRouter.get(
   '/:id/export',
-  requireRole(UserRole.ADMIN),
+  requirePermission('leads.privacy'),
   ah(async (req, res) => {
     const lead = await prisma.lead.findUnique({
       where: { id: req.params.id },
@@ -116,7 +117,7 @@ leadsRouter.get(
  */
 leadsRouter.post(
   '/:id/anonymize',
-  requireRole(UserRole.ADMIN),
+  requirePermission('leads.privacy'),
   ah(async (req, res) => {
     const lead = await prisma.lead.findUnique({
       where: { id: req.params.id },

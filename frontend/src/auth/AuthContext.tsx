@@ -1,11 +1,19 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { tokenStore, type Session } from '../api/client';
 import { authApi, trialApi, type TrialSignupInput } from '../api/endpoints';
-import type { PublicUser } from '../types';
+import type { Permission, PublicUser } from '../types';
 
 interface AuthContextValue {
   user: PublicUser | null;
   initializing: boolean;
+  /**
+   * O usuário tem alguma das permissões pedidas?
+   *
+   * Serve para a tela não OFERECER o que já se sabe que o servidor vai negar -
+   * não é controle de acesso. Toda rota é barrada de novo no back-end; aqui é
+   * só a diferença entre um menu escondido e um 403 na cara do usuário.
+   */
+  can(...permissions: Permission[]): boolean;
   login(email: string, password: string): Promise<void>;
   signupTrial(input: TrialSignupInput): Promise<void>;
   logout(): Promise<void>;
@@ -89,8 +97,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const can = useCallback(
+    (...permissions: Permission[]) => {
+      // `permissions` só chega em /auth/me. Enquanto a sessão persistida não é
+      // revalidada, nada é liberado: esconder demais por um instante é melhor
+      // que piscar um menu que o usuário não pode usar.
+      const granted = user?.permissions;
+      return !!granted && permissions.some((p) => granted.includes(p));
+    },
+    [user],
+  );
+
   return (
-    <AuthContext.Provider value={{ user, initializing, login, signupTrial, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, initializing, can, login, signupTrial, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

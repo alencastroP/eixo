@@ -49,7 +49,7 @@ function toListTicket(detail: TicketDetail): Ticket {
 
 export function InboxPage() {
   const { id: selectedId } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -75,7 +75,9 @@ export function InboxPage() {
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const isAdmin = user?.role === 'ADMIN';
+  // quem enxerga o funil inteiro filtra por atendente; quem só vê os
+  // próprios tickets não tem o que filtrar
+  const canSeeAll = can('tickets.view.all');
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -86,13 +88,13 @@ export function InboxPage() {
   }, [searchInput]);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (canSeeAll) {
       usersApi
         .list()
         .then(setUsers)
         .catch(() => setUsers([]));
     }
-  }, [isAdmin]);
+  }, [canSeeAll]);
 
   useEffect(() => {
     let cancelled = false;
@@ -209,7 +211,7 @@ export function InboxPage() {
                 </option>
               ))}
             </select>
-            {isAdmin && (
+            {canSeeAll && (
               <select value={filters.agentId} onChange={(e) => setFilter('agentId', e.target.value)}>
                 <option value="">Atendente</option>
                 {users.map((u) => (

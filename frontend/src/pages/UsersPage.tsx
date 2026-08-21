@@ -1,25 +1,27 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { usersApi } from '../api/endpoints';
+import { Link } from 'react-router-dom';
+import { rolesApi, usersApi } from '../api/endpoints';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { PageHeader } from '../components/PageHeader';
 import { PlusIcon } from '../components/icons';
-import { ROLE_LABELS, type Role, type UserListItem } from '../types';
+import { ROLE_LABELS, type AccessProfile, type UserListItem } from '../types';
 import { avatarColor, initials } from '../utils/format';
 
 interface EditState {
   id?: string;
   name: string;
   email: string;
-  role: Role;
+  profileId: string;
   password: string;
 }
 
-const BLANK: EditState = { name: '', email: '', role: 'AGENT', password: '' };
+const BLANK: EditState = { name: '', email: '', profileId: '', password: '' };
 
 export function UsersPage() {
-  const { user: me } = useAuth();
+  const { user: me, can } = useAuth();
   const [users, setUsers] = useState<UserListItem[]>([]);
+  const [profiles, setProfiles] = useState<AccessProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<EditState | null>(null);
   const [saving, setSaving] = useState(false);
@@ -27,21 +29,27 @@ export function UsersPage() {
 
   const load = () => {
     setLoading(true);
-    usersApi
-      .list()
-      .then(setUsers)
+    Promise.all([usersApi.list(), rolesApi.list().catch(() => [] as AccessProfile[])])
+      .then(([list, profileList]) => {
+        setUsers(list);
+        setProfiles(profileList);
+      })
       .catch(() => setUsers([]))
       .finally(() => setLoading(false));
   };
   useEffect(load, []);
 
+  /** Padrão do formulário: o perfil menos abrangente que a loja tem. */
+  const defaultProfileId = () =>
+    profiles.find((p) => p.systemKey === 'agent')?.id ?? profiles.find((p) => !p.locked)?.id ?? '';
+
   const openNew = () => {
     setError(null);
-    setModal({ ...BLANK });
+    setModal({ ...BLANK, profileId: defaultProfileId() });
   };
   const openEdit = (u: UserListItem) => {
     setError(null);
-    setModal({ id: u.id, name: u.name, email: u.email, role: u.role, password: '' });
+    setModal({ id: u.id, name: u.name, email: u.email, profileId: u.profile?.id ?? defaultProfileId(), password: '' });
   };
 
   const save = async (e: FormEvent) => {
@@ -53,11 +61,16 @@ export function UsersPage() {
       if (modal.id) {
         await usersApi.update(modal.id, {
           name: modal.name,
-          role: modal.role,
+          profileId: modal.profileId || undefined,
           password: modal.password || undefined,
         });
       } else {
-        await usersApi.create({ name: modal.name, email: modal.email, password: modal.password, role: modal.role });
+        await usersApi.create({
+          name: modal.name,
+          email: modal.email,
+          password: modal.password,
+          profileId: modal.profileId || undefined,
+        });
       }
       setModal(null);
       load();
@@ -69,8 +82,14 @@ export function UsersPage() {
   };
 
   const toggleActive = async (u: UserListItem) => {
-    await usersApi.update(u.id, { active: !u.active });
-    load();
+    setError(null);
+    try {
+      await usersApi.update(u.id, { active: !u.active });
+      load();
+    } catch (err) {
+      // a API barra revogar a última pessoa que administra a conta
+      setError(err instanceof ApiError ? err.message : 'Falha ao alterar o acesso');
+    }
   };
 
   return (
@@ -81,11 +100,20 @@ export function UsersPage() {
         title="Gerenciar Usuários"
         subtitle="Crie, edite ou revogue o acesso dos funcionários da loja."
         actions={
-          <button className="btn btn-primary" onClick={openNew}>
-            <PlusIcon size={16} /> Novo Usuário
-          </button>
+          <>
+            {can('profiles.manage') && (
+              <Link className="btn btn-ghost" to="/roles">
+                Perfis & Permissões
+              </Link>
+            )}
+            <button className="btn btn-primary" onClick={openNew}>
+              <PlusIcon size={16} /> Novo Usuário
+            </button>
+          </>
         }
       />
+
+      {error && !modal && <div className="alert alert-error">{error}</div>}
 
       <div className="card table-wrap">
         <table className="fin-table users-table ds-table-cards">
@@ -93,7 +121,7 @@ export function UsersPage() {
             <tr>
               <th>Funcionário</th>
               <th>E-mail</th>
-              <th>Papel</th>
+              <th>Perfil de acesso</th>
               <th>Status</th>
               <th className="right">Ações</th>
             </tr>
@@ -115,8 +143,10 @@ export function UsersPage() {
                 <td className="muted" data-label="E-mail">
                   {u.email}
                 </td>
-                <td data-label="Papel">
-                  <span className={`badge ${u.role === 'ADMIN' ? 'role-admin' : 'role-agent'}`}>{ROLE_LABELS[u.role]}</span>
+                <td data-label="Perfil de acesso">
+                  <span className={`badge ${u.role === 'ADMIN' ? 'role-admin' : 'role-agent'}`}>
+                    {u.profile?.name ?? ROLE_LABELS[u.role]}
+                  </span>
                 </td>
                 <td data-label="Status">
                   <span className={`badge ${u.active ? 'fin-PAID' : 'fin-OVERDUE'}`}>{u.active ? 'Ativo' : 'Revogado'}</span>
@@ -174,10 +204,16 @@ export function UsersPage() {
               </label>
               <div className="field-row">
                 <label className="field">
-                  <span>Papel</span>
-                  <select value={modal.role} onChange={(e) => setModal({ ...modal, role: e.target.value as Role })}>
-                    <option value="AGENT">Atendente</option>
-                    <option value="ADMIN">Administrador</option>
+                  <span>Perfil de acesso</span>
+                  <select
+                    value={modal.profileId}
+                    onChange={(e) => setModal({ ...modal, profileId: e.target.value })}
+                  >
+                    {profiles.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label className="field">
@@ -192,6 +228,10 @@ export function UsersPage() {
                   />
                 </label>
               </div>
+              <p className="muted small">
+                O perfil define o que a pessoa enxerga e pode fazer.{' '}
+                {can('profiles.manage') && <Link to="/roles">Configurar perfis</Link>}
+              </p>
               {error && <p className="form-error">{error}</p>}
               <div className="modal-actions">
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>

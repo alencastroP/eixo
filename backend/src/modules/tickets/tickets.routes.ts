@@ -1,13 +1,16 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { TicketPriority, TicketStatus } from '@prisma/client';
-import { authenticate } from '../../middleware/auth';
+import { requirePermission } from '../../middleware/permissions';
 import { ah } from '../../lib/errors';
 import * as tickets from './tickets.service';
 import { currentUser } from '../../lib/current-user';
 
 export const ticketsRouter = Router();
-ticketsRouter.use(authenticate);
+// Piso do modulo: sem "ver a caixa de entrada" nada aqui abre. O RECORTE de
+// quais tickets aparecem (so os meus x os da loja inteira) e outra permissao,
+// aplicada no servico - ver scopeFor().
+ticketsRouter.use(requirePermission('tickets.view'));
 
 const listQuerySchema = z.object({
   status: z.nativeEnum(TicketStatus).optional(),
@@ -62,6 +65,7 @@ const createSchema = z.object({
 
 ticketsRouter.post(
   '/',
+  requirePermission('tickets.create'),
   ah(async (req, res) => {
     const input = createSchema.parse(req.body);
     res.status(201).json(await tickets.createManualTicket(input, currentUser(req)));
@@ -95,6 +99,7 @@ const botSchema = z.object({ enabled: z.boolean() });
 
 ticketsRouter.patch(
   '/:id/bot',
+  requirePermission('tickets.bot'),
   ah(async (req, res) => {
     const { enabled } = botSchema.parse(req.body);
     res.json(await tickets.setBotEnabled(req.params.id, enabled, currentUser(req)));
@@ -108,6 +113,7 @@ const interactionSchema = z.object({
 
 ticketsRouter.post(
   '/:id/interactions',
+  requirePermission('tickets.reply'),
   ah(async (req, res) => {
     const input = interactionSchema.parse(req.body);
     res.status(201).json(await tickets.addInteraction(req.params.id, input, currentUser(req)));

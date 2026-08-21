@@ -7,6 +7,9 @@ import { CoinsIcon, LinkIcon, SendIcon, SparklesIcon } from './icons';
 interface Props {
   ticket: TicketDetail;
   onUpdated: (detail: TicketDetail) => void;
+  /** Sem 'tickets.bot' o painel continua visível (o log é informação útil),
+   *  mas a chave de ligar/desligar a IA fica travada. */
+  canToggle: boolean;
 }
 
 interface AiAction {
@@ -46,13 +49,13 @@ function buildActions(interactions: Interaction[]): AiAction[] {
   return out.reverse().slice(0, 6);
 }
 
-export function CoPilotPanel({ ticket, onUpdated }: Props) {
+export function CoPilotPanel({ ticket, onUpdated, canToggle }: Props) {
   const [saving, setSaving] = useState(false);
   const active = ticket.botEnabled;
   const actions = useMemo(() => buildActions(ticket.interactions), [ticket.interactions]);
 
   const toggle = async () => {
-    if (saving) return;
+    if (saving || !canToggle) return;
     setSaving(true);
     try {
       onUpdated(await ticketsApi.setBot(ticket.id, !active));
@@ -78,8 +81,9 @@ export function CoPilotPanel({ ticket, onUpdated }: Props) {
           role="switch"
           aria-checked={active}
           aria-label="Ativar atendimento por IA"
+          title={canToggle ? undefined : 'Seu perfil de acesso não permite alterar o atendimento por IA'}
           className={`copilot-switch ${active ? 'on' : ''}`}
-          disabled={saving}
+          disabled={saving || !canToggle}
           onClick={() => void toggle()}
         >
           <span className="copilot-knob" />

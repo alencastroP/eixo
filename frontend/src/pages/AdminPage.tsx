@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
+import { useAuth } from '../auth/AuthContext';
 import { PageHeader } from '../components/PageHeader';
+import type { Permission } from '../types';
 import {
   BuildingIcon,
   ChevronRightIcon,
@@ -20,6 +22,8 @@ interface Tile {
   label: string;
   desc: string;
   icon: ReactNode;
+  /** Quem não tem a permissão não vê o botão. */
+  permission: Permission;
 }
 
 interface Section {
@@ -31,6 +35,10 @@ interface Section {
 /**
  * Tudo que era item solto no rail (vitrine, integrações, auditoria) e no menu
  * do usuário (empresa) passa por aqui. O rail volta a ser só operação diária.
+ *
+ * Cada botão declara a permissão que o abre: a central mostra a cada pessoa o
+ * pedaço da administração que o perfil dela alcança, em vez de ser um bloco
+ * único que só o dono da loja enxerga.
  */
 const SECTIONS: Section[] = [
   {
@@ -42,6 +50,7 @@ const SECTIONS: Section[] = [
         label: 'Dados da Empresa',
         desc: 'CNPJ, razão social, endereço e contatos usados em documentos e na vitrine.',
         icon: <BuildingIcon size={20} />,
+        permission: 'company.manage',
       },
     ],
   },
@@ -54,18 +63,21 @@ const SECTIONS: Section[] = [
         label: 'Vitrine',
         desc: 'Site público da loja: domínio, identidade visual e veículos publicados.',
         icon: <GlobeIcon size={20} />,
+        permission: 'storefront.manage',
       },
       {
         to: '/integrations',
         label: 'Integrações',
         desc: 'Conecte OLX, Webmotors e demais portais para centralizar leads e mensagens.',
         icon: <PlugIcon size={20} />,
+        permission: 'integrations.manage',
       },
       {
         to: '/agent',
         label: 'Agente de IA',
         desc: 'Tom de voz, base de conhecimento da loja e o que acontece quando o cliente para de responder.',
         icon: <SparkIcon size={20} />,
+        permission: 'agent.manage',
       },
     ],
   },
@@ -78,11 +90,14 @@ const SECTIONS: Section[] = [
         label: 'Gerenciar Usuários',
         desc: 'Crie, edite ou revogue o acesso dos funcionários da loja.',
         icon: <UsersIcon size={20} />,
+        permission: 'users.manage',
       },
       {
+        to: '/roles',
         label: 'Perfis & Permissões',
-        desc: 'Defina o que cada papel pode ver e fazer em cada módulo do sistema.',
+        desc: 'Defina o que cada perfil pode ver e fazer em cada módulo do sistema.',
         icon: <ShieldIcon size={20} />,
+        permission: 'profiles.manage',
       },
     ],
   },
@@ -95,17 +110,20 @@ const SECTIONS: Section[] = [
         label: 'Auditoria',
         desc: 'Trilha completa de ações: quem alterou o quê, quando e de qual origem.',
         icon: <HistoryIcon size={20} />,
+        permission: 'audit.view',
       },
     ],
   },
   {
-    title: 'Plataforma',
-    hint: 'Em construção - os módulos abaixo abrem em breve.',
+    title: 'Assinatura',
+    hint: 'O que a loja contratou do Eixo e como isso é cobrado.',
     tiles: [
       {
-        label: 'Pagamentos',
-        desc: 'Plano, forma de pagamento, faturas e acompanhamento do consumo da conta.',
+        to: '/billing',
+        label: 'Plano e pagamentos',
+        desc: 'Plano contratado, consumo do mês, faturas e nota fiscal.',
         icon: <CreditCardIcon size={20} />,
+        permission: 'billing.view',
       },
     ],
   },
@@ -120,18 +138,28 @@ export const ADMIN_ROUTES: string[] = [
   ...SECTIONS.flatMap((s) => s.tiles.map((t) => t.to).filter((to): to is string => Boolean(to))),
 ];
 
+/** Ter QUALQUER uma destas já justifica abrir a central. */
+export const ADMIN_PERMISSIONS: Permission[] = [
+  ...new Set(SECTIONS.flatMap((s) => s.tiles.map((t) => t.permission))),
+];
+
 /** Central de administração: um botão por módulo, agrupados por assunto. */
 export function AdminPage() {
+  const { can } = useAuth();
+  const sections = SECTIONS.map((s) => ({ ...s, tiles: s.tiles.filter((t) => can(t.permission)) })).filter(
+    (s) => s.tiles.length > 0,
+  );
+
   return (
     <div className="dash admin-page">
       <PageHeader
         icon={<GridIcon size={19} />}
         eyebrow="Administração"
         title="Central de Administração"
-        subtitle="Configuração da loja, canais de venda e controle da conta - disponível apenas para administradores."
+        subtitle="Configuração da loja, canais de venda e controle da conta - você vê os módulos que seu perfil de acesso libera."
       />
 
-      {SECTIONS.map((section) => (
+      {sections.map((section) => (
         <section className="admin-section" key={section.title}>
           <div className="admin-section-head">
             <h2>{section.title}</h2>

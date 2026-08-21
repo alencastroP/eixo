@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { FiscalKind, UserRole } from '@prisma/client';
-import { authenticate, requireRole } from '../../middleware/auth';
+import { FiscalKind } from '@prisma/client';
+import { requirePermission } from '../../middleware/permissions';
 import { ah } from '../../lib/errors';
 import * as fiscal from './fiscal.service';
 
 export const fiscalRouter = Router();
-fiscalRouter.use(authenticate, requireRole(UserRole.ADMIN));
+fiscalRouter.use(requirePermission('fiscal.view'));
 
 fiscalRouter.get(
   '/invoices',
@@ -33,6 +33,7 @@ const emitSchema = z.object({
 
 fiscalRouter.post(
   '/invoices',
+  requirePermission('fiscal.emit'),
   ah(async (req, res) => {
     res.status(201).json(await fiscal.emitInvoice(emitSchema.parse(req.body)));
   }),
@@ -40,6 +41,7 @@ fiscalRouter.post(
 
 fiscalRouter.post(
   '/invoices/:id/cancel',
+  requirePermission('fiscal.emit'),
   ah(async (req, res) => {
     res.json(await fiscal.cancelInvoice(req.params.id));
   }),

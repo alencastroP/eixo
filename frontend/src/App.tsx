@@ -1,9 +1,10 @@
 import { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedLayout } from './components/Layout';
-import { AdminRoute } from './components/AdminRoute';
+import { RequirePermission } from './components/RequirePermission';
 import { AgentConfigPage } from './pages/AgentConfigPage';
-import { AdminPage } from './pages/AdminPage';
+import { ADMIN_PERMISSIONS, AdminPage } from './pages/AdminPage';
+import { BillingPage } from './pages/BillingPage';
 import { CompanyPage } from './pages/CompanyPage';
 import { CreditPage } from './pages/CreditPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -12,6 +13,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { StorefrontConfigPage } from './pages/StorefrontConfigPage';
 import { UsersPage } from './pages/UsersPage';
+import { RolesPage } from './pages/RolesPage';
 import { InboxPage } from './pages/InboxPage';
 import { IntegrationsPage } from './pages/IntegrationsPage';
 import { InventoryPage } from './pages/InventoryPage';
@@ -74,101 +76,163 @@ export default function App() {
         {/* no subdomínio de uma loja a raiz é a vitrine (rota acima), não o painel */}
         {!hostSlug && <Route path="/" element={<Navigate to="/dashboard" replace />} />}
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/tickets" element={<InboxPage />} />
-        <Route path="/tickets/:id" element={<InboxPage />} />
-        <Route path="/kanban" element={<KanbanPage />} />
-        <Route path="/inventory" element={<InventoryPage />} />
+        <Route
+          path="/tickets"
+          element={
+            <RequirePermission permission="tickets.view">
+              <InboxPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/tickets/:id"
+          element={
+            <RequirePermission permission="tickets.view">
+              <InboxPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/kanban"
+          element={
+            <RequirePermission permission="tickets.view">
+              <KanbanPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/inventory"
+          element={
+            <RequirePermission permission="vehicles.view">
+              <InventoryPage />
+            </RequirePermission>
+          }
+        />
         <Route
           path="/inventory/new"
           element={
-            <AdminRoute>
+            <RequirePermission permission="vehicles.manage">
               <VehicleFormPage />
-            </AdminRoute>
+            </RequirePermission>
           }
         />
-        <Route path="/inventory/:id/edit" element={<VehicleFormPage />} />
-        <Route path="/credit" element={<CreditPage />} />
+        {/* a ficha abre para quem vê o estoque; sem 'vehicles.manage' os
+            campos ficam travados dentro da própria página */}
+        <Route
+          path="/inventory/:id/edit"
+          element={
+            <RequirePermission permission="vehicles.view">
+              <VehicleFormPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/credit"
+          element={
+            <RequirePermission permission="credit.view">
+              <CreditPage />
+            </RequirePermission>
+          }
+        />
         <Route
           path="/finance"
           element={
-            <AdminRoute>
+            <RequirePermission permission={['finance.view', 'fiscal.view', 'vehicles.costs']}>
               <FinancePage />
-            </AdminRoute>
+            </RequirePermission>
           }
         />
         <Route
           path="/reports"
           element={
-            <AdminRoute>
+            <RequirePermission permission="reports.view">
               <Suspense fallback={<div className="dash-loading">Carregando relatórios…</div>}>
                 <ReportsPage />
               </Suspense>
-            </AdminRoute>
+            </RequirePermission>
           }
         />
         <Route
           path="/audit"
           element={
-            <AdminRoute>
+            <RequirePermission permission="audit.view">
               <AuditPage />
-            </AdminRoute>
+            </RequirePermission>
           }
         />
         <Route path="/profile" element={<ProfilePage />} />
         <Route
           path="/admin"
           element={
-            <AdminRoute>
+            // a central lista o que o perfil alcança; basta administrar UMA
+            // coisa para ela fazer sentido
+            <RequirePermission permission={ADMIN_PERMISSIONS}>
               <AdminPage />
-            </AdminRoute>
+            </RequirePermission>
           }
         />
         <Route
           path="/company"
           element={
-            <AdminRoute>
+            <RequirePermission permission="company.manage">
               <CompanyPage />
-            </AdminRoute>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/billing"
+          element={
+            <RequirePermission permission="billing.view">
+              <BillingPage />
+            </RequirePermission>
           }
         />
         <Route
           path="/users"
           element={
-            <AdminRoute>
+            <RequirePermission permission="users.manage">
               <UsersPage />
-            </AdminRoute>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/roles"
+          element={
+            <RequirePermission permission="profiles.manage">
+              <RolesPage />
+            </RequirePermission>
           }
         />
         <Route
           path="/settings"
           element={
-            <AdminRoute>
+            <RequirePermission permission="company.manage">
               <SettingsPage />
-            </AdminRoute>
+            </RequirePermission>
           }
         />
         <Route
           path="/storefront"
           element={
-            <AdminRoute>
+            <RequirePermission permission="storefront.manage">
               <StorefrontConfigPage />
-            </AdminRoute>
+            </RequirePermission>
           }
         />
         <Route
           path="/agent"
           element={
-            <AdminRoute>
+            <RequirePermission permission="agent.manage">
               <AgentConfigPage />
-            </AdminRoute>
+            </RequirePermission>
           }
         />
         <Route
           path="/integrations"
           element={
-            <AdminRoute>
+            <RequirePermission permission="integrations.manage">
               <IntegrationsPage />
-            </AdminRoute>
+            </RequirePermission>
           }
         />
       </Route>

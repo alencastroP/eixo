@@ -16,44 +16,46 @@ import {
   UserIcon,
   WalletIcon,
 } from './icons';
-import { ADMIN_ROUTES } from '../pages/AdminPage';
+import { ADMIN_PERMISSIONS, ADMIN_ROUTES } from '../pages/AdminPage';
 import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../theme/ThemeContext';
-import { ROLE_LABELS } from '../types';
+import { accessLabel, type Permission } from '../types';
 import { avatarColor, initials } from '../utils/format';
 
 interface Item {
   to: string;
   label: string;
   icon: ReactNode;
-  admin?: boolean;
+  /** Permissões que abrem o destino; ausente = todo mundo vê. */
+  permission?: Permission[];
 }
 
 /** Os destinos que cabem na barra - o resto vai para "Mais". */
 const PRIMARY: Item[] = [
   { to: '/dashboard', label: 'Painel', icon: <GaugeIcon size={20} /> },
-  { to: '/tickets', label: 'Atendimento', icon: <InboxIcon size={20} /> },
-  { to: '/inventory', label: 'Estoque', icon: <CarIcon size={20} /> },
-  { to: '/credit', label: 'Crédito', icon: <ShieldIcon size={20} /> },
+  { to: '/tickets', label: 'Atendimento', icon: <InboxIcon size={20} />, permission: ['tickets.view'] },
+  { to: '/inventory', label: 'Estoque', icon: <CarIcon size={20} />, permission: ['vehicles.view'] },
+  { to: '/credit', label: 'Crédito', icon: <ShieldIcon size={20} />, permission: ['credit.view'] },
 ];
 
 /** Tudo que o rail lateral oferece e não coube nos 5 alvos da barra. */
 const SECONDARY: Item[] = [
-  { to: '/finance', label: 'Financeiro', icon: <WalletIcon size={20} />, admin: true },
-  { to: '/reports', label: 'Relatórios', icon: <BarChartIcon size={20} />, admin: true },
-  { to: '/admin', label: 'Administração', icon: <GridIcon size={20} />, admin: true },
+  { to: '/finance', label: 'Financeiro', icon: <WalletIcon size={20} />, permission: ['finance.view', 'fiscal.view'] },
+  { to: '/reports', label: 'Relatórios', icon: <BarChartIcon size={20} />, permission: ['reports.view'] },
+  { to: '/admin', label: 'Administração', icon: <GridIcon size={20} />, permission: ADMIN_PERMISSIONS },
   { to: '/profile', label: 'Meus dados', icon: <UserIcon size={20} /> },
-  { to: '/settings', label: 'Configurações', icon: <SettingsIcon size={20} />, admin: true },
+  { to: '/settings', label: 'Configurações', icon: <SettingsIcon size={20} />, permission: ['company.manage'] },
 ];
 
 /**
- * Barra inferior do celular: 5 alvos de 44px e uma folha "Mais" com o resto.
+ * Barra inferior do celular: até 5 alvos de 44px e uma folha "Mais" com o
+ * resto. Os destinos seguem as permissões do perfil, iguais às do rail.
  * Só aparece abaixo de 880px - o rail lateral some no mesmo ponto, então a
  * folha precisa cobrir tudo que ele oferecia, inclusive encerrar a sessão.
  */
-export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
+export function MobileNav() {
   const [sheetOpen, setSheetOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, can } = useAuth();
   const { theme, toggle } = useTheme();
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -69,7 +71,8 @@ export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
     return () => document.removeEventListener('keydown', onKey);
   }, [sheetOpen]);
 
-  const extra = SECONDARY.filter((i) => !i.admin || isAdmin);
+  const allowed = (item: Item) => !item.permission || can(...item.permission);
+  const extra = SECONDARY.filter(allowed);
   // as telas da central abrem por dentro de "Administração" e não têm item próprio
   const covers = (item: Item) =>
     pathname.startsWith(item.to) || (item.to === '/admin' && ADMIN_ROUTES.some((p) => pathname.startsWith(p)));
@@ -86,7 +89,7 @@ export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
   return (
     <>
       <nav className="mobile-nav" aria-label="Navegação principal">
-        {PRIMARY.map((item) => {
+        {PRIMARY.filter(allowed).map((item) => {
           // O Kanban não tem botão próprio (é o dropdown dentro da Caixa de
           // entrada), mas o botão "Atendimento" continua aceso nele.
           const active =
@@ -128,7 +131,7 @@ export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
                 <div>
                   <strong>{user.name}</strong>
                   <span className="muted small">
-                    {user.email} · {ROLE_LABELS[user.role]}
+                    {user.email} · {accessLabel(user)}
                   </span>
                 </div>
               </div>

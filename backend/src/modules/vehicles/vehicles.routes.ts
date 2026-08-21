@@ -1,7 +1,7 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { z } from 'zod';
-import { UserRole, VehicleSaleStatus, VehicleType } from '@prisma/client';
-import { authenticate, requireRole } from '../../middleware/auth';
+import { VehicleSaleStatus, VehicleType } from '@prisma/client';
+import { requirePermission } from '../../middleware/permissions';
 import { ah } from '../../lib/errors';
 import * as vehicles from './vehicles.service';
 
@@ -11,7 +11,15 @@ import * as vehicles from './vehicles.service';
  * app.ts) - o estoque de uma loja nunca é visível para outra.
  */
 export const vehiclesRouter = Router();
-vehiclesRouter.use(authenticate);
+vehiclesRouter.use(requirePermission('vehicles.view'));
+
+/**
+ * Ficha do veículo pronta para ESTE usuário: sem 'vehicles.costs', preço de
+ * compra, gastos e margem saem da resposta. Toda rota que devolve a ficha
+ * passa por aqui - inclusive as de escrita, que respondem com o veículo salvo.
+ */
+const fichaPara = (req: Request, detail: vehicles.VehicleDetail) =>
+  req.user!.permissions!.includes('vehicles.costs') ? detail : vehicles.withoutCostData(detail);
 
 const listSchema = z.object({
   brand: z.string().trim().min(1).optional(),
@@ -42,7 +50,7 @@ const plateSchema = z.object({ plate: z.string().trim().min(6) });
 
 vehiclesRouter.post(
   '/plate-lookup',
-  requireRole(UserRole.ADMIN),
+  requirePermission('vehicles.manage'),
   ah(async (req, res) => {
     const { plate } = plateSchema.parse(req.body);
     res.json(await vehicles.lookupPlate(plate));
@@ -52,7 +60,7 @@ vehiclesRouter.post(
 vehiclesRouter.get(
   '/:id',
   ah(async (req, res) => {
-    res.json(await vehicles.getVehicle(req.account!.id, req.params.id));
+    res.json(fichaPara(req, await vehicles.getVehicle(req.account!.id, req.params.id)));
   }),
 );
 
@@ -85,7 +93,7 @@ const generateDescSchema = z.object({ extraNotes: z.string().trim().max(600).opt
 
 vehiclesRouter.post(
   '/:id/description/generate',
-  requireRole(UserRole.ADMIN),
+  requirePermission('vehicles.manage'),
   ah(async (req, res) => {
     const { extraNotes } = generateDescSchema.parse(req.body);
     res.json(await vehicles.generateDescription(req.account!.id, req.params.id, extraNotes));
@@ -94,23 +102,23 @@ vehiclesRouter.post(
 
 vehiclesRouter.post(
   '/',
-  requireRole(UserRole.ADMIN),
+  requirePermission('vehicles.manage'),
   ah(async (req, res) => {
-    res.status(201).json(await vehicles.createVehicle(req.account!.id, vehicleSchema.parse(req.body)));
+    res.status(201).json(fichaPara(req, await vehicles.createVehicle(req.account!.id, vehicleSchema.parse(req.body))));
   }),
 );
 
 vehiclesRouter.put(
   '/:id',
-  requireRole(UserRole.ADMIN),
+  requirePermission('vehicles.manage'),
   ah(async (req, res) => {
-    res.json(await vehicles.updateVehicle(req.account!.id, req.params.id, vehicleSchema.parse(req.body)));
+    res.json(fichaPara(req, await vehicles.updateVehicle(req.account!.id, req.params.id, vehicleSchema.parse(req.body))));
   }),
 );
 
 vehiclesRouter.delete(
   '/:id',
-  requireRole(UserRole.ADMIN),
+  requirePermission('vehicles.manage'),
   ah(async (req, res) => {
     await vehicles.deleteVehicle(req.account!.id, req.params.id);
     res.status(204).end();
@@ -125,10 +133,10 @@ const photosSchema = z.object({
 
 vehiclesRouter.post(
   '/:id/photos',
-  requireRole(UserRole.ADMIN),
+  requirePermission('vehicles.manage'),
   ah(async (req, res) => {
     const { images } = photosSchema.parse(req.body);
-    res.status(201).json(await vehicles.addPhotos(req.account!.id, req.params.id, images));
+    res.status(201).json(fichaPara(req, await vehicles.addPhotos(req.account!.id, req.params.id, images)));
   }),
 );
 
@@ -139,18 +147,18 @@ const reorderSchema = z.object({
 
 vehiclesRouter.patch(
   '/:id/photos',
-  requireRole(UserRole.ADMIN),
+  requirePermission('vehicles.manage'),
   ah(async (req, res) => {
     const { order, coverId } = reorderSchema.parse(req.body);
-    res.json(await vehicles.reorderPhotos(req.account!.id, req.params.id, order, coverId));
+    res.json(fichaPara(req, await vehicles.reorderPhotos(req.account!.id, req.params.id, order, coverId)));
   }),
 );
 
 vehiclesRouter.delete(
   '/:id/photos/:photoId',
-  requireRole(UserRole.ADMIN),
+  requirePermission('vehicles.manage'),
   ah(async (req, res) => {
-    res.json(await vehicles.deletePhoto(req.account!.id, req.params.id, req.params.photoId));
+    res.json(fichaPara(req, await vehicles.deletePhoto(req.account!.id, req.params.id, req.params.photoId)));
   }),
 );
 
@@ -165,16 +173,16 @@ const costSchema = z.object({
 
 vehiclesRouter.post(
   '/:id/costs',
-  requireRole(UserRole.ADMIN),
+  requirePermission('vehicles.costs'),
   ah(async (req, res) => {
-    res.status(201).json(await vehicles.addCost(req.account!.id, req.params.id, costSchema.parse(req.body)));
+    res.status(201).json(fichaPara(req, await vehicles.addCost(req.account!.id, req.params.id, costSchema.parse(req.body))));
   }),
 );
 
 vehiclesRouter.delete(
   '/:id/costs/:costId',
-  requireRole(UserRole.ADMIN),
+  requirePermission('vehicles.costs'),
   ah(async (req, res) => {
-    res.json(await vehicles.deleteCost(req.account!.id, req.params.id, req.params.costId));
+    res.json(fichaPara(req, await vehicles.deleteCost(req.account!.id, req.params.id, req.params.costId)));
   }),
 );

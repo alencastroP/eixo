@@ -14,6 +14,9 @@ const signupSchema = z.object({
   password: z.string().min(8, 'A senha precisa de ao menos 8 caracteres'),
   companyName: z.string().trim().min(2, 'Informe o nome da empresa'),
   companyCnpj: z.string().trim().optional(),
+  termsAccepted: z.literal(true, {
+    errorMap: () => ({ message: 'É necessário aceitar os Termos de Uso para continuar' }),
+  }),
 });
 
 trialRouter.post(
@@ -22,7 +25,7 @@ trialRouter.post(
   ah(async (req, res) => {
     const input = signupSchema.parse(req.body);
     try {
-      const session = await signupTrial(input, { ip: req.ip });
+      const session = await signupTrial(input, { ip: req.ip, userAgent: req.get('user-agent') });
       res.status(201).json(session);
     } catch (err) {
       if (err instanceof CpfAlreadyUsedError) {

@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { UserRole } from '@prisma/client';
-import { authenticate, requireRole } from '../../middleware/auth';
+import { requirePermission } from '../../middleware/permissions';
 import { ah, notFound } from '../../lib/errors';
 import { prisma } from '../../lib/prisma';
 import { KNOWLEDGE_INJECT_BUDGET, resolveAgentProfile, resolveKnowledge } from './context.service';
@@ -12,7 +11,7 @@ import { rescheduleAccount, resolvePolicyRow } from '../flow/flow.service';
  * `req.account!.id` é sempre a origem do tenant - nunca corpo nem query.
  */
 export const agentRouter = Router();
-agentRouter.use(authenticate, requireRole(UserRole.ADMIN));
+agentRouter.use(requirePermission('agent.manage'));
 
 // ─── Persona ─────────────────────────────────────────────────────────────────
 

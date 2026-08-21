@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { GaugeIcon, RefreshIcon, TrendUpIcon } from '../components/icons';
 import { PageHeader } from '../components/PageHeader';
 import {
-  ROLE_LABELS,
+  accessLabel,
   STATUS_LABELS,
   STATUS_ORDER,
   platformLabel,
@@ -78,7 +78,7 @@ export function DashboardPage() {
         icon={<GaugeIcon size={19} />}
         eyebrow="Painel"
         title={`${greeting}, ${user?.name.split(' ')[0] ?? ''}`}
-        subtitle={`${user ? ROLE_LABELS[user.role] : ''} · atendimento dos últimos ${windowDays} dias`}
+        subtitle={`${accessLabel(user)} · atendimento dos últimos ${windowDays} dias`}
         actions={
           <>
             <div className="segmented">

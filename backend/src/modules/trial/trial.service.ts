@@ -10,9 +10,12 @@ import { AccountStatus, Prisma, SubscriptionStatus, UserRole } from '@prisma/cli
 import { badRequest, conflict } from '../../lib/errors';
 import { logger } from '../../lib/logger';
 import { maskDocument, isValidCpf, onlyDigits } from '../../lib/document';
+import { TERMS_DOCUMENT_CODE, TERMS_VERSION } from '../../lib/legal-versions';
 import { prisma } from '../../lib/prisma';
 import { hashCpf, sealCpf } from '../../lib/cpf-token';
 import { hashPassword, issueTokens } from '../auth/auth.service';
+import { ADMIN_PROFILE_KEY } from '../roles/permissions';
+import { ensureDefaultProfiles } from '../roles/roles.service';
 import { TRIAL_DURATION_DAYS, TRIAL_PLAN_CODE } from '../billing/plans';
 
 const toJson = (value: unknown) => value as Prisma.InputJsonValue;
@@ -24,6 +27,8 @@ export interface TrialSignupInput {
   password: string;
   companyName: string;
   companyCnpj?: string;
+  /** Aceite explícito dos Termos de Uso + DPA + AUP + SLA (checkbox, não pré-marcado). */
+  termsAccepted: boolean;
 }
 
 export class CpfAlreadyUsedError extends Error {
@@ -34,12 +39,19 @@ export class CpfAlreadyUsedError extends Error {
   }
 }
 
-export async function signupTrial(input: TrialSignupInput, meta: { ip?: string }) {
+export async function signupTrial(input: TrialSignupInput, meta: { ip?: string; userAgent?: string }) {
   const cpfDigits = onlyDigits(input.cpf);
 
   // (a) validação oficial de CPF no BACK-END (nunca confiar só no client)
   if (!isValidCpf(cpfDigits)) {
     throw badRequest('CPF inválido. Verifique os dígitos informados.', 'INVALID_CPF');
+  }
+
+  // Aceite dos Termos é condição de cadastro, não um checkbox decorativo: sem
+  // prova de aceite, o contrato não é oponível ao cliente depois (ver
+  // legal/07-CONTROLE-DE-VERSOES-E-REGISTRO-DE-ACEITE.md).
+  if (!input.termsAccepted) {
+    throw badRequest('É necessário aceitar os Termos de Uso para criar a conta.', 'TERMS_NOT_ACCEPTED');
   }
 
   const email = input.email.toLowerCase().trim();
@@ -80,12 +92,17 @@ export async function signupTrial(input: TrialSignupInput, meta: { ip?: string }
         },
       });
 
+      // Perfis de acesso da loja nova: "Administrador" e "Atendente" já nascem
+      // com a conta, para o lojista ter o que atribuir ao primeiro funcionário.
+      const profiles = await ensureDefaultProfiles(tx, account.id);
+
       const createdUser = await tx.user.create({
         data: {
           name: input.name.trim(),
           email,
           passwordHash: hashPassword(input.password),
           role: UserRole.ADMIN, // quem cria o trial é o admin da própria conta
+          profileId: profiles.get(ADMIN_PROFILE_KEY)!.id,
           accountId: account.id,
         },
       });
@@ -97,6 +114,20 @@ export async function signupTrial(input: TrialSignupInput, meta: { ip?: string }
       // registro anti-fraude (unique em cpfHash garante a corrida no banco)
       await tx.trialCpfRegistry.create({
         data: { cpfHash, cpfSealed: toJson(sealCpf(cpfDigits)), accountId: account.id },
+      });
+
+      // prova de aceite dos Termos - somente inserção, nunca atualizada (ver
+      // legal/07-CONTROLE-DE-VERSOES-E-REGISTRO-DE-ACEITE.md §5)
+      await tx.termsAcceptance.create({
+        data: {
+          accountId: account.id,
+          userId: createdUser.id,
+          documentCode: TERMS_DOCUMENT_CODE,
+          documentVersion: TERMS_VERSION,
+          context: 'signup',
+          ip: meta.ip,
+          userAgent: meta.userAgent,
+        },
       });
 
       return createdUser;

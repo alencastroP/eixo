@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { ChannelsCard } from '../components/ChannelsCard';
 import { PageHeader } from '../components/PageHeader';
 import { UserIcon } from '../components/icons';
-import { ROLE_LABELS } from '../types';
+import { accessLabel } from '../types';
 
 export function ProfilePage() {
   const { user, refreshUser } = useAuth();
@@ -56,8 +56,8 @@ export function ProfilePage() {
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </label>
           <div className="field">
-            <span>Papel</span>
-            <div className="static-field">{user ? ROLE_LABELS[user.role] : '-'}</div>
+            <span>Perfil de acesso</span>
+            <div className="static-field">{accessLabel(user)}</div>
           </div>
         </div>
 

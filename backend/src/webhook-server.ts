@@ -13,6 +13,7 @@ import { prisma } from './lib/prisma';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { requestLog } from './middleware/request-log';
 import { securityHeaders, webhookRateLimit } from './middleware/security';
+import { billingWebhookRouter } from './webhooks/billing-webhook.routes';
 import { webhookRouter } from './webhooks/webhook.routes';
 import { startWorker } from './workers/lead-processor';
 
@@ -32,6 +33,7 @@ app.use(
 app.use(requestLog);
 
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'crm-webhooks' }));
+app.use('/webhooks', webhookRateLimit, billingWebhookRouter);
 app.use(webhookRateLimit, webhookRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);

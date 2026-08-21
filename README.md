@@ -22,7 +22,7 @@ Leads recebidos de plataformas de anúncio (OLX, Mercado Livre, Webmotors) viram
                  PostgreSQL ◄──────────────┘
                      ▲
                      │ Prisma
-              API CRM (:3001) ── JWT + papéis (ADMIN / AGENT)
+              API CRM (:3001) ── JWT + perfis de acesso por loja
                      ▲
                      │ /api (proxy em dev)
               React + Vite (:5173) ── lista, kanban, detalhe do ticket
@@ -89,9 +89,11 @@ npm run dev                 # http://localhost:5173 (proxy /api → :3001)
 
 | Usuário | Senha | Papel |
 | --- | --- | --- |
-| `admin@crm.local` | `Admin@123` | Administrador - vê tudo, reatribui, anonimiza |
+| `admin@crm.local` | `Admin@123` | Administrador - acesso total (perfil coringa) |
 | `carlos@crm.local` | `Vendedor@123` | Atendente - vê os próprios tickets + não atribuídos |
 | `ana@crm.local` | `Vendedor@123` | Atendente |
+
+O papel de cada um vem do **perfil de acesso** (Administração › Perfis & Permissões), não de um enum fixo - a loja cria os perfis que quiser.
 
 ### Simulando um lead chegando
 
@@ -251,9 +253,9 @@ Vitrine despublicada, conta bloqueada (inadimplente/expirada) ou slug inexistent
 - **PII nunca em logs:** o logger (`lib/logger.ts`) redige recursivamente chaves sensíveis (telefone, e-mail, CPF, senha, token) e mascara padrões de e-mail/telefone em strings livres. Os access logs registram só método/rota/status/ids.
 - **Senhas** com bcrypt (custo 10). **Refresh tokens** guardados apenas como SHA-256, com rotação a cada uso e revogação em logout.
 - **Credenciais de plataforma por conta:** cada loja tem o próprio segredo de webhook, cifrado em repouso (AES-256-GCM) em `integrations.inboundSecret`, e a própria URL de recepção (`/webhooks/:platform/:webhookKey`). Não há segredo global de plataforma - com um único token de ambiente, qualquer lojista poderia forjar leads no funil de outro.
-- **Isolamento de tenant:** `leads`, `tickets`, `webhook_events` e `integrations` carregam `accountId`. O escopo de leitura aplica a conta **antes** da regra de papel, então nem um ADMIN enxerga o funil de outra loja - ele é dono da própria conta, não da instalação. Verificável com `npm run verify:isolation`.
-- **Direito ao esquecimento (art. 18):** `POST /api/leads/:id/anonymize` (admin) remove nome/telefone/e-mail do lead, apaga o conteúdo das mensagens recebidas e os payloads brutos de webhook associados - preservando métricas (status, tempos, contagens) para relatórios.
-- **Autorização por papel:** atendente enxerga/edita apenas tickets próprios ou livres (pode assumir); admin vê tudo e reatribui. Regras aplicadas no serviço (não só na UI).
+- **Isolamento de tenant:** `leads`, `tickets`, `webhook_events` e `integrations` carregam `accountId`. O escopo de leitura aplica a conta **antes** da regra de perfil, então nem quem tem acesso total enxerga o funil de outra loja - ele é dono da própria conta, não da instalação. Verificável com `npm run verify:isolation`.
+- **Direito ao esquecimento (art. 18):** `POST /api/leads/:id/anonymize` (`leads.privacy`) remove nome/telefone/e-mail do lead, apaga o conteúdo das mensagens recebidas e os payloads brutos de webhook associados - preservando métricas (status, tempos, contagens) para relatórios.
+- **Autorização por perfil de acesso:** cada loja desenha os próprios perfis (`access_profiles`) marcando permissões de um catálogo por módulo - `tickets.view.all`, `vehicles.costs`, `finance.manage`, `users.manage`, etc. Toda rota declara a permissão que exige (`requirePermission`), e o recorte de leitura do funil também sai daí: sem `tickets.view.all` a pessoa vê só os próprios tickets e os livres. A lista efetiva é relida do banco a cada requisição (cache de 30s), e não do JWT - revogar acesso vale na requisição seguinte, sem esperar o refresh do token. Dois perfis nascem com a conta ("Administrador", com o coringa `*`, e "Atendente"); os demais o lojista cria. Verificável com `npm run verify:permissions`.
 
 ## API (resumo)
 
@@ -261,14 +263,15 @@ Vitrine despublicada, conta bloqueada (inadimplente/expirada) ou slug inexistent
 | --- | --- | --- |
 | `POST /api/auth/login` · `/refresh` · `/logout` | Sessão JWT + refresh com rotação | público |
 | `GET /api/auth/me` | Usuário atual | autenticado |
-| `GET/POST /api/users` · `PATCH /api/users/:id` | Gestão de usuários | GET: todos · resto: admin |
-| `GET /api/tickets` | Lista com filtros (`status`, `platform`, `assignedTo=me\|unassigned\|id`, `search`, `dateFrom/To`, paginação) | escopo por papel |
-| `GET /api/tickets/stats` | Contadores por status | escopo por papel |
+| `GET/POST /api/users` · `PATCH /api/users/:id` | Gestão de usuários | GET: todos · resto: `users.manage` |
+| `GET /api/roles` · `/roles/catalog` · `POST/PUT/DELETE` | Perfis de acesso e catálogo de permissões | `profiles.manage` |
+| `GET /api/tickets` | Lista com filtros (`status`, `platform`, `assignedTo=me\|unassigned\|id`, `search`, `dateFrom/To`, paginação) | escopo por perfil |
+| `GET /api/tickets/stats` | Contadores por status | escopo por perfil |
 | `POST /api/tickets` | Ticket manual (lead balcão/telefone) | autenticado |
-| `GET/PATCH /api/tickets/:id` | Detalhe · status/prioridade/atribuição (auditados) | escopo por papel |
-| `POST /api/tickets/:id/interactions` | Resposta ao cliente (marca 1ª resposta/SLA) ou nota interna | escopo por papel |
-| `POST /api/leads/:id/anonymize` | Anonimização LGPD | admin |
-| `GET /api/webhook-events` · `POST /api/webhook-events/:id/retry` | Observabilidade/reprocesso da fila | admin |
+| `GET/PATCH /api/tickets/:id` | Detalhe · status/prioridade/atribuição (auditados) | escopo por perfil |
+| `POST /api/tickets/:id/interactions` | Resposta ao cliente (marca 1ª resposta/SLA) ou nota interna | escopo por perfil |
+| `POST /api/leads/:id/anonymize` | Anonimização LGPD | `leads.privacy` |
+| `GET /api/webhook-events` · `POST /api/webhook-events/:id/retry` | Observabilidade/reprocesso da fila | `integrations.manage` |
 | `POST /webhooks/:platform` (porta 3002) | Recepção de leads | autenticação por adapter |
 
 Comportamentos automáticos auditados: responder um ticket livre **atribui ao atendente**; primeira resposta move `NEW → IN_PROGRESS` e grava `firstResponseAt` (SLA); mensagem nova do cliente move `WAITING_CUSTOMER → IN_PROGRESS`; status de fechamento define `closedAt`.

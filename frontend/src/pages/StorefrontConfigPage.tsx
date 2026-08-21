@@ -41,8 +41,8 @@ function readAsDataUrl(file: File): Promise<string> {
 }
 
 export function StorefrontConfigPage() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const { can } = useAuth();
+  const canEdit = can('storefront.manage');
 
   const [data, setData] = useState<StorefrontSettings | null>(null);
   const [config, setConfig] = useState<StorefrontConfig | null>(null);
@@ -140,7 +140,7 @@ export function StorefrontConfigPage() {
                 <input
                   value={config.brand.name}
                   onChange={(e) => patch('brand', { name: e.target.value })}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </label>
               <label className="field">
@@ -148,7 +148,7 @@ export function StorefrontConfigPage() {
                 <input
                   value={config.brand.tagline}
                   onChange={(e) => patch('brand', { tagline: e.target.value })}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </label>
             </div>
@@ -161,13 +161,13 @@ export function StorefrontConfigPage() {
                     type="color"
                     value={config.brand.primary}
                     onChange={(e) => patch('brand', { primary: e.target.value })}
-                    disabled={!isAdmin}
+                    disabled={!canEdit}
                     style={{ width: 52, height: 38, padding: 2 }}
                   />
                   <input
                     value={config.brand.primary}
                     onChange={(e) => patch('brand', { primary: e.target.value })}
-                    disabled={!isAdmin}
+                    disabled={!canEdit}
                   />
                 </span>
               </label>
@@ -176,7 +176,7 @@ export function StorefrontConfigPage() {
                 <select
                   value={config.brand.theme}
                   onChange={(e) => patch('brand', { theme: e.target.value as 'dark' | 'light' })}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 >
                   <option value="light">Claro (recomendado)</option>
                   <option value="dark">Escuro</option>
@@ -201,11 +201,11 @@ export function StorefrontConfigPage() {
                   hidden
                   onChange={(e) => void upload('logo', e.target.files?.[0])}
                 />
-                <button className="btn btn-ghost" onClick={() => logoInput.current?.click()} disabled={!isAdmin}>
+                <button className="btn btn-ghost" onClick={() => logoInput.current?.click()} disabled={!canEdit}>
                   {config.brand.logoUrl ? 'Trocar logo' : 'Enviar logo'}
                 </button>
                 {config.brand.logoUrl && (
-                  <button className="btn btn-ghost" onClick={() => patch('brand', { logoUrl: null })} disabled={!isAdmin}>
+                  <button className="btn btn-ghost" onClick={() => patch('brand', { logoUrl: null })} disabled={!canEdit}>
                     Remover
                   </button>
                 )}
@@ -220,7 +220,7 @@ export function StorefrontConfigPage() {
             <h3>Primeira dobra</h3>
             <label className="field">
               <span>Título</span>
-              <input value={config.hero.title} onChange={(e) => patch('hero', { title: e.target.value })} disabled={!isAdmin} />
+              <input value={config.hero.title} onChange={(e) => patch('hero', { title: e.target.value })} disabled={!canEdit} />
             </label>
             <label className="field">
               <span>Subtítulo</span>
@@ -228,7 +228,7 @@ export function StorefrontConfigPage() {
                 rows={2}
                 value={config.hero.subtitle}
                 onChange={(e) => patch('hero', { subtitle: e.target.value })}
-                disabled={!isAdmin}
+                disabled={!canEdit}
               />
             </label>
             <div className="field-row">
@@ -237,7 +237,7 @@ export function StorefrontConfigPage() {
                 <input
                   value={config.hero.ctaPrimary}
                   onChange={(e) => patch('hero', { ctaPrimary: e.target.value })}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </label>
               <label className="field">
@@ -245,7 +245,7 @@ export function StorefrontConfigPage() {
                 <input
                   value={config.hero.ctaSecondary}
                   onChange={(e) => patch('hero', { ctaSecondary: e.target.value })}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </label>
             </div>
@@ -257,7 +257,7 @@ export function StorefrontConfigPage() {
                 onChange={(e) =>
                   patch('hero', { badges: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 4) })
                 }
-                disabled={!isAdmin}
+                disabled={!canEdit}
               />
             </label>
             <div className="field">
@@ -277,11 +277,11 @@ export function StorefrontConfigPage() {
                   hidden
                   onChange={(e) => void upload('hero', e.target.files?.[0])}
                 />
-                <button className="btn btn-ghost" onClick={() => heroInput.current?.click()} disabled={!isAdmin}>
+                <button className="btn btn-ghost" onClick={() => heroInput.current?.click()} disabled={!canEdit}>
                   {config.hero.imageUrl ? 'Trocar imagem' : 'Enviar imagem'}
                 </button>
                 {config.hero.imageUrl && (
-                  <button className="btn btn-ghost" onClick={() => patch('hero', { imageUrl: null })} disabled={!isAdmin}>
+                  <button className="btn btn-ghost" onClick={() => patch('hero', { imageUrl: null })} disabled={!canEdit}>
                     Remover
                   </button>
                 )}
@@ -299,7 +299,7 @@ export function StorefrontConfigPage() {
             <h3>Sobre a loja</h3>
             <label className="field">
               <span>Título da seção</span>
-              <input value={config.about.title} onChange={(e) => patch('about', { title: e.target.value })} disabled={!isAdmin} />
+              <input value={config.about.title} onChange={(e) => patch('about', { title: e.target.value })} disabled={!canEdit} />
             </label>
             <label className="field">
               <span>Texto</span>
@@ -307,7 +307,7 @@ export function StorefrontConfigPage() {
                 rows={6}
                 value={config.about.text}
                 onChange={(e) => patch('about', { text: e.target.value })}
-                disabled={!isAdmin}
+                disabled={!canEdit}
               />
             </label>
 
@@ -324,7 +324,7 @@ export function StorefrontConfigPage() {
                       next[index] = { ...item, icon: e.target.value };
                       setConfig({ ...config, highlights: next });
                     }}
-                    disabled={!isAdmin}
+                    disabled={!canEdit}
                   >
                     {HIGHLIGHT_ICON_KEYS.map((key) => (
                       <option key={key} value={key}>
@@ -342,7 +342,7 @@ export function StorefrontConfigPage() {
                       next[index] = { ...item, title: e.target.value };
                       setConfig({ ...config, highlights: next });
                     }}
-                    disabled={!isAdmin}
+                    disabled={!canEdit}
                   />
                 </label>
                 <label className="field" style={{ flex: 2 }}>
@@ -354,12 +354,12 @@ export function StorefrontConfigPage() {
                       next[index] = { ...item, text: e.target.value };
                       setConfig({ ...config, highlights: next });
                     }}
-                    disabled={!isAdmin}
+                    disabled={!canEdit}
                   />
                 </label>
               </div>
             ))}
-            {isAdmin && config.highlights.length < 6 && (
+            {canEdit && config.highlights.length < 6 && (
               <button
                 className="btn btn-ghost"
                 onClick={() =>
@@ -384,7 +384,7 @@ export function StorefrontConfigPage() {
                   max={90}
                   value={config.financing.downPercent}
                   onChange={(e) => patch('financing', { downPercent: Number(e.target.value) })}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </label>
               <label className="field">
@@ -395,7 +395,7 @@ export function StorefrontConfigPage() {
                   max={72}
                   value={config.financing.months}
                   onChange={(e) => patch('financing', { months: Number(e.target.value) })}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </label>
               <label className="field">
@@ -407,7 +407,7 @@ export function StorefrontConfigPage() {
                   max={10}
                   value={config.financing.monthlyRate}
                   onChange={(e) => patch('financing', { monthlyRate: Number(e.target.value) })}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </label>
             </div>
@@ -415,7 +415,7 @@ export function StorefrontConfigPage() {
             <h3 style={{ marginTop: 24 }}>Busca no Google</h3>
             <label className="field">
               <span>Título da página</span>
-              <input value={config.seo.title} onChange={(e) => patch('seo', { title: e.target.value })} disabled={!isAdmin} />
+              <input value={config.seo.title} onChange={(e) => patch('seo', { title: e.target.value })} disabled={!canEdit} />
             </label>
             <label className="field">
               <span>Descrição</span>
@@ -423,7 +423,7 @@ export function StorefrontConfigPage() {
                 rows={2}
                 value={config.seo.description}
                 onChange={(e) => patch('seo', { description: e.target.value })}
-                disabled={!isAdmin}
+                disabled={!canEdit}
               />
             </label>
           </div>
@@ -439,7 +439,7 @@ export function StorefrontConfigPage() {
                   value={config.contact.phone}
                   onChange={(e) => patch('contact', { phone: e.target.value })}
                   placeholder="(84) 98801-3786"
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </label>
               <label className="field">
@@ -448,7 +448,7 @@ export function StorefrontConfigPage() {
                   value={config.contact.whatsapp}
                   onChange={(e) => patch('contact', { whatsapp: e.target.value.replace(/\D/g, '') })}
                   placeholder="5584988013786"
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </label>
             </div>
@@ -458,7 +458,7 @@ export function StorefrontConfigPage() {
                 type="email"
                 value={config.contact.email}
                 onChange={(e) => patch('contact', { email: e.target.value })}
-                disabled={!isAdmin}
+                disabled={!canEdit}
               />
             </label>
             <label className="field">
@@ -466,7 +466,7 @@ export function StorefrontConfigPage() {
               <input
                 value={config.contact.address}
                 onChange={(e) => patch('contact', { address: e.target.value })}
-                disabled={!isAdmin}
+                disabled={!canEdit}
               />
             </label>
             <div className="field-row">
@@ -475,7 +475,7 @@ export function StorefrontConfigPage() {
                 <input
                   value={config.contact.city}
                   onChange={(e) => patch('contact', { city: e.target.value })}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </label>
               <label className="field">
@@ -484,7 +484,7 @@ export function StorefrontConfigPage() {
                   value={config.contact.state}
                   maxLength={2}
                   onChange={(e) => patch('contact', { state: e.target.value.toUpperCase() })}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </label>
             </div>
@@ -493,7 +493,7 @@ export function StorefrontConfigPage() {
               <input
                 value={config.contact.hours}
                 onChange={(e) => patch('contact', { hours: e.target.value })}
-                disabled={!isAdmin}
+                disabled={!canEdit}
               />
             </label>
             <label className="field">
@@ -501,7 +501,7 @@ export function StorefrontConfigPage() {
               <input
                 value={config.contact.mapUrl}
                 onChange={(e) => patch('contact', { mapUrl: e.target.value })}
-                disabled={!isAdmin}
+                disabled={!canEdit}
               />
             </label>
             <div className="field-row">
@@ -510,7 +510,7 @@ export function StorefrontConfigPage() {
                 <input
                   value={config.contact.instagram}
                   onChange={(e) => patch('contact', { instagram: e.target.value })}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </label>
               <label className="field">
@@ -518,7 +518,7 @@ export function StorefrontConfigPage() {
                 <input
                   value={config.contact.facebook}
                   onChange={(e) => patch('contact', { facebook: e.target.value })}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                 />
               </label>
             </div>
@@ -539,7 +539,7 @@ export function StorefrontConfigPage() {
                       onClick={() => patch('sections', { [key]: !config.sections[key] } as never)}
                       role="switch"
                       aria-checked={config.sections[key]}
-                      disabled={!isAdmin}
+                      disabled={!canEdit}
                     >
                       <span className="switch-knob" />
                     </button>
@@ -561,7 +561,7 @@ export function StorefrontConfigPage() {
                   setOk(false);
                   setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'));
                 }}
-                disabled={!isAdmin}
+                disabled={!canEdit}
               />
               <p className="muted small">
                 Site publicado em <strong>{publicUrl}</strong>
@@ -579,7 +579,7 @@ export function StorefrontConfigPage() {
                   onClick={() => void save({ published: !data.published })}
                   role="switch"
                   aria-checked={data.published}
-                  disabled={!isAdmin || saving}
+                  disabled={!canEdit || saving}
                 >
                   <span className="switch-knob" />
                 </button>
@@ -596,7 +596,7 @@ export function StorefrontConfigPage() {
         {error && <div className="alert alert-error">{error}</div>}
         {ok && <div className="alert alert-success">Vitrine atualizada.</div>}
 
-        {isAdmin ? (
+        {canEdit ? (
           <div className="settings-footer">
             <button className="btn btn-primary" onClick={() => void save()} disabled={saving}>
               {saving ? 'Salvando…' : 'Salvar alterações'}

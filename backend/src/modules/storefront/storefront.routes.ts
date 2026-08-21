@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { UserRole } from '@prisma/client';
-import { requireRole } from '../../middleware/auth';
+import { requirePermission } from '../../middleware/permissions';
 import { ah } from '../../lib/errors';
 import { saveImageDataUrl } from '../../lib/storage';
 import * as storefront from './storefront.service';
@@ -9,7 +8,7 @@ import * as storefront from './storefront.service';
 /**
  * Configuração da vitrine, dentro do CRM. Montada sob o guard de tenant -
  * a conta vem de `req.account`, nunca do corpo da requisição.
- * Leitura para autenticados; escrita restrita a ADMIN (o lojista).
+ * Leitura para quem tem acesso à conta; escrita só com 'storefront.manage'.
  */
 export const storefrontRouter = Router();
 
@@ -94,7 +93,7 @@ const updateSchema = z.object({
 
 storefrontRouter.put(
   '/',
-  requireRole(UserRole.ADMIN),
+  requirePermission('storefront.manage'),
   ah(async (req, res) => {
     res.json(await storefront.updateStorefront(req.account!.id, updateSchema.parse(req.body)));
   }),
@@ -111,7 +110,7 @@ const imageSchema = z.object({
 
 storefrontRouter.post(
   '/images',
-  requireRole(UserRole.ADMIN),
+  requirePermission('storefront.manage'),
   ah(async (req, res) => {
     const { kind, image } = imageSchema.parse(req.body);
     const url = await saveImageDataUrl(`storefronts/${req.account!.id}`, image);

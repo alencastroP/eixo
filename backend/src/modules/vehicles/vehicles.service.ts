@@ -2,6 +2,7 @@ import { Prisma, VehicleSaleStatus, VehicleType } from '@prisma/client';
 import { badRequest, notFound } from '../../lib/errors';
 import { prisma } from '../../lib/prisma';
 import { deleteByPublicUrl, saveImageDataUrl } from '../../lib/storage';
+import { assertCanAddVehicle } from '../billing/limits.service';
 import { generateVehicleDescription } from './description.generator';
 
 const dec = (d: Prisma.Decimal | null): number | null => (d == null ? null : Number(d));
@@ -163,6 +164,19 @@ export async function vehicleFacets(accountId: string) {
   };
 }
 
+export type VehicleDetail = ReturnType<typeof serializeVehicleDetail>;
+
+/**
+ * Recorta os números de custo da ficha para quem não tem 'vehicles.costs'.
+ *
+ * Esconder os campos só na tela não bastaria: a resposta da API é visível no
+ * navegador de qualquer atendente. Se a permissão promete que o vendedor não
+ * enxerga a margem, é aqui que a promessa se cumpre.
+ */
+export function withoutCostData(detail: VehicleDetail): VehicleDetail {
+  return { ...detail, costPrice: null, margin: null, totalCosts: 0, costs: [] };
+}
+
 export async function getVehicle(accountId: string, id: string) {
   const v = await prisma.vehicle.findFirst({ where: { id, accountId }, include: detailInclude });
   if (!v) throw notFound('Veículo não encontrado');
@@ -232,6 +246,7 @@ async function assertPlateFree(accountId: string, plate: string | null | undefin
 }
 
 export async function createVehicle(accountId: string, input: VehicleInput) {
+  await assertCanAddVehicle(accountId);
   await assertPlateFree(accountId, input.plate);
   const v = await prisma.vehicle.create({ data: { ...toData(input), accountId }, include: detailInclude });
   return serializeVehicleDetail(v);

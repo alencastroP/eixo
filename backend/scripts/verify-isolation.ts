@@ -13,8 +13,10 @@
  */
 import { AccountStatus, UserRole } from '@prisma/client';
 import { prisma } from '../src/lib/prisma';
+import { WILDCARD, expandPermissions } from '../src/modules/roles/permissions';
 import { ingestNormalizedLead } from '../src/modules/tickets/ingest.service';
 import { listTickets, ticketStats, getTicket, type CurrentUser } from '../src/modules/tickets/tickets.service';
+import { runQuery, recentQueries, getQuery } from '../src/modules/credit/credit.service';
 
 const SUFFIX = Date.now().toString(36);
 let failures = 0;
@@ -45,6 +47,7 @@ async function makeAccount(name: string) {
     name: user.name,
     email: user.email,
     accountId: account.id,
+    permissions: expandPermissions([WILDCARD]),
   };
   return { account, asUser };
 }
@@ -97,6 +100,37 @@ async function main() {
   // ── Contadores do painel também respeitam a fronteira ─────────────────────
   const statsA = await ticketStats(A.asUser);
   check('contadores do painel são por conta', statsA.total === 1, `total=${statsA.total}`);
+
+  // ── Crédito: até aqui a ÚNICA tabela de dado de negócio sem accountId ─────
+  await runQuery('52998224725', A.asUser, {
+    leadId: inA.leadId,
+    consentConfirmed: true,
+    consentSource: 'presencial',
+  });
+  const creditB = await runQuery('52998224725', B.asUser, {
+    leadId: inB.leadId,
+    consentConfirmed: true,
+    consentSource: 'presencial',
+  });
+
+  const recentA = await recentQueries(A.account.id, 50);
+  check('histórico de crédito da Loja A não inclui consulta da Loja B', !recentA.some((q) => q.id === creditB.id));
+
+  let creditBlocked = false;
+  try {
+    await getQuery(creditB.id, A.account.id); // consulta de OUTRA conta
+  } catch {
+    creditBlocked = true;
+  }
+  check('abrir consulta de crédito de outra loja pelo id é bloqueado', creditBlocked);
+
+  let queryWithoutConsent = false;
+  try {
+    await runQuery('52998224725', A.asUser, { leadId: inA.leadId, consentConfirmed: false, consentSource: '' });
+  } catch {
+    queryWithoutConsent = true;
+  }
+  check('consulta de crédito sem consentimento confirmado é bloqueada', queryWithoutConsent);
 
   // ── Visão do banco: o que o usuário pediu para conseguir enxergar ─────────
   const overview = await prisma.account.findMany({

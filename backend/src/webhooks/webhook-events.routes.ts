@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { UserRole, WebhookEventStatus } from '@prisma/client';
-import { authenticate, requireRole } from '../middleware/auth';
+import { WebhookEventStatus } from '@prisma/client';
+import { requirePermission } from '../middleware/permissions';
 import { ah, badRequest, notFound } from '../lib/errors';
 import { prisma } from '../lib/prisma';
 
 /** Rotas administrativas (na API principal) para observar e reprocessar a fila de webhooks. */
 export const webhookEventsRouter = Router();
-webhookEventsRouter.use(authenticate, requireRole(UserRole.ADMIN));
+webhookEventsRouter.use(requirePermission('integrations.manage'));
 
 const listSchema = z.object({
   status: z.nativeEnum(WebhookEventStatus).optional(),

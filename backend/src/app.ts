@@ -5,11 +5,13 @@ import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { requestLog } from './middleware/request-log';
 import { globalRateLimit, securityHeaders } from './middleware/security';
 import { authenticate } from './middleware/auth';
-import { requireActiveAccount } from './middleware/tenant';
+import { loadPermissions } from './middleware/permissions';
+import { requireActiveAccount, resolveAccount } from './middleware/tenant';
 import { UPLOADS_PUBLIC_PREFIX, UPLOADS_ROOT } from './lib/storage';
 import { authRouter } from './modules/auth/auth.routes';
 import { trialRouter } from './modules/trial/trial.routes';
 import { usersRouter } from './modules/users/users.routes';
+import { rolesRouter } from './modules/roles/roles.routes';
 import { ticketsRouter } from './modules/tickets/tickets.routes';
 import { leadsRouter } from './modules/leads/leads.routes';
 import { integrationsRouter } from './modules/integrations/integrations.routes';
@@ -21,6 +23,7 @@ import { fiscalRouter } from './modules/fiscal/fiscal.routes';
 import { settingsRouter } from './modules/settings/settings.routes';
 import { storefrontRouter } from './modules/storefront/storefront.routes';
 import { agentRouter } from './modules/aiAgent/agent.routes';
+import { billingRouter } from './modules/billing/billing.routes';
 import { publicSiteRouter } from './modules/storefront/public.routes';
 import { webhookEventsRouter } from './webhooks/webhook-events.routes';
 
@@ -54,8 +57,18 @@ export function createApiApp() {
   // Portão do SaaS: rotas de negócio exigem conta ATIVA (trial válido ou paga).
   // `authenticate` roda aqui para popular req.user antes do guard de tenant;
   // uma conta expirada/inadimplente recebe 403 ACCOUNT_BLOCKED (dados preservados).
-  const tenant = [authenticate, requireActiveAccount];
+  // `loadPermissions` fecha a corrente: daqui para baixo toda rota pode chamar
+  // `requirePermission` sabendo que a lista efetiva já está em req.user.
+  const tenant = [authenticate, requireActiveAccount, loadPermissions];
+
+  // Pagamentos é a ÚNICA rota de negócio fora do portão de conta ativa, e de
+  // propósito: é por ela que a conta bloqueada por inadimplência volta a ficar
+  // em dia. Trancar o pagamento atrás do bloqueio que só o pagamento resolve
+  // deixaria o lojista sem saída a não ser o suporte.
+  app.use('/api/billing', [authenticate, resolveAccount, loadPermissions], billingRouter);
+
   app.use('/api/users', tenant, usersRouter);
+  app.use('/api/roles', tenant, rolesRouter);
   app.use('/api/tickets', tenant, ticketsRouter);
   app.use('/api/leads', tenant, leadsRouter);
   app.use('/api/integrations', tenant, integrationsRouter);

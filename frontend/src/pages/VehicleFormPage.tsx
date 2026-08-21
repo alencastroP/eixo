@@ -5,6 +5,7 @@ import { ApiError } from '../api/client';
 import { PhotoGallery } from '../components/PhotoGallery';
 import { SearchDataIcon, SparklesIcon, TrashIcon } from '../components/icons';
 import { AiDescriptionModal } from '../components/AiDescriptionModal';
+import { useAuth } from '../auth/AuthContext';
 import { PageHeader } from '../components/PageHeader';
 import {
   FUEL_OPTIONS,
@@ -103,6 +104,11 @@ export function VehicleFormPage() {
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
+  const { can } = useAuth();
+  // sem 'vehicles.manage' a ficha vira consulta; sem 'vehicles.costs' os
+  // números de compra e margem nem aparecem - é o dado mais sensível daqui
+  const canManage = can('vehicles.manage');
+  const canSeeCosts = can('vehicles.costs');
 
   const [form, setForm] = useState<FormState>(EMPTY);
   const [detail, setDetail] = useState<VehicleDetail | null>(null);
@@ -236,7 +242,8 @@ export function VehicleFormPage() {
         title={isEdit ? `${form.brand} ${form.model}` : 'Adicionar Veículo'}
         subtitle={isEdit ? 'Edite os dados, custos e a galeria de fotos.' : 'Cadastre um novo veículo no estoque.'}
         actions={
-          isEdit && (
+          isEdit &&
+          canManage && (
             <button className="btn btn-ghost danger-ghost" onClick={remove}>
               <TrashIcon size={15} /> Remover
             </button>
@@ -379,7 +386,7 @@ export function VehicleFormPage() {
         <section className="form-section">
           <div className="section-head">
             <span className="section-num">2</span>
-            <h2>Precificação e Custos</h2>
+            <h2>{canSeeCosts ? 'Precificação e Custos' : 'Precificação'}</h2>
           </div>
           <div className="price-layout">
             <div className="price-fields">
@@ -387,23 +394,27 @@ export function VehicleFormPage() {
                 <span>Preço FIPE (informativo)</span>
                 <input type="number" step="0.01" value={form.fipePrice} onChange={(e) => set('fipePrice', e.target.value)} placeholder="0,00" />
               </label>
-              <label className="field">
-                <span>Preço de Custo / Compra</span>
-                <input type="number" step="0.01" value={form.costPrice} onChange={(e) => set('costPrice', e.target.value)} placeholder="0,00" />
-              </label>
+              {canSeeCosts && (
+                <label className="field">
+                  <span>Preço de Custo / Compra</span>
+                  <input type="number" step="0.01" value={form.costPrice} onChange={(e) => set('costPrice', e.target.value)} placeholder="0,00" />
+                </label>
+              )}
               <label className="field">
                 <span>Preço de Venda *</span>
                 <input type="number" step="0.01" value={form.salePrice} onChange={(e) => set('salePrice', e.target.value)} placeholder="0,00" required />
               </label>
             </div>
-            <div className={`margin-card ${margin && margin.value < 0 ? 'negative' : ''}`}>
-              <span className="margin-label">Margem estimada</span>
-              <span className="margin-value">{margin ? formatBRL(margin.value) : '-'}</span>
-              {margin && <span className="margin-pct">{margin.pct.toFixed(1)}% sobre a venda</span>}
-              {detail && detail.totalCosts > 0 && (
-                <span className="margin-note muted small">Inclui {formatBRL(detail.totalCosts)} em gastos lançados</span>
-              )}
-            </div>
+            {canSeeCosts && (
+              <div className={`margin-card ${margin && margin.value < 0 ? 'negative' : ''}`}>
+                <span className="margin-label">Margem estimada</span>
+                <span className="margin-value">{margin ? formatBRL(margin.value) : '-'}</span>
+                {margin && <span className="margin-pct">{margin.pct.toFixed(1)}% sobre a venda</span>}
+                {detail && detail.totalCosts > 0 && (
+                  <span className="margin-note muted small">Inclui {formatBRL(detail.totalCosts)} em gastos lançados</span>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
@@ -478,11 +489,13 @@ export function VehicleFormPage() {
 
         <div className="form-footer ds-sticky-action">
           <Link to="/inventory" className="btn btn-ghost">
-            Cancelar
+            {canManage ? 'Cancelar' : 'Voltar ao estoque'}
           </Link>
-          <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? 'Salvando…' : isEdit ? 'Salvar alterações' : 'Cadastrar veículo'}
-          </button>
+          {canManage && (
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'Salvando…' : isEdit ? 'Salvar alterações' : 'Cadastrar veículo'}
+            </button>
+          )}
         </div>
       </form>
 

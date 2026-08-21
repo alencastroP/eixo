@@ -9,6 +9,7 @@ export function TrialSignupPage() {
   const { user, initializing, signupTrial } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', cpf: '', password: '', companyName: '' });
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +25,8 @@ export function TrialSignupPage() {
     /.+@.+\..+/.test(form.email) &&
     cpfValid &&
     form.password.length >= 8 &&
-    form.companyName.trim().length >= 2;
+    form.companyName.trim().length >= 2 &&
+    termsAccepted;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -37,7 +39,7 @@ export function TrialSignupPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await signupTrial({ ...form, cpf: onlyDigits(form.cpf) });
+      await signupTrial({ ...form, cpf: onlyDigits(form.cpf), termsAccepted });
       navigate('/tickets');
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
@@ -94,6 +96,19 @@ export function TrialSignupPage() {
         <label className="field">
           <span>Senha</span>
           <input type="password" value={form.password} onChange={(e) => set('password', e.target.value)} placeholder="Mínimo 8 caracteres" required />
+        </label>
+
+        <label className="checkbox-field" style={{ fontWeight: 400, alignItems: 'flex-start', lineHeight: 1.4 }}>
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+            style={{ marginTop: 2 }}
+          />
+          <span>
+            Li e aceito os Termos de Uso, o Acordo de Tratamento de Dados, a Política de Uso Aceitável e o Acordo de
+            Nível de Serviço. Meu CPF é usado apenas para garantir um teste gratuito por pessoa.
+          </span>
         </label>
 
         {error && <p className="form-error">{error}</p>}

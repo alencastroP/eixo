@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { creditApi } from '../api/endpoints';
+import { creditApi, leadsApi } from '../api/endpoints';
 import { ApiError } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { LinkLeadModal } from '../components/LinkLeadModal';
@@ -11,11 +11,20 @@ import {
   FileTextIcon,
   LinkIcon,
   SearchDataIcon,
+  SearchIcon,
   ShieldIcon,
   TrendUpIcon,
 } from '../components/icons';
-import type { CreditQuery, ScoreBand } from '../types';
+import type { CreditQuery, LeadSearchResult, ScoreBand } from '../types';
 import { formatBRL, formatDateTime, formatDocumentInput } from '../utils/format';
+
+/** Canais aceitos para o registro do consentimento (legal/09 §8.1). */
+const CONSENT_SOURCES: { value: string; label: string }[] = [
+  { value: 'presencial', label: 'Presencial' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'site', label: 'Site / chat' },
+  { value: 'telefone', label: 'Telefone' },
+];
 
 const BAND_CLASS: Record<ScoreBand, string> = {
   HIGH_RISK: 'band-high',
@@ -47,6 +56,15 @@ export function CreditPage() {
   const [error, setError] = useState<string | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
 
+  // Titular da consulta - obrigatório: sem lead não há como registrar quem
+  // autorizou (legal/09-CONSENTIMENTO-CONSULTA-DE-CREDITO.md §6.3).
+  const [leadTerm, setLeadTerm] = useState('');
+  const [leadResults, setLeadResults] = useState<LeadSearchResult[]>([]);
+  const [leadSearching, setLeadSearching] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<LeadSearchResult | null>(null);
+  const [consentConfirmed, setConsentConfirmed] = useState(false);
+  const [consentSource, setConsentSource] = useState('presencial');
+
   const loadRecent = useCallback(() => {
     creditApi
       .recent()
@@ -58,6 +76,26 @@ export function CreditPage() {
     loadRecent();
   }, [loadRecent]);
 
+  useEffect(() => {
+    if (selectedLead || !leadTerm.trim()) {
+      setLeadResults([]);
+      return;
+    }
+    let cancelled = false;
+    setLeadSearching(true);
+    const t = setTimeout(() => {
+      leadsApi
+        .search(leadTerm.trim())
+        .then((r) => !cancelled && setLeadResults(r))
+        .catch(() => !cancelled && setLeadResults([]))
+        .finally(() => !cancelled && setLeadSearching(false));
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [leadTerm, selectedLead]);
+
   const runQuery = async (e: FormEvent) => {
     e.preventDefault();
     const digits = docInput.replace(/\D/g, '');
@@ -65,10 +103,22 @@ export function CreditPage() {
       setError('Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).');
       return;
     }
+    if (!selectedLead) {
+      setError('Selecione o lead/cliente desta consulta.');
+      return;
+    }
+    if (!consentConfirmed) {
+      setError('Confirme que o cliente foi informado e autorizou a consulta.');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const q = await creditApi.query(docInput);
+      const q = await creditApi.query(docInput, {
+        leadId: selectedLead.id,
+        consentConfirmed,
+        consentSource,
+      });
       setResult(q);
       loadRecent();
     } catch (err) {
@@ -94,6 +144,9 @@ export function CreditPage() {
     setResult(null);
     setDocInput('');
     setError(null);
+    setSelectedLead(null);
+    setLeadTerm('');
+    setConsentConfirmed(false);
     loadRecent();
   };
 
@@ -115,6 +168,13 @@ export function CreditPage() {
         />
 
         <div className="credit-report" id="credit-report">
+          {r.source === 'mock' && (
+            <div className="alert alert-warning credit-simulated-banner">
+              <AlertIcon size={14} /> <strong>Resultado simulado</strong> - sem consulta a bureau de crédito. Não
+              tem validade para decisão de crédito. Não apresente como análise real.
+            </div>
+          )}
+
           {result.lead && (
             <div className="alert alert-info credit-linked">
               <LinkIcon size={14} /> Vinculado ao lead <strong>{result.lead.name}</strong>
@@ -265,8 +325,68 @@ export function CreditPage() {
           </span>
           <h2 className="credit-search-title">Consultar perfil de crédito</h2>
           <p className="credit-search-hint">
-            Digite o documento para receber score, restrições e limite estimado em segundos.
+            Toda consulta precisa de um titular e de confirmação de que ele autorizou.
           </p>
+
+          <label className="credit-search-label">Lead / cliente</label>
+          {selectedLead ? (
+            <div className="lead-result" style={{ cursor: 'default', marginBottom: 10 }}>
+              <span className="lead-result-info">
+                <span className="lead-result-name">{selectedLead.name}</span>
+                <span className="lead-result-contact muted small">
+                  {selectedLead.phone ?? selectedLead.email ?? 'sem contato'}
+                </span>
+              </span>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  setSelectedLead(null);
+                  setConsentConfirmed(false);
+                }}
+              >
+                Trocar
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="inbox-search link-search">
+                <SearchIcon size={15} />
+                <input
+                  autoFocus
+                  placeholder="Buscar por nome, telefone ou e-mail…"
+                  value={leadTerm}
+                  onChange={(e) => setLeadTerm(e.target.value)}
+                />
+              </div>
+              {leadTerm.trim() && (
+                <div className="lead-results" style={{ marginBottom: 10 }}>
+                  {leadSearching && leadResults.length === 0 && <div className="muted small">Buscando…</div>}
+                  {!leadSearching && leadResults.length === 0 && (
+                    <div className="muted small">Nenhum lead encontrado.</div>
+                  )}
+                  {leadResults.map((l) => (
+                    <button
+                      key={l.id}
+                      type="button"
+                      className="lead-result"
+                      onClick={() => {
+                        setSelectedLead(l);
+                        setLeadResults([]);
+                      }}
+                    >
+                      <span className="lead-result-info">
+                        <span className="lead-result-name">{l.name}</span>
+                        <span className="lead-result-contact muted small">{l.phone ?? l.email ?? 'sem contato'}</span>
+                      </span>
+                      <span className="lead-result-cta">Selecionar</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
           <label className="credit-search-label">CPF ou CNPJ</label>
           <div className="credit-search-row">
             <input
@@ -275,12 +395,43 @@ export function CreditPage() {
               onChange={(e) => setDocInput(formatDocumentInput(e.target.value))}
               placeholder="000.000.000-00"
               inputMode="numeric"
-              autoFocus
             />
-            <button type="submit" className="btn btn-primary credit-submit" disabled={loading}>
-              <SearchDataIcon size={17} /> {loading ? 'Consultando…' : 'Consultar Perfil'}
-            </button>
           </div>
+
+          {selectedLead && (
+            <>
+              <label className="checkbox-field" style={{ marginTop: 10 }}>
+                <input
+                  type="checkbox"
+                  checked={consentConfirmed}
+                  onChange={(e) => setConsentConfirmed(e.target.checked)}
+                />
+                O cliente foi informado e <strong>autorizou</strong> esta consulta.
+              </label>
+              <label className="credit-search-label">Canal da autorização</label>
+              <select
+                className="credit-doc-input"
+                value={consentSource}
+                onChange={(e) => setConsentSource(e.target.value)}
+                style={{ marginBottom: 10 }}
+              >
+                {CONSENT_SOURCES.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+
+          <button
+            type="submit"
+            className="btn btn-primary credit-submit"
+            disabled={loading || !selectedLead || !consentConfirmed}
+          >
+            <SearchDataIcon size={17} /> {loading ? 'Consultando…' : 'Consultar Perfil'}
+          </button>
+
           {error && <p className="form-error credit-search-error">{error}</p>}
         </form>
 

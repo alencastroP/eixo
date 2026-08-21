@@ -6,6 +6,7 @@ import { prisma } from '../../lib/prisma';
 import { findAdapter, listAdapters } from '../../integrations';
 import type { ChannelSender, PlatformCredentials } from '../../integrations';
 import { writeAudit } from '../audit/audit.service';
+import { assertCanAddChannel } from '../billing/limits.service';
 
 /**
  * Canais de atendimento POR ATENDENTE.
@@ -148,6 +149,14 @@ export async function connectMyChannel(accountId: string, userId: string, platfo
 
   const sender = senders.find((s) => s.externalId === externalId);
   if (!sender) throw badRequest('Este número não pertence à conta da loja nesta plataforma.');
+
+  // Só conta vaga quando é canal NOVO: trocar o número de quem já está
+  // conectado (o upsert abaixo) não muda o total e não deve ser barrado.
+  const alreadyConnected = await prisma.userChannel.findUnique({
+    where: { userId_platform: { userId, platform } },
+    select: { id: true },
+  });
+  if (!alreadyConnected) await assertCanAddChannel(accountId);
 
   try {
     const row = await prisma.userChannel.upsert({

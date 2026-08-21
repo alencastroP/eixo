@@ -19,8 +19,8 @@ const EMPTY: CompanySettings = {
 };
 
 export function CompanyPage() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const { can } = useAuth();
+  const canEdit = can('company.manage');
   const [form, setForm] = useState<CompanySettings>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -68,16 +68,16 @@ export function CompanyPage() {
           <h3>Identificação</h3>
           <label className="field">
             <span>Nome fantasia *</span>
-            <input value={form.tradeName} onChange={(e) => set('tradeName', e.target.value)} required disabled={!isAdmin} />
+            <input value={form.tradeName} onChange={(e) => set('tradeName', e.target.value)} required disabled={!canEdit} />
           </label>
           <div className="field-row">
             <label className="field">
               <span>Razão social</span>
-              <input value={form.legalName} onChange={(e) => set('legalName', e.target.value)} disabled={!isAdmin} />
+              <input value={form.legalName} onChange={(e) => set('legalName', e.target.value)} disabled={!canEdit} />
             </label>
             <label className="field">
               <span>CNPJ</span>
-              <input value={form.cnpj} onChange={(e) => set('cnpj', formatDocumentInput(e.target.value))} disabled={!isAdmin} />
+              <input value={form.cnpj} onChange={(e) => set('cnpj', formatDocumentInput(e.target.value))} disabled={!canEdit} />
             </label>
           </div>
         </div>
@@ -87,25 +87,25 @@ export function CompanyPage() {
           <div className="field-row">
             <label className="field">
               <span>E-mail</span>
-              <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} disabled={!isAdmin} />
+              <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} disabled={!canEdit} />
             </label>
             <label className="field">
               <span>Telefone</span>
-              <input value={form.phone} onChange={(e) => set('phone', e.target.value)} disabled={!isAdmin} />
+              <input value={form.phone} onChange={(e) => set('phone', e.target.value)} disabled={!canEdit} />
             </label>
           </div>
           <label className="field">
             <span>Endereço</span>
-            <input value={form.address} onChange={(e) => set('address', e.target.value)} disabled={!isAdmin} />
+            <input value={form.address} onChange={(e) => set('address', e.target.value)} disabled={!canEdit} />
           </label>
           <div className="field-row">
             <label className="field">
               <span>Cidade</span>
-              <input value={form.city} onChange={(e) => set('city', e.target.value)} disabled={!isAdmin} />
+              <input value={form.city} onChange={(e) => set('city', e.target.value)} disabled={!canEdit} />
             </label>
             <label className="field">
               <span>UF</span>
-              <input value={form.state} onChange={(e) => set('state', e.target.value.toUpperCase())} maxLength={2} disabled={!isAdmin} />
+              <input value={form.state} onChange={(e) => set('state', e.target.value.toUpperCase())} maxLength={2} disabled={!canEdit} />
             </label>
           </div>
         </div>
@@ -113,14 +113,16 @@ export function CompanyPage() {
         {error && <div className="alert alert-error">{error}</div>}
         {ok && <div className="alert alert-success">Dados da empresa salvos.</div>}
 
-        {isAdmin && (
+        {canEdit && (
           <div className="settings-footer">
             <button type="submit" className="btn btn-primary" disabled={saving}>
               {saving ? 'Salvando…' : 'Salvar dados'}
             </button>
           </div>
         )}
-        {!isAdmin && <p className="muted small">Apenas administradores podem editar os dados da empresa.</p>}
+        {!canEdit && (
+          <p className="muted small">Seu perfil de acesso permite consultar, mas não editar, os dados da empresa.</p>
+        )}
       </form>
     </div>
   );

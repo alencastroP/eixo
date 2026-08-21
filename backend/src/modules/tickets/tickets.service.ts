@@ -17,7 +17,12 @@ export interface CurrentUser {
   /** Tenant do usuário. Vem de `req.account!.id` (relido do banco pelo guard de
    *  tenant), NUNCA de entrada do cliente nem do JWT diretamente. */
   accountId: string;
+  /** Permissões efetivas do perfil de acesso (ver modules/roles). É o que
+   *  decide o recorte de leitura e o que pode ser feito - não o `role`. */
+  permissions: string[];
 }
+
+const can = (user: CurrentUser, permission: string) => user.permissions.includes(permission);
 
 export const CLOSED_STATUSES: TicketStatus[] = [
   TicketStatus.CONVERTED,
@@ -126,15 +131,15 @@ export function serializeTicketDetail(t: TicketDetailRow) {
  *
  *  1. TENANT (`accountId`) - fronteira rígida. Vale inclusive para o ADMIN:
  *     administrador é dono da própria loja, não da instalação.
- *  2. PAPEL - dentro da conta, o atendente vê só os próprios tickets e os
- *     livres; o admin vê todos os da conta dele.
+ *  2. PERFIL - dentro da conta, quem não tem 'tickets.view.all' vê só os
+ *     próprios tickets e os livres; com ela, vê o funil inteiro da loja.
  *
- * A ordem importa: aplicar apenas o filtro de papel deixaria um ADMIN de uma
- * loja enxergando o funil de todas as outras.
+ * A ordem importa: aplicar apenas o filtro de perfil deixaria o supervisor de
+ * uma loja enxergando o funil de todas as outras.
  */
 function scopeFor(user: CurrentUser): Prisma.TicketWhereInput {
   const tenant: Prisma.TicketWhereInput = { accountId: user.accountId };
-  if (user.role === 'ADMIN') return tenant;
+  if (can(user, 'tickets.view.all')) return tenant;
   return { AND: [tenant, { OR: [{ assignedToId: user.id }, { assignedToId: null }] }] };
 }
 
@@ -143,7 +148,7 @@ async function getScopedTicket(id: string, user: CurrentUser): Promise<TicketDet
   // Ticket de outra conta responde "não encontrado", e não "proibido": a
   // diferença revelaria que aquele id existe em algum lugar do sistema.
   if (!ticket || ticket.accountId !== user.accountId) throw notFound('Ticket não encontrado');
-  if (user.role !== 'ADMIN' && ticket.assignedToId && ticket.assignedToId !== user.id) {
+  if (!can(user, 'tickets.view.all') && ticket.assignedToId && ticket.assignedToId !== user.id) {
     throw forbidden('Este ticket está atribuído a outro atendente');
   }
   return ticket;
@@ -334,8 +339,9 @@ export async function createManualTicket(input: CreateManualTicketInput, user: C
         leadId: lead.id,
         platform: 'manual',
         priority: input.priority ?? TicketPriority.NORMAL,
-        // quem registra o atendimento manual já assume o ticket (admin deixa em aberto)
-        assignedToId: user.role === 'AGENT' ? user.id : null,
+        // quem registra o atendimento manual já assume o ticket; quem distribui
+        // leads (tickets.assign) deixa em aberto para escolher o dono depois
+        assignedToId: can(user, 'tickets.assign') ? null : user.id,
         vehicleRefExternal: input.vehicleText ? toJson({ title: input.vehicleText }) : undefined,
         lastCustomerMessageAt: new Date(),
       },
@@ -377,11 +383,11 @@ export async function updateTicket(id: string, patch: UpdateTicketInput, user: C
   let targetUser: { id: string; name: string } | null = null;
 
   if (wantsAssign) {
-    if (user.role !== 'ADMIN') {
+    if (!can(user, 'tickets.assign')) {
       const claiming = patch.assignedToId === user.id;
       const releasingOwn = patch.assignedToId === null && ticket.assignedToId === user.id;
       if (!claiming && !releasingOwn) {
-        throw forbidden('Atendente pode apenas assumir tickets livres ou liberar os próprios');
+        throw forbidden('Seu perfil permite apenas assumir tickets livres ou liberar os próprios');
       }
     }
     if (patch.assignedToId) {

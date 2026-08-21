@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { ROLE_LABELS } from '../types';
+import { ADMIN_PERMISSIONS } from '../pages/AdminPage';
+import { accessLabel } from '../types';
 import { avatarColor, initials } from '../utils/format';
 import { GridIcon, LogoutIcon, SettingsIcon, UserIcon } from './icons';
 
-/** Dropdown do avatar (rail): perfil, usuários e administração (admin) e limpar sessão. */
+/** Dropdown do avatar (rail): meus dados, administração (conforme o perfil) e limpar sessão. */
 export function UserMenu() {
-  const { user, logout } = useAuth();
+  const { user, logout, can } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -62,7 +63,7 @@ export function UserMenu() {
             <div className="user-menu-id">
               <strong>{user.name}</strong>
               <span className="muted small">
-                {user.email} · {ROLE_LABELS[user.role]}
+                {user.email} · {accessLabel(user)}
               </span>
             </div>
           </div>
@@ -71,15 +72,15 @@ export function UserMenu() {
             <button className="user-menu-item" onClick={() => go('/profile')}>
               <UserIcon size={16} /> Meus Dados
             </button>
-            {user.role === 'ADMIN' && (
-              <>
-                <button className="user-menu-item" onClick={() => go('/admin')}>
-                  <GridIcon size={16} /> Administração
-                </button>
-                <button className="user-menu-item" onClick={() => go('/settings')}>
-                  <SettingsIcon size={16} /> Configurações
-                </button>
-              </>
+            {can(...ADMIN_PERMISSIONS) && (
+              <button className="user-menu-item" onClick={() => go('/admin')}>
+                <GridIcon size={16} /> Administração
+              </button>
+            )}
+            {can('company.manage') && (
+              <button className="user-menu-item" onClick={() => go('/settings')}>
+                <SettingsIcon size={16} /> Configurações
+              </button>
             )}
           </div>
 

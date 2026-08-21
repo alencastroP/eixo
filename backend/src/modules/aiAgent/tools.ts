@@ -1,8 +1,10 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import { InteractionType, Prisma, TicketPriority } from '@prisma/client';
+import { InteractionType, Prisma, TicketPriority, UsageMetric } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../lib/logger';
 import { maskDocument, validateDocument } from '../../lib/document';
+import { CREDIT_CONSENT_VERSION } from '../../lib/legal-versions';
+import { hasQuota, recordUsage } from '../billing/usage.service';
 import { generateReport } from '../credit/bureau.mock';
 import { getInventoryDetail, searchInventory } from './inventory.tool';
 import { mergeLeadProfile, searchKnowledge, type AgentProfileResolved, type LeadProfile } from './context.service';
@@ -301,9 +303,29 @@ async function runCreditTool(documentoRaw: unknown, ctx: AgentToolContext): Prom
     return { content: 'Documento inválido: os dígitos verificadores não conferem. Peça ao cliente para reenviar o CPF/CNPJ.' };
   }
 
+  // Mesma franquia da consulta feita por gente - o custo no bureau é o mesmo,
+  // e sem esta checagem o agente seria o caminho aberto para furar a cota.
+  if (!(await hasQuota(ctx.accountId, UsageMetric.CREDIT_QUERY))) {
+    return {
+      content:
+        'A franquia de consultas de crédito da loja acabou neste mês. Não faça a simulação; diga ao cliente que um consultor vai verificar as condições de financiamento e transfira para um atendente humano.',
+    };
+  }
+
   const report = generateReport(valid.digits, valid.docType);
 
-  // persiste no histórico do módulo de crédito, já vinculado ao lead (sem actor humano)
+  // Consentimento: o próprio titular está fornecendo o documento voluntariamente
+  // nesta mensagem, para esta simulação - é um ato específico e contemporâneo
+  // do titular (a forma mais forte de consentimento possível aqui), não uma
+  // suposição do sistema. Registrado como tal, com o canal 'chat_ia', para que
+  // a consulta tenha o mesmo lastro de autorização exigido do fluxo humano
+  // (legal/09-CONSENTIMENTO-CONSULTA-DE-CREDITO.md).
+  await prisma.lead.update({
+    where: { id: ctx.leadId },
+    data: { creditConsentAt: new Date(), creditConsentSource: 'chat_ia', creditConsentVersion: CREDIT_CONSENT_VERSION },
+  });
+
+  // persiste no histórico do módulo de crédito, já vinculado ao lead e à conta (sem actor humano)
   await prisma.creditQuery.create({
     data: {
       document: valid.digits,
@@ -312,14 +334,18 @@ async function runCreditTool(documentoRaw: unknown, ctx: AgentToolContext): Prom
       score: report.score,
       report: report as unknown as Prisma.InputJsonValue,
       leadId: ctx.leadId,
+      accountId: ctx.accountId,
     },
   });
+
+  await recordUsage(ctx.accountId, UsageMetric.CREDIT_QUERY);
 
   logger.info('IA: consulta de crédito', {
     ticketId: ctx.ticketId,
     docType: valid.docType,
     document: maskDocument(valid.digits),
     score: report.score,
+    consentSource: 'chat_ia',
   });
 
   await logAiAction(ctx.ticketId, 'credit', `Consulta de crédito · score ${report.score} (${report.bandLabel})`, {
@@ -330,7 +356,9 @@ async function runCreditTool(documentoRaw: unknown, ctx: AgentToolContext): Prom
 
   const limitTxt = report.credit.limit > 0 ? brl(report.credit.limit) : 'não liberado neste momento';
   const summaryForClaude = [
-    `Resultado da simulação (estimativa, não é aprovação):`,
+    report.source === 'mock'
+      ? `Resultado de SIMULAÇÃO INTERNA (sem consulta a bureau de crédito real) - estimativa, não é aprovação:`
+      : `Resultado da consulta (estimativa, não é aprovação):`,
     `- Score: ${report.score}/1000 (${report.bandLabel})`,
     `- Limite de financiamento estimado: ${limitTxt}`,
     report.credit.limit > 0
@@ -339,7 +367,9 @@ async function runCreditTool(documentoRaw: unknown, ctx: AgentToolContext): Prom
     report.restrictions.hasRestrictions
       ? `- Observação: constam restrições no CPF/CNPJ; conduza com cautela e sem prometer aprovação.`
       : `- Sem restrições encontradas.`,
-    `Personalize a mensagem ao cliente de forma consultiva, sem citar o score cru nem prometer aprovação.`,
+    report.source === 'mock'
+      ? `Nunca diga ao cliente que isto veio de um bureau de crédito real - é uma simulação. Personalize a mensagem de forma consultiva, sem citar o score cru nem prometer aprovação.`
+      : `Personalize a mensagem ao cliente de forma consultiva, sem citar o score cru nem prometer aprovação.`,
   ].join('\n');
 
   return { content: summaryForClaude };

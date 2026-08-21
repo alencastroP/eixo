@@ -1,9 +1,19 @@
 import { api, type Session } from './client';
 import type {
+  AccessProfile,
+  BillingCharge,
+  BillingCycle,
+  BillingMethod,
+  BillingOverview,
+  BillingPlan,
+  BillingSubscription,
   ChannelPlatform,
   ChannelSender,
+  ChargePix,
   CompanySettings,
   CreditQuery,
+  PayerDefaults,
+  SubscribeResult,
   FinanceSummary,
   FinancialEntry,
   FinancialType,
@@ -18,6 +28,7 @@ import type {
   LeadFormSettings,
   LeadSearchResult,
   Paged,
+  PermissionCatalog,
   PublicUser,
   StorefrontSettings,
   Ticket,
@@ -51,6 +62,8 @@ export interface TrialSignupInput {
   password: string;
   companyName: string;
   companyCnpj?: string;
+  /** Aceite explícito dos Termos de Uso (checkbox não pré-marcado). */
+  termsAccepted: boolean;
 }
 
 export const trialApi = {
@@ -91,10 +104,26 @@ export const ticketsApi = {
 
 export const usersApi = {
   list: () => api<UserListItem[]>('/users'),
-  create: (input: { name: string; email: string; password: string; role: 'ADMIN' | 'AGENT' }) =>
+  create: (input: { name: string; email: string; password: string; profileId?: string }) =>
     api<UserListItem>('/users', { method: 'POST', body: input }),
-  update: (id: string, input: { name?: string; role?: 'ADMIN' | 'AGENT'; active?: boolean; password?: string }) =>
+  update: (id: string, input: { name?: string; profileId?: string; active?: boolean; password?: string }) =>
     api<UserListItem>(`/users/${id}`, { method: 'PATCH', body: input }),
+};
+
+export interface ProfilePayload {
+  name: string;
+  description?: string;
+  permissions: string[];
+}
+
+/** Perfis de acesso da loja (Administração › Perfis & Permissões). */
+export const rolesApi = {
+  list: () => api<AccessProfile[]>('/roles'),
+  // o catálogo vem do servidor: é lá que a lista de permissões é definida
+  catalog: () => api<PermissionCatalog>('/roles/catalog'),
+  create: (input: ProfilePayload) => api<AccessProfile>('/roles', { method: 'POST', body: input }),
+  update: (id: string, input: ProfilePayload) => api<AccessProfile>(`/roles/${id}`, { method: 'PUT', body: input }),
+  remove: (id: string) => api<void>(`/roles/${id}`, { method: 'DELETE' }),
 };
 
 export interface VehicleListParams {
@@ -180,8 +209,15 @@ export const integrationsApi = {
     api<WebhookSecret>(`/integrations/${platform}/rotate-secret`, { method: 'POST' }),
 };
 
+export interface CreditConsentInput {
+  leadId: string;
+  consentConfirmed: boolean;
+  consentSource: string;
+}
+
 export const creditApi = {
-  query: (document: string) => api<CreditQuery>('/credit/queries', { method: 'POST', body: { document } }),
+  query: (document: string, consent: CreditConsentInput) =>
+    api<CreditQuery>('/credit/queries', { method: 'POST', body: { document, ...consent } }),
   recent: () => api<CreditQuery[]>('/credit/queries/recent'),
   get: (id: string) => api<CreditQuery>(`/credit/queries/${id}`),
   link: (id: string, leadId: string) =>
@@ -191,6 +227,32 @@ export const creditApi = {
 export const leadsApi = {
   search: (search: string) =>
     api<LeadSearchResult[]>('/leads', { query: { search: search || undefined, limit: 10 } }),
+};
+
+export interface SubscribeInput {
+  planCode: string;
+  cycle: BillingCycle;
+  method: BillingMethod;
+  payer: {
+    name: string;
+    document: string;
+    email: string;
+    phone?: string;
+    postalCode?: string;
+    addressNumber?: string;
+  };
+}
+
+export const billingApi = {
+  overview: () => api<BillingOverview>('/billing/overview'),
+  plans: () => api<BillingPlan[]>('/billing/plans'),
+  payer: () => api<PayerDefaults>('/billing/payer'),
+  subscribe: (input: SubscribeInput) =>
+    api<SubscribeResult>('/billing/subscribe', { method: 'POST', body: input }),
+  cancel: () => api<BillingSubscription | null>('/billing/cancel', { method: 'POST' }),
+  /** Reconcilia com o gateway - o botão "já paguei e não apareceu". */
+  sync: () => api<BillingCharge[]>('/billing/sync', { method: 'POST' }),
+  pix: (chargeId: string) => api<ChargePix>(`/billing/charges/${chargeId}/pix`),
 };
 
 /**

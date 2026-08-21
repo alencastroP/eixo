@@ -112,6 +112,62 @@ export const env = {
    */
   webhookPublicUrl: process.env.WEBHOOK_PUBLIC_URL ?? 'http://localhost:3002',
 
+  /**
+   * Gateway de recorrência (Asaas). É o motor de assinatura do SaaS: cobrança
+   * recorrente em cartão/PIX/boleto, retentativa, régua de inadimplência e
+   * emissão de NFS-e - nada disso é reescrito aqui dentro.
+   *
+   * Sem `apiKey` o módulo de Pagamentos entra em modo somente-leitura: a tela
+   * abre, mostra plano e faturas já gravados, e as ações de assinar/trocar
+   * respondem 503 em vez de falhar no meio de uma cobrança.
+   *
+   * `webhookToken` é o segredo que ESTE serviço exige de volta no header
+   * `asaas-access-token` - o mesmo valor precisa ser cadastrado no painel do
+   * Asaas ao criar o webhook. Sem ele, qualquer um poderia forjar
+   * "PAYMENT_CONFIRMED" e liberar acesso de graça.
+   */
+  billing: {
+    provider: process.env.BILLING_PROVIDER ?? 'asaas',
+    asaas: {
+      apiKey: process.env.ASAAS_API_KEY ?? '',
+      /** 'sandbox' (padrão) ou 'production'. Erra para o lado seguro. */
+      mode: process.env.ASAAS_ENV === 'production' ? 'production' : 'sandbox',
+      webhookToken: process.env.ASAAS_WEBHOOK_TOKEN ?? '',
+      /** Carteira de recebimento, quando a conta usa split/subcontas. */
+      walletId: process.env.ASAAS_WALLET_ID ?? '',
+      /** Emitir NFS-e junto de cada cobrança (exige config fiscal no Asaas). */
+      issueNfse: process.env.ASAAS_ISSUE_NFSE === 'true',
+      /** Nome do serviço municipal na nota - varia por prefeitura. */
+      nfseServiceName: process.env.ASAAS_NFSE_SERVICE_NAME ?? 'Licenciamento de software de gestão (SaaS)',
+      nfseObservations: process.env.ASAAS_NFSE_OBSERVATIONS ?? '',
+      nfseDaysBeforeDueDate: toInt(process.env.ASAAS_NFSE_DAYS_BEFORE_DUE, 0),
+    },
+    /**
+     * Dias de tolerância entre o vencimento e o bloqueio efetivo da conta.
+     *
+     * O padrão 7 não é arbitrário: é o prazo que os Termos de Uso prometem ao
+     * cliente (cl. 8.2). Documento e sistema precisam dizer o mesmo número -
+     * um contrato que promete 7 dias sobre um sistema que corta em 3 é o tipo
+     * de divergência que só aparece quando vira reclamação.
+     */
+    graceDays: toInt(process.env.BILLING_GRACE_DAYS, 7),
+  },
+
+  // E-mail transacional (Resend). Sem apiKey, o envio vira log e a aplicação
+  // segue normalmente - ver emailEnabled() e lib/email.ts.
+  email: {
+    apiKey: process.env.RESEND_API_KEY ?? '',
+    // 'onboarding@resend.dev' é o remetente de teste do próprio Resend: funciona
+    // sem domínio verificado, mas só entrega para o e-mail da conta Resend.
+    // Trocar por um remetente do domínio próprio (com SPF/DKIM/DMARC) antes de
+    // qualquer envio real a clientes.
+    from: process.env.EMAIL_FROM ?? 'Eixo <onboarding@resend.dev>',
+    replyTo: process.env.EMAIL_REPLY_TO || undefined,
+  },
+
+  // Base para montar links absolutos nos e-mails (botão "Ver na plataforma").
+  appUrl: (process.env.APP_URL ?? 'http://localhost:5173').replace(/\/+$/, ''),
+
   // Agente de Pré-Venda IA (Claude). Sem apiKey, o bot fica indisponível e as
   // conversas seguem 100% humanas (o toggle no front aparece desabilitado).
   ai: {
@@ -127,6 +183,12 @@ export const env = {
 
 /** true quando o Agente de IA está configurado (há API key). */
 export const aiEnabled = () => Boolean(env.ai.apiKey);
+
+/** true quando o gateway de pagamento está configurado (há API key). */
+export const billingEnabled = () => Boolean(env.billing.asaas.apiKey);
+
+/** true quando o envio de e-mail está configurado (há API key do Resend). */
+export const emailEnabled = () => Boolean(env.email.apiKey);
 
 /**
  * Verifica se uma origem tem permissão de CORS.

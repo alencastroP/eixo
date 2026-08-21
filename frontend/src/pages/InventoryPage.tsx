@@ -20,9 +20,10 @@ import { formatBRL } from '../utils/format';
 const TYPES: VehicleType[] = ['CAR', 'MOTORCYCLE', 'HEAVY'];
 
 export function InventoryPage() {
-  const { user } = useAuth();
+  const { can } = useAuth();
   const navigate = useNavigate();
-  const isAdmin = user?.role === 'ADMIN';
+  const canManage = can('vehicles.manage');
+  const canSeeCosts = can('vehicles.costs');
 
   const [filters, setFilters] = useState({ brand: '', model: '', year: '', status: '', type: '' });
   const [searchInput, setSearchInput] = useState('');
@@ -93,7 +94,7 @@ export function InventoryPage() {
         title="Garagem Digital"
         subtitle={facets ? `${facets.total} veículos no inventário` : 'Carregando inventário…'}
         actions={
-          isAdmin && (
+          canManage && (
             <button className="btn btn-primary" onClick={() => navigate('/inventory/new')}>
               <PlusIcon size={17} /> Adicionar Veículo
             </button>
@@ -188,7 +189,7 @@ export function InventoryPage() {
       <div className="veh-grid">
         {items.map((v) => (
           <div key={v.id} className="veh-card">
-            <div className="veh-cover" onClick={() => isAdmin && navigate(`/inventory/${v.id}/edit`)}>
+            <div className="veh-cover" onClick={() => canManage && navigate(`/inventory/${v.id}/edit`)}>
               {v.coverUrl ? (
                 <img src={v.coverUrl} alt={`${v.brand} ${v.model}`} loading="lazy" />
               ) : (
@@ -236,11 +237,13 @@ export function InventoryPage() {
 
               <div className="veh-actions">
                 <button className="link-btn" onClick={() => navigate(`/inventory/${v.id}/edit`)}>
-                  {isAdmin ? 'Ver / Editar' : 'Ver detalhes'}
+                  {canManage ? 'Ver / Editar' : 'Ver detalhes'}
                 </button>
-                <button className="link-btn subtle" onClick={() => setCostsFor(v)}>
-                  Histórico de Gastos
-                </button>
+                {canSeeCosts && (
+                  <button className="link-btn subtle" onClick={() => setCostsFor(v)}>
+                    Histórico de Gastos
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -250,7 +253,7 @@ export function InventoryPage() {
           <div className="veh-empty">
             <CarIcon size={30} />
             <p>{hasFilters ? 'Nenhum veículo com esses filtros.' : 'Estoque vazio.'}</p>
-            {isAdmin && !hasFilters && (
+            {canManage && !hasFilters && (
               <button className="btn btn-primary btn-sm" onClick={() => navigate('/inventory/new')}>
                 <PlusIcon size={15} /> Adicionar o primeiro
               </button>
@@ -270,7 +273,7 @@ export function InventoryPage() {
         <VehicleCostsModal
           vehicleId={costsFor.id}
           title={`${costsFor.brand} ${costsFor.model}`}
-          canEdit={isAdmin}
+          canEdit={canSeeCosts}
           onClose={() => setCostsFor(null)}
           onChanged={() => loadFacets()}
         />

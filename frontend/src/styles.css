@@ -324,6 +324,11 @@ select option {
   border-color: color-mix(in srgb, var(--info) 38%, transparent);
   color: var(--info);
 }
+.alert-warning {
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
+  color: var(--warning);
+}
 
 /* ═══ Avatares ════════════════════════════════════════════════════════════ */
 .avatar {
@@ -6561,3 +6566,623 @@ input.input-bad {
 .channel-option-number { font-weight: 600; font-size: 13.5px; }
 .channel-option-name { font-size: 12px; color: var(--text-muted); }
 .channel-option-taken { font-size: 11.5px; color: var(--warning, #b07d18); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PERFIS & PERMISSÕES (Administração › /roles)
+   Duas colunas: a lista de perfis da loja à esquerda, o editor à direita.
+   Abaixo de 1000px vira uma coluna só - a lista primeiro, como um índice.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.roles-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 1000px) {
+  .roles-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.roles-list {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* acompanha a rolagem do editor, que é bem mais alto */
+  position: sticky;
+  top: 12px;
+}
+@media (max-width: 1000px) {
+  .roles-list {
+    position: static;
+  }
+}
+.roles-list-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.roles-list-head h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+.roles-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.role-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.role-item:hover {
+  background: var(--hover);
+}
+.role-item.active {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+}
+.role-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.role-item.active .role-item-icon {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+.role-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.role-item-text strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.role-tag {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  background: var(--surface-2);
+}
+.role-item-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.roles-templates {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.roles-templates p {
+  margin: 0 0 8px;
+}
+.roles-template-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+.chip:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.roles-editor {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.roles-editor-head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.roles-editor-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.perm-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.perm-group {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.perm-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+}
+.perm-group-head h3 {
+  margin: 0 0 2px;
+  font-size: 13.5px;
+  font-weight: 650;
+}
+.perm-group-head p {
+  margin: 0;
+}
+.perm-group-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.perm-items {
+  /* duas colunas onde couber: o catálogo é longo e uma lista única obrigaria
+     a rolar muito para comparar o que um perfil libera */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+.perm-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+.perm-item:hover {
+  background: var(--hover);
+}
+.perm-item.locked {
+  cursor: default;
+  opacity: 0.75;
+}
+.perm-item.locked:hover {
+  background: transparent;
+}
+.perm-item input[type='checkbox'] {
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  accent-color: var(--accent);
+  cursor: inherit;
+}
+.perm-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.perm-item-text strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.perm-item.on .perm-item-text strong {
+  color: var(--text);
+}
+.perm-item-implies {
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--text-3);
+  font-style: italic;
+}
+
+.roles-editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.btn-ghost.danger {
+  color: var(--danger);
+}
+.btn-ghost.danger:hover {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.roles-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 320px;
+  padding: 32px;
+  text-align: center;
+  color: var(--text-3);
+}
+.roles-empty h2 {
+  margin: 4px 0 0;
+  font-size: 16px;
+  color: var(--text);
+}
+.roles-empty p {
+  margin: 0;
+  max-width: 42ch;
+}
+
+/* conversa em modo leitura (sem 'tickets.reply') */
+.composer-readonly {
+  margin: 0;
+  padding: 14px 16px;
+  text-align: center;
+}
+
+/* ═══ ASSINATURA E PAGAMENTOS ═════════════════════════════════════════════ */
+
+.billing-page .panel {
+  margin-bottom: 16px;
+}
+
+/* Situação da conta - o estado escrito por extenso, não só uma cor. */
+.billing-page .badge[class*='status-'] {
+  background: color-mix(in srgb, var(--muted) 18%, transparent);
+  color: var(--text);
+}
+.billing-page .badge.status-active {
+  background: color-mix(in srgb, var(--success, #22c55e) 18%, transparent);
+  color: var(--success, #22c55e);
+}
+.billing-page .badge.status-trial {
+  background: color-mix(in srgb, var(--info) 18%, transparent);
+  color: var(--info);
+}
+.billing-page .badge.status-past_due,
+.billing-page .badge.status-suspended {
+  background: color-mix(in srgb, var(--warning) 20%, transparent);
+  color: var(--warning);
+}
+.billing-page .badge.status-expired,
+.billing-page .badge.status-canceled {
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger);
+}
+
+.billing-plan-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.billing-plan-line strong {
+  font-size: 17px;
+}
+
+.billing-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 0 0 10px;
+  font-size: 13px;
+}
+.billing-meta dt {
+  color: var(--muted);
+}
+.billing-meta dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.billing-checkout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── Consumo ── */
+.usage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.usage-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) 2fr auto;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.usage-label {
+  color: var(--muted);
+}
+.usage-track {
+  height: 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 70%, transparent);
+  overflow: hidden;
+}
+.usage-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+.usage-track.warn .usage-fill {
+  background: var(--warning);
+}
+.usage-track.bad .usage-fill {
+  background: var(--danger);
+}
+.usage-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Alternador de ciclo ── */
+.cycle-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 45%, transparent);
+}
+.cycle-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cycle-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.cycle-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--success, #22c55e) 20%, transparent);
+  color: var(--success, #22c55e);
+}
+
+/* ── Cartões de plano ── */
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+.plan-card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.plan-card.highlight {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.plan-card.current {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.plan-tag {
+  position: absolute;
+  top: -9px;
+  left: 16px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+}
+.plan-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.plan-desc {
+  margin: 0;
+  min-height: 32px;
+}
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.plan-price strong {
+  font-size: 24px;
+  letter-spacing: -0.5px;
+}
+.plan-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--muted);
+  flex: 1;
+}
+.plan-features li::before {
+  content: '✓ ';
+  color: var(--success, #22c55e);
+  font-weight: 800;
+}
+
+/* ── Meios de pagamento ── */
+.method-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.method-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: 'radio name' 'radio hint';
+  gap: 2px 10px;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.method-option.selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.method-option input {
+  grid-area: radio;
+  align-self: center;
+  accent-color: var(--accent);
+}
+.method-name {
+  grid-area: name;
+  font-weight: 700;
+  font-size: 13px;
+}
+.method-hint {
+  grid-area: hint;
+}
+
+.billing-form .form-grid {
+  margin-bottom: 12px;
+}
+
+/* ── Faturas ── */
+.charge-list {
+  display: flex;
+  flex-direction: column;
+}
+.charge-row {
+  display: grid;
+  grid-template-columns: 130px 1fr auto auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.charge-row:last-child {
+  border-bottom: 0;
+}
+.charge-status {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 9px;
+  border-radius: 999px;
+  text-align: center;
+}
+.charge-status.ok {
+  background: color-mix(in srgb, var(--success, #22c55e) 18%, transparent);
+  color: var(--success, #22c55e);
+}
+.charge-status.warn {
+  background: color-mix(in srgb, var(--warning) 20%, transparent);
+  color: var(--warning);
+}
+.charge-status.bad {
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger);
+}
+.charge-status.muted {
+  background: color-mix(in srgb, var(--border) 60%, transparent);
+  color: var(--muted);
+}
+.charge-amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.charge-links {
+  display: flex;
+  gap: 6px;
+}
+
+/* ── Zona de cancelamento ── */
+.danger-zone {
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+}
+.btn-danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+.btn-danger:hover {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+@media (max-width: 720px) {
+  .usage-row {
+    grid-template-columns: 1fr auto;
+  }
+  .usage-track {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+  .charge-row {
+    grid-template-columns: 1fr auto;
+    row-gap: 4px;
+  }
+  .charge-desc,
+  .charge-due {
+    grid-column: 1 / -1;
+  }
+}

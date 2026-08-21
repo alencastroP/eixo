@@ -11,10 +11,11 @@
  * disponível para atendimento humano.
  */
 import Anthropic from '@anthropic-ai/sdk';
-import { InteractionType, Prisma, TicketStatus } from '@prisma/client';
+import { InteractionType, Prisma, TicketStatus, UsageMetric } from '@prisma/client';
 import { aiEnabled, env } from '../../config/env';
 import { logger } from '../../lib/logger';
 import { prisma } from '../../lib/prisma';
+import { hasQuota, recordUsage } from '../billing/usage.service';
 import type { NormalizedLead } from '../../integrations/core/types';
 import { dispatchOutboundReply } from '../../integrations/outbound';
 import { buildStablePrefix, buildTurnContext } from './prompt';
@@ -152,6 +153,11 @@ export async function handleInboundMessage(ticketId: string): Promise<void> {
     ]);
     if (!profile.enabled) return; // agente desligado para esta conta
 
+    // Cota do plano. Esgotada, o agente cala - e SÓ ele: o ticket segue vivo,
+    // o cliente segue registrado e o atendente responde pela Caixa de Entrada
+    // normalmente. Estourar a franquia não pode significar perder o lead.
+    if (!(await hasQuota(ticket.accountId, UsageMetric.AI_MESSAGE))) return;
+
     const messages = await buildHistory(ticketId);
     if (messages.length === 0) return;
 
@@ -229,6 +235,10 @@ export async function handleInboundMessage(ticketId: string): Promise<void> {
       vehicleRef,
       reply,
     );
+
+    // Mede DEPOIS de a resposta sair. Contar antes cobraria da franquia do
+    // lojista uma mensagem que uma falha de rede impediu de chegar ao cliente.
+    await recordUsage(ticket.accountId, UsageMetric.AI_MESSAGE);
 
     logger.info('IA respondeu ao lead', { ticketId, handedOff, turns: messages.length });
   } catch (err) {

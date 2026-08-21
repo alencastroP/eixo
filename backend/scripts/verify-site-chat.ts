@@ -18,6 +18,7 @@
  */
 import { AccountStatus, TicketStatus, UserRole } from '@prisma/client';
 import { prisma } from '../src/lib/prisma';
+import { WILDCARD, expandPermissions } from '../src/modules/roles/permissions';
 import { addInteraction, setBotEnabled, updateTicket, type CurrentUser } from '../src/modules/tickets/tickets.service';
 import { fetchChatMessages, sendChatMessage } from '../src/modules/storefront/chat.service';
 
@@ -56,6 +57,7 @@ async function makeStore(name: string) {
     name: user.name,
     email: user.email,
     accountId: account.id,
+    permissions: expandPermissions([WILDCARD]),
   };
   return { account, slug, asUser };
 }

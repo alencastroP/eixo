@@ -6,7 +6,7 @@ import * as channels from './channels.service';
 /**
  * Canais de atendimento do PRÓPRIO usuário ("Meus Dados" › Canais).
  *
- * Sem `requireRole`: ao contrário de Integrações (administração da loja), aqui
+ * Sem `requirePermission`: ao contrário de Integrações (administração da loja), aqui
  * qualquer atendente conecta o número dele. O escopo vem sempre de
  * `req.user!.id` + `req.account!.id` - nunca do corpo -, então um agente não
  * consegue mexer no canal de outro trocando um parâmetro.

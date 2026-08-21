@@ -15,6 +15,7 @@ import { AccountStatus, SubscriptionStatus, UserRole } from '@prisma/client';
 import { prisma } from '../src/lib/prisma';
 import { hashPassword } from '../src/modules/auth/auth.service';
 import { PLAN_SEED } from '../src/modules/billing/plans';
+import { adminProfileId } from '../src/modules/roles/roles.service';
 
 /** Senha aleatória legível para digitar uma vez e trocar depois, se quiser. */
 function generatePassword(): string {
@@ -65,16 +66,20 @@ async function main() {
     create: { accountId: account.id, planId: proPlan.id, status: SubscriptionStatus.ACTIVE },
   });
 
-  // 3) usuário admin
+  // 3) perfis de acesso padrão da conta (idempotente)
+  const profileId = await adminProfileId(prisma, account.id);
+
+  // 4) usuário admin
   const { password, generated } = resolvePassword();
   const user = await prisma.user.upsert({
     where: { email },
-    update: { passwordHash: hashPassword(password), role: UserRole.ADMIN, active: true },
+    update: { passwordHash: hashPassword(password), role: UserRole.ADMIN, profileId, active: true },
     create: {
       name: 'Administrador',
       email,
       passwordHash: hashPassword(password),
       role: UserRole.ADMIN,
+      profileId,
       accountId: account.id,
     },
   });

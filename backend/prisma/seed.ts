@@ -22,6 +22,8 @@ import {
 } from '@prisma/client';
 import { prisma } from '../src/lib/prisma';
 import { hashPassword } from '../src/modules/auth/auth.service';
+import { DEFAULT_PROFILES, WILDCARD, expandPermissions } from '../src/modules/roles/permissions';
+import { ensureDefaultProfiles } from '../src/modules/roles/roles.service';
 import { ingestNormalizedLead } from '../src/modules/tickets/ingest.service';
 import * as tickets from '../src/modules/tickets/tickets.service';
 import type { CurrentUser } from '../src/modules/tickets/tickets.service';
@@ -114,11 +116,18 @@ async function seedFinance() {
   console.log(`Seed: ${rows.length} lançamentos financeiros criados.`);
 }
 
-async function upsertUser(name: string, email: string, password: string, role: UserRole) {
+async function upsertUser(
+  name: string,
+  email: string,
+  password: string,
+  role: UserRole,
+  accountId: string,
+  profileId: string,
+) {
   return prisma.user.upsert({
     where: { email },
-    update: {},
-    create: { name, email, passwordHash: hashPassword(password), role },
+    update: { profileId },
+    create: { name, email, passwordHash: hashPassword(password), role, accountId, profileId },
   });
 }
 
@@ -140,9 +149,14 @@ async function main() {
   }
   const accountId = seedAccount.id;
 
-  const admin = await upsertUser('Administrador', 'admin@crm.local', 'Admin@123', UserRole.ADMIN);
-  const carlos = await upsertUser('Carlos Andrade', 'carlos@crm.local', 'Vendedor@123', UserRole.AGENT);
-  const ana = await upsertUser('Ana Souza', 'ana@crm.local', 'Vendedor@123', UserRole.AGENT);
+  // perfis padrão da conta de demonstração (idempotente)
+  const profiles = await ensureDefaultProfiles(prisma, accountId);
+  const adminProfile = profiles.get('admin')!.id;
+  const agentProfile = profiles.get('agent')!.id;
+
+  const admin = await upsertUser('Administrador', 'admin@crm.local', 'Admin@123', UserRole.ADMIN, accountId, adminProfile);
+  const carlos = await upsertUser('Carlos Andrade', 'carlos@crm.local', 'Vendedor@123', UserRole.AGENT, accountId, agentProfile);
+  const ana = await upsertUser('Ana Souza', 'ana@crm.local', 'Vendedor@123', UserRole.AGENT, accountId, agentProfile);
 
   const asUser = (u: { id: string; role: UserRole; name: string; email: string }): CurrentUser => ({
     id: u.id,
@@ -150,6 +164,11 @@ async function main() {
     name: u.name,
     email: u.email,
     accountId,
+    // o seed fala direto com o serviço, sem passar pelo middleware que resolve
+    // o perfil - reproduz aqui as permissões que cada papel padrão concede
+    permissions: expandPermissions(
+      u.role === UserRole.ADMIN ? [WILDCARD] : DEFAULT_PROFILES[1].permissions,
+    ),
   });
 
   await seedVehicles();

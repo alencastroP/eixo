@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { FinancialType, UserRole } from '@prisma/client';
-import { authenticate, requireRole } from '../../middleware/auth';
+import { FinancialType } from '@prisma/client';
+import { requirePermission } from '../../middleware/permissions';
 import { ah } from '../../lib/errors';
 import * as finance from './finance.service';
 
-/** Módulo Administrativo & Fiscal - restrito a ADMIN (gestor/lojista). */
+/** Módulo Administrativo & Fiscal. Consultar e movimentar o caixa são
+ *  permissões separadas: há quem precise ver o fluxo sem poder lançar nada. */
 export const financeRouter = Router();
-financeRouter.use(authenticate, requireRole(UserRole.ADMIN));
+financeRouter.use(requirePermission('finance.view'));
 
 const listSchema = z.object({
   type: z.nativeEnum(FinancialType).optional(),
@@ -43,6 +44,7 @@ const createSchema = z.object({
 
 financeRouter.post(
   '/entries',
+  requirePermission('finance.manage'),
   ah(async (req, res) => {
     res.status(201).json(await finance.createEntry(createSchema.parse(req.body)));
   }),
@@ -52,6 +54,7 @@ const paidSchema = z.object({ paid: z.boolean() });
 
 financeRouter.patch(
   '/entries/:id/paid',
+  requirePermission('finance.manage'),
   ah(async (req, res) => {
     const { paid } = paidSchema.parse(req.body);
     res.json(await finance.setPaid(req.params.id, paid));
@@ -60,6 +63,7 @@ financeRouter.patch(
 
 financeRouter.delete(
   '/entries/:id',
+  requirePermission('finance.manage'),
   ah(async (req, res) => {
     await finance.deleteEntry(req.params.id);
     res.status(204).end();

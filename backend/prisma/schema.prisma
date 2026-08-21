@@ -17,6 +17,13 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+/// Nível base do usuário. Depois da introdução dos perfis de acesso
+/// (`AccessProfile`) ele NÃO decide mais o que o usuário pode fazer - quem
+/// decide é a lista de permissões do perfil. Continua existindo por dois
+/// motivos: é o fallback de quem ainda não tem perfil (bases antigas) e é o
+/// que responde "quem é administrador desta loja?" para quem não pergunta por
+/// permissão - o aviso de expiração de trial, por exemplo. É derivado do
+/// perfil na escrita (ver roleFromPermissions), nunca editado à mão.
 enum UserRole {
   ADMIN
   AGENT
@@ -42,6 +49,58 @@ enum SubscriptionStatus {
   EXPIRED
 }
 
+/// Periodicidade da cobrança. O anual cobra 10 mensalidades (2 meses grátis) -
+/// desconto que existe para antecipar caixa e derrubar churn, e é o que
+/// justifica liberar boleto.
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+/// Meio de pagamento da assinatura.
+///
+/// CREDIT_CARD é o único que renova sozinho e por isso é o padrão empurrado.
+/// PIX gera cobrança a cada ciclo (exige ação do cliente - risco de churn
+/// passivo). BOLETO fica restrito ao ciclo anual (ver plans.ts): boleto mensal
+/// em SaaS pequeno é máquina de inadimplência e trabalho manual.
+enum BillingMethod {
+  CREDIT_CARD
+  PIX
+  BOLETO
+}
+
+/// Ciclo de vida de UMA cobrança no gateway. Espelha os estados do Asaas -
+/// PENDING (emitida), CONFIRMED (paga, ainda não liquidada), RECEIVED
+/// (dinheiro na conta), OVERDUE (vencida) e os desfechos negativos.
+enum ChargeStatus {
+  PENDING
+  CONFIRMED
+  RECEIVED
+  OVERDUE
+  REFUNDED
+  CANCELED
+  CHARGEBACK
+  FAILED
+}
+
+/// Estágio do processamento de um evento recebido do gateway.
+enum BillingEventStatus {
+  RECEIVED
+  PROCESSED
+  IGNORED
+  FAILED
+}
+
+/// Métricas de consumo medidas por conta e por ciclo.
+///
+/// Existem porque o plano é flat mas o custo destes itens é variável: uma loja
+/// com muito volume de chat pode queimar mais em tokens do que paga. Sem
+/// medição não há como aplicar cota nem cobrar excedente.
+enum UsageMetric {
+  AI_MESSAGE
+  CREDIT_QUERY
+}
+
 enum TicketStatus {
   NEW
   IN_PROGRESS
@@ -60,11 +119,11 @@ enum TicketPriority {
 
 enum InteractionType {
   CUSTOMER_MESSAGE // mensagem recebida do lead (via plataforma ou registro manual)
-  AGENT_REPLY      // resposta enviada pelo atendente
-  INTERNAL_NOTE    // nota interna, invisível ao cliente
-  STATUS_CHANGE    // registro de mudança de status na linha do tempo
-  ASSIGNMENT       // registro de (re)atribuição na linha do tempo
-  SYSTEM           // eventos automáticos
+  AGENT_REPLY // resposta enviada pelo atendente
+  INTERNAL_NOTE // nota interna, invisível ao cliente
+  STATUS_CHANGE // registro de mudança de status na linha do tempo
+  ASSIGNMENT // registro de (re)atribuição na linha do tempo
+  SYSTEM // eventos automáticos
 }
 
 enum WebhookEventStatus {
@@ -147,15 +206,65 @@ model User {
   accountId String?
   account   Account? @relation(fields: [accountId], references: [id])
 
-  assignedTickets Ticket[]            @relation("TicketAssignee")
-  interactions    TicketInteraction[]
-  refreshTokens   RefreshToken[]
-  auditLogs       AuditLog[]
-  creditQueries   CreditQuery[]
-  channels        UserChannel[]
+  /// Perfil de acesso (o que este usuário pode fazer). Nullable por
+  /// compatibilidade: usuário sem perfil cai no fallback do `role` acima.
+  /// `onDelete: SetNull` é conservador de propósito - apagar um perfil nunca
+  /// pode apagar gente; a rota de exclusão já barra perfis em uso.
+  profileId String?
+  profile   AccessProfile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
+
+  assignedTickets  Ticket[]            @relation("TicketAssignee")
+  interactions     TicketInteraction[]
+  refreshTokens    RefreshToken[]
+  auditLogs        AuditLog[]
+  creditQueries    CreditQuery[]
+  channels         UserChannel[]
+  termsAcceptances TermsAcceptance[]
 
   @@index([accountId])
+  @@index([profileId])
   @@map("users")
+}
+
+/// Perfil de acesso (o "cargo" dentro da loja): um nome e a lista de
+/// permissões que ele concede. Pertence a UMA conta - cada lojista desenha os
+/// próprios perfis, e nenhum enxerga os do vizinho.
+///
+/// Por que uma tabela e não um enum: o conjunto de cargos de uma loja de
+/// veículos não é fechado (avaliador, gerente de F&I, financeiro, estagiário
+/// de vendas...). Um enum exigiria migration a cada cargo novo e ainda deixaria
+/// o lojista sem poder afinar o que cada um vê.
+///
+/// `permissions` guarda os slugs do catálogo (src/modules/roles/permissions.ts).
+/// O perfil de administrador guarda o coringa `*`: assim ele já nasce com toda
+/// permissão que o produto vier a ganhar, sem depender de backfill.
+model AccessProfile {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  /// Chave estável dos perfis criados junto com a conta ('admin', 'agent').
+  /// Perfis criados pelo lojista têm `null`. É por ela que o código reencontra
+  /// o perfil padrão sem depender do nome, que o lojista pode ter mudado.
+  systemKey String?
+
+  /// Slugs do catálogo de permissões, ou `*` (acesso total).
+  permissions String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+
+  /// Dois perfis com o mesmo nome na mesma loja viram armadilha na hora de
+  /// atribuir alguém - o banco impede.
+  @@unique([accountId, name])
+  @@unique([accountId, systemKey])
+  @@index([accountId])
+  @@map("access_profiles")
 }
 
 /// Canal de atendimento conectado por UM atendente (hoje: WhatsApp Cloud API).
@@ -182,11 +291,11 @@ model UserChannel {
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   /// Identificador do número na plataforma (Cloud API: phoneNumberId).
-  externalId String
+  externalId    String
   /// Número como a Meta o exibe (ex.: "+55 84 98801-3786") - só para a tela.
   displayNumber String
   /// Nome verificado do remetente exibido ao cliente no WhatsApp.
-  verifiedName String?
+  verifiedName  String?
 
   connectedAt   DateTime  @default(now())
   lastCheckedAt DateTime?
@@ -239,11 +348,21 @@ model Lead {
   document String? // CPF/CNPJ do cliente (dígitos) - usado na consulta rápida
   extra    Json? // campos personalizados do formulário (config em Setting "leadForm")
 
+  /// Consentimento do titular para consulta de crédito (LGPD art. 7º, I) - ver
+  /// legal/09-CONSENTIMENTO-CONSULTA-DE-CREDITO.md. Vale para a consulta mais
+  /// recente: cada nova consulta regrava os três campos, inclusive quando é o
+  /// próprio agente de IA que a colhe (fornecida voluntariamente pelo titular
+  /// no chat). `creditConsentSource` é o canal ('presencial', 'whatsapp',
+  /// 'site', 'telefone', 'chat_ia' ou o slug da plataforma de origem).
+  creditConsentAt      DateTime?
+  creditConsentSource  String?
+  creditConsentVersion String?
+
   /// Perfil de compra coletado pelo agente ao longo da conversa (orçamento, carro
   /// na troca, forma de pagamento, urgência, preferências). Vai no prefixo do
   /// prompt para o agente parar de reperguntar o que já foi respondido.
   /// É PII de preferência comercial - segue as mesmas regras de anonimização.
-  profile  Json?
+  profile Json?
 
   tickets       Ticket[]
   creditQueries CreditQuery[]
@@ -299,8 +418,8 @@ model Ticket {
   lastFollowUpAt DateTime?
   /// Por que fechou (ex.: "sem_resposta"), quando o fechamento foi automático.
   closeReason    String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   interactions TicketInteraction[]
 
@@ -444,15 +563,26 @@ model CreditQuery {
   score    Int // 0..1000
   report   Json // snapshot completo do diagnóstico
 
+  /// Tenant dono da consulta. Até aqui era a ÚNICA tabela de dado de negócio
+  /// sem isolamento: consultas de todas as lojas (CPF/CNPJ + score) ficavam no
+  /// mesmo balde, visíveis entre contas. Backfill: herda do lead vinculado ou
+  /// da conta de quem consultou (ver migration).
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
   actorId String? // quem realizou a consulta
   actor   User?   @relation(fields: [actorId], references: [id])
-  leadId  String? // vínculo opcional a um lead/cliente
+  /// Nullable só por compatibilidade com linhas anteriores à exigência de
+  /// consentimento. Toda consulta NOVA é obrigada a informar um lead (ver
+  /// credit.service.ts) - é nele que mora o registro de consentimento do
+  /// titular, e sem lead não há como provar que a consulta foi autorizada.
+  leadId  String?
   lead    Lead?   @relation(fields: [leadId], references: [id])
 
   createdAt DateTime @default(now())
 
-  @@index([document])
-  @@index([createdAt])
+  @@index([accountId, createdAt])
+  @@index([accountId, document])
   @@map("credit_queries")
 }
 
@@ -475,12 +605,24 @@ model Plan {
   id           String  @id @default(cuid())
   code         String  @unique // slug estável: 'trial', 'pro', 'business'
   name         String
-  priceCents   Int     @default(0) // em centavos (BRL)
+  priceCents   Int     @default(0) // mensalidade em centavos (BRL)
   durationDays Int? // null = recorrente mensal; trial = 15
-  features     Json    @default("{}") // { maxUsers, maxVehicles, modules: [...] }
+  features     Json    @default("{}") // ver PlanFeatures em modules/billing/plans.ts
   active       Boolean @default(true)
 
+  /// Preço do ciclo ANUAL, cobrado de uma vez. Null = plano não é vendido no
+  /// anual (o trial, por exemplo). Guardado explícito em vez de calculado:
+  /// o desconto é decisão comercial e muda sem mexer em código.
+  priceYearlyCents Int?
+
+  /// Texto de venda mostrado no cartão do plano, e ordem/destaque na vitrine
+  /// de planos dentro da Administração.
+  description String?
+  sortOrder   Int     @default(0)
+  highlight   Boolean @default(false)
+
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   accounts      Account[]
   subscriptions Subscription[]
@@ -499,31 +641,53 @@ model Account {
   planId String?
   plan   Plan?   @relation(fields: [planId], references: [id])
 
-  trialStartedAt DateTime?
-  trialEndsAt    DateTime? // trialStartedAt + 15 dias
+  trialStartedAt   DateTime?
+  trialEndsAt      DateTime? // trialStartedAt + 15 dias
   expiryNotifiedAt DateTime? // evita reenviar o aviso de pré-expiração
+
+  /// Cliente correspondente no gateway de pagamento (Asaas: `cus_...`).
+  ///
+  /// Mora na CONTA, e não na assinatura, de propósito: o cadastro do pagador
+  /// sobrevive a cancelamentos e trocas de plano. Recriar o cliente a cada
+  /// assinatura duplicaria o pagador no painel do gateway e perderia o
+  /// histórico de cobranças dele.
+  gatewayCustomerId String?
+
+  /// Dados de faturamento do pagador. Preenchidos na primeira assinatura; o
+  /// CNPJ cai para `Account.cnpj` quando não informado à parte.
+  billingName  String?
+  billingEmail String?
+  billingPhone String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users        User[]
-  subscription Subscription?
-  trialCpf     TrialCpfRegistry?
-  vehicles     Vehicle[]
-  storefront   Storefront?
-  userChannels UserChannel[]
+  users            User[]
+  profiles         AccessProfile[]
+  subscription     Subscription?
+  trialCpf         TrialCpfRegistry?
+  vehicles         Vehicle[]
+  storefront       Storefront?
+  userChannels     UserChannel[]
   // Isolamento do atendimento: cada conta enxerga só o próprio funil.
-  leads         Lead[]
-  tickets       Ticket[]
-  webhookEvents WebhookEvent[]
-  integrations  Integration[]
+  leads            Lead[]
+  tickets          Ticket[]
+  webhookEvents    WebhookEvent[]
+  integrations     Integration[]
   // Agente de IA e automação de atendimento, configuráveis por lojista.
-  agentProfile  AgentProfile?
-  knowledgeDocs KnowledgeDoc[]
-  flowPolicy    FlowPolicy?
+  agentProfile     AgentProfile?
+  knowledgeDocs    KnowledgeDoc[]
+  flowPolicy       FlowPolicy?
+  // Pagamentos: cobranças emitidas, eventos do gateway e consumo medido.
+  charges          BillingCharge[]
+  billingEvents    BillingEvent[]
+  usageCounters    UsageCounter[]
+  creditQueries    CreditQuery[]
+  termsAcceptances TermsAcceptance[]
 
   @@index([status])
   @@index([trialEndsAt])
+  @@index([gatewayCustomerId])
   @@map("accounts")
 }
 
@@ -572,9 +736,9 @@ model KnowledgeDoc {
   accountId String
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  title   String
-  content String
-  enabled Boolean @default(true)
+  title     String
+  content   String
+  enabled   Boolean @default(true)
   /// Reservado para busca vetorial futura; nulo enquanto a recuperação for lexical.
   embedding Json?
 
@@ -644,8 +808,10 @@ model Storefront {
   @@map("storefronts")
 }
 
-/// Assinatura da conta (1:1). Guarda o estado de billing e os pontos de extensão
-/// para o gateway de pagamento recorrente (Stripe/Pagar.me/Iugu - integração real depois).
+/// Assinatura da conta (1:1). É o espelho local do contrato recorrente que vive
+/// no gateway (Asaas): quem move dinheiro, retenta cartão e roda a régua de
+/// inadimplência é ele; aqui guardamos o estado que o produto precisa consultar
+/// sem ir à rede, e o vínculo para reconciliar por webhook.
 model Subscription {
   id        String             @id @default(cuid())
   accountId String             @unique
@@ -654,18 +820,142 @@ model Subscription {
   plan      Plan               @relation(fields: [planId], references: [id])
   status    SubscriptionStatus @default(TRIALING)
 
+  cycle  BillingCycle  @default(MONTHLY)
+  method BillingMethod @default(CREDIT_CARD)
+
+  /// Preço TRAVADO no ato da contratação, em centavos. O catálogo pode subir de
+  /// preço amanhã sem reajustar quem já assinou - reajuste é ato explícito
+  /// (cláusula de IPCA no contrato), nunca efeito colateral de editar o plano.
+  priceCents Int @default(0)
+
   startedAt        DateTime  @default(now())
   currentPeriodEnd DateTime? // fim do ciclo pago vigente
+  nextDueDate      DateTime? // vencimento da próxima cobrança, segundo o gateway
   canceledAt       DateTime?
 
-  // Hooks de billing - preenchidos quando o gateway for plugado.
-  externalCustomerId     String?
+  /// Cancelamento agendado: o acesso continua até o fim do período já pago.
+  cancelAtPeriodEnd Boolean @default(false)
+
+  /// Vínculo com o gateway. `gateway` é o slug do provedor ('asaas') para que
+  /// uma eventual troca não exija adivinhar a origem dos ids antigos.
+  gateway                String?
   externalSubscriptionId String?
+
+  /// Cartão em uso - apenas o que o gateway devolve para EXIBIÇÃO. O número do
+  /// cartão nunca entra neste banco (tokenização do lado do gateway mantém a
+  /// operação fora do escopo pesado de PCI-DSS).
+  cardBrand  String?
+  cardLast4  String?
+  cardHolder String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  charges BillingCharge[]
+
+  @@index([externalSubscriptionId])
   @@map("subscriptions")
+}
+
+/// Uma cobrança emitida pelo gateway (mensalidade, anuidade ou avulsa).
+///
+/// É a "fatura" que o lojista vê em Administração › Pagamentos: espelho local
+/// do objeto `payment` do Asaas, reconciliado por webhook. Nada aqui é fonte da
+/// verdade sobre dinheiro - a fonte é o gateway; esta tabela existe para a tela
+/// abrir instantânea e para haver histórico auditável mesmo se a API cair.
+model BillingCharge {
+  id        String  @id @default(cuid())
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  /// id da cobrança no gateway (Asaas: `pay_...`). Único: é a chave de
+  /// reconciliação que torna o processamento de webhook idempotente.
+  gateway    String @default("asaas")
+  externalId String @unique
+
+  status      ChargeStatus  @default(PENDING)
+  method      BillingMethod
+  amountCents Int
+  description String?
+
+  dueDate DateTime
+  paidAt  DateTime?
+
+  /// Links prontos do gateway - a fatura web (serve para cartão e PIX), o PDF
+  /// do boleto e o comprovante. O QR do PIX NÃO é guardado: é buscado sob
+  /// demanda, porque tem validade e pesa como base64 no banco.
+  invoiceUrl  String?
+  bankSlipUrl String?
+  receiptUrl  String?
+
+  /// Nota fiscal de serviço emitida pelo gateway junto da cobrança.
+  nfseStatus String?
+  nfseUrl    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([accountId, dueDate])
+  @@index([status])
+  @@map("billing_charges")
+}
+
+/// Caixa de entrada dos webhooks do gateway.
+///
+/// Mesmo princípio da fila de leads: o endpoint autentica, persiste o payload
+/// BRUTO e responde rápido. A diferença é que aqui o processamento é síncrono
+/// (o volume é baixo e o efeito - liberar ou bloquear acesso - precisa valer
+/// imediatamente). `externalId` único garante que a reentrega do gateway, que
+/// acontece sempre que ele não recebe 200, não aplique o mesmo efeito duas vezes.
+model BillingEvent {
+  id      String @id @default(cuid())
+  gateway String @default("asaas")
+
+  /// id do evento no gateway (Asaas: `evt_...`). Único = idempotência.
+  externalId String @unique
+  type       String // PAYMENT_CONFIRMED, PAYMENT_OVERDUE, ...
+  payload    Json
+
+  status BillingEventStatus @default(RECEIVED)
+  error  String?
+
+  /// Conta afetada, quando foi possível resolvê-la. Nulo em evento órfão
+  /// (cobrança criada direto no painel do gateway, por exemplo).
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([status, receivedAt])
+  @@index([accountId])
+  @@map("billing_events")
+}
+
+/// Consumo medido por conta, métrica e ciclo (`period` = 'YYYY-MM').
+///
+/// O plano é flat, mas mensagem de IA e consulta de bureau custam por unidade.
+/// Sem este contador não existe cota, não existe cobrança de excedente e uma
+/// única loja de alto volume pode consumir mais do que paga. O incremento é
+/// atômico (upsert + increment), então rodadas concorrentes do worker não se
+/// perdem.
+model UsageCounter {
+  id        String  @id @default(cuid())
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  metric UsageMetric
+  period String // 'YYYY-MM' no fuso de faturamento (America/Sao_Paulo)
+  used   Int         @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([accountId, metric, period])
+  @@index([period])
+  @@map("usage_counters")
 }
 
 /// Registro anti-fraude de CPFs que já usufruíram do trial gratuito.
@@ -683,6 +973,38 @@ model TrialCpfRegistry {
 
   @@index([cpfHash])
   @@map("trial_cpf_registry")
+}
+
+/// Prova de aceite dos documentos jurídicos (Termos de Uso + DPA + AUP + SLA,
+/// aceitos como bloco único no cadastro) - ver
+/// legal/07-CONTROLE-DE-VERSOES-E-REGISTRO-DE-ACEITE.md.
+///
+/// Somente inserção: nunca é atualizada nem apagada - um novo aceite (ex.:
+/// re-aceite por versão nova) gera uma linha nova, não sobrescreve a anterior.
+/// Sobrevive ao expurgo de retenção e ao encerramento da conta por ser prova
+/// de relação contratual.
+model TermsAcceptance {
+  id        String  @id @default(cuid())
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+
+  /// Hoje só existe 'terms' (o bloco único aceito no cadastro do trial). Um
+  /// código por documento deixa a tabela pronta para aceites separados
+  /// (ex.: consentimento de crédito) sem migration nova.
+  documentCode    String
+  documentVersion String
+  /// 'signup' | 'checkout' | 'reacceptance' | 'plan-change'
+  context         String
+
+  ip         String?
+  userAgent  String?
+  acceptedAt DateTime @default(now())
+
+  @@index([accountId])
+  @@index([userId])
+  @@map("terms_acceptances")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -707,7 +1029,7 @@ model Vehicle {
   yearModel       Int
   color           String?
   fuel            String? // Flex, Gasolina, Diesel, Etanol, Elétrico, Híbrido, GNV
-  km              Int      @default(0)
+  km              Int     @default(0)
   plate           String? // única DENTRO da conta (ver @@unique abaixo)
   chassi          String?
   renavam         String?
@@ -734,10 +1056,10 @@ model Vehicle {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  photos          VehiclePhoto[]
-  costs           VehicleCost[]
+  photos           VehiclePhoto[]
+  costs            VehicleCost[]
   financialEntries FinancialEntry[]
-  fiscalInvoices  FiscalInvoice[]
+  fiscalInvoices   FiscalInvoice[]
 
   /// Placa é única por conta, não globalmente: duas lojas diferentes podem ter
   /// registrado o mesmo veículo (consignado que trocou de pátio, por exemplo).
@@ -820,10 +1142,10 @@ model FiscalInvoice {
   vehicleId String?
   vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
 
-  xml         String? // conteúdo XML mock
+  xml          String? // conteúdo XML mock
   rejectReason String?
-  issuedAt    DateTime @default(now())
-  createdAt   DateTime @default(now())
+  issuedAt     DateTime @default(now())
+  createdAt    DateTime @default(now())
 
   @@index([kind, issuedAt])
   @@index([status])

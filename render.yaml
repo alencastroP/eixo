@@ -119,6 +119,50 @@ services:
         value: "365"
       - key: RETENTION_AUDIT_LOG_DAYS
         value: "730"
+      # Pagamentos (Asaas). Sem ASAAS_API_KEY, requireGateway() responde 503 e
+      # a tela de Pagamentos abre em modo leitura - nenhuma cobrança sai daqui
+      # até a chave ser preenchida no dashboard.
+      - key: BILLING_PROVIDER
+        value: asaas
+      - key: ASAAS_API_KEY
+        sync: false
+      # 'sandbox' ou 'production' - preencher no dashboard junto da chave
+      # correspondente (são contas diferentes no Asaas). Sem valor, o código
+      # erra para 'sandbox' por padrão (config/env.ts).
+      - key: ASAAS_ENV
+        sync: false
+      # Cadastrado no painel do Asaas em Integrações › Webhooks, apontando
+      # para https://eixo-crm-webhooks.onrender.com/webhooks/billing. Sem ele
+      # o endpoint fica FECHADO (404 para qualquer chamada) - ver
+      # billing-webhook.routes.ts.
+      - key: ASAAS_WEBHOOK_TOKEN
+        sync: false
+      - key: ASAAS_WALLET_ID
+        sync: false
+      - key: ASAAS_ISSUE_NFSE
+        value: "false"
+      - key: ASAAS_NFSE_SERVICE_NAME
+        value: Licenciamento de software de gestão (SaaS)
+      - key: BILLING_GRACE_DAYS
+        value: "7"
+      # E-mail transacional (Resend). Sem a chave, os avisos de trial e de
+      # cobrança viram log e nada quebra - mas nenhum cliente é avisado.
+      - key: RESEND_API_KEY
+        sync: false
+      # Deixado sync:false de propósito (e não com o padrão de sandbox do
+      # .env.example): o remetente de teste do Resend só entrega para o
+      # e-mail da própria conta Resend, então rodar em produção com o padrão
+      # implícito faria todo aviso a cliente falhar silenciosamente. Preencher
+      # com o remetente do domínio verificado (SPF/DKIM/DMARC) antes do
+      # primeiro cliente pagante.
+      - key: EMAIL_FROM
+        sync: false
+      - key: EMAIL_REPLY_TO
+        sync: false
+      # Mesma URL do front usada em CORS_ORIGIN - é para onde os botões dos
+      # e-mails apontam ("Ver fatura", "Escolher plano").
+      - key: APP_URL
+        value: https://eixo.pedrovalencastro.workers.dev
 
   # ─── Recepção de webhooks + worker de leads (processo independente) ────
   - type: web
@@ -162,6 +206,38 @@ services:
           name: eixo-crm-api
           type: web
           envVarKey: TRIAL_CPF_PEPPER
+      # Segredo que o Asaas envia de volta no header `asaas-access-token` do
+      # webhook. Só o token, não a API key inteira - este processo nunca fala
+      # com o Asaas, só recebe e valida a chamada dele (ver
+      # billing-webhook.routes.ts e billing/webhook.service.ts).
+      - key: ASAAS_WEBHOOK_TOKEN
+        fromService:
+          name: eixo-crm-api
+          type: web
+          envVarKey: ASAAS_WEBHOOK_TOKEN
+      # A confirmação/queda de pagamento chega aqui (POST /webhooks/billing) e
+      # é este processo que manda os avisos de mudança de acesso - por isso
+      # precisa das mesmas credenciais de e-mail do eixo-crm-api.
+      - key: RESEND_API_KEY
+        fromService:
+          name: eixo-crm-api
+          type: web
+          envVarKey: RESEND_API_KEY
+      - key: EMAIL_FROM
+        fromService:
+          name: eixo-crm-api
+          type: web
+          envVarKey: EMAIL_FROM
+      - key: EMAIL_REPLY_TO
+        fromService:
+          name: eixo-crm-api
+          type: web
+          envVarKey: EMAIL_REPLY_TO
+      - key: APP_URL
+        fromService:
+          name: eixo-crm-api
+          type: web
+          envVarKey: APP_URL
       # worker embutido no mesmo processo (mantém 1 serviço em vez de 2 no
       # plano free). Se crescer o volume, separar em eixo-worker próprio.
       - key: WORKER_INLINE

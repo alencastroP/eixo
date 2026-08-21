@@ -5,6 +5,7 @@ import { authRateLimit } from '../../middleware/security';
 import { ah, unauthorized } from '../../lib/errors';
 import { prisma } from '../../lib/prisma';
 import { serializeAccount } from '../billing/account.service';
+import { resolveUserAccess } from '../roles/roles.service';
 import * as authService from './auth.service';
 
 export const authRouter = Router();
@@ -43,14 +44,26 @@ authRouter.post(
   }),
 );
 
+/**
+ * Sessão do usuário. Além da identidade e da conta, devolve o PERFIL e a lista
+ * efetiva de permissões - é com ela que o front acende ou apaga menus, rotas e
+ * botões. A lista chega expandida (coringa e implicações já resolvidos), então
+ * a checagem no cliente é uma busca simples na lista.
+ *
+ * Isso não é controle de acesso: é a mesma decisão que o servidor já toma,
+ * antecipada para a tela não oferecer o que ela sabe que vai levar 403.
+ */
 authRouter.get(
   '/me',
   authenticate,
   ah(async (req, res) => {
     const user = await prisma.user.findUnique({ where: { id: req.user!.id }, include: { account: true } });
     if (!user || !user.active) throw unauthorized('Usuário inativo ou removido');
+    const access = await resolveUserAccess(user.id);
     res.json({
       ...authService.toPublicUser(user),
+      profile: access.profileId ? { id: access.profileId, name: access.profileName } : null,
+      permissions: access.permissions,
       account: user.account ? serializeAccount(user.account) : null,
     });
   }),

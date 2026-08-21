@@ -1,5 +1,56 @@
 export type Role = 'ADMIN' | 'AGENT';
 
+/**
+ * Slug de permissão (`modulo.acao`). O catálogo completo mora no back-end
+ * (src/modules/roles/permissions.ts) e chega pronto na tela de perfis - aqui
+ * o tipo é aberto de propósito: duplicar a lista significaria mantê-la em dois
+ * lugares e vê-las divergir no primeiro módulo novo.
+ */
+export type Permission = string;
+
+/** Um perfil de acesso da loja, como a API o devolve. */
+export interface AccessProfile {
+  id: string;
+  name: string;
+  description: string | null;
+  /** 'admin' | 'agent' nos perfis que nascem com a conta; null nos criados pelo lojista. */
+  systemKey: string | null;
+  permissions: Permission[];
+  /** Com as implicações resolvidas - é o que a tela mostra marcado. */
+  effectivePermissions: Permission[];
+  /** Perfil de administrador: existe sempre e não é editável nem removível. */
+  locked: boolean;
+  userCount: number;
+  createdAt: string;
+}
+
+export interface PermissionDef {
+  key: Permission;
+  label: string;
+  description: string;
+  implies?: Permission[];
+}
+
+export interface PermissionGroup {
+  key: string;
+  label: string;
+  hint: string;
+  permissions: PermissionDef[];
+}
+
+/** Ponto de partida oferecido no "Novo perfil" - não é linha no banco. */
+export interface ProfileTemplate {
+  key: string;
+  name: string;
+  description: string;
+  permissions: Permission[];
+}
+
+export interface PermissionCatalog {
+  groups: PermissionGroup[];
+  templates: ProfileTemplate[];
+}
+
 export type AccountStatus = 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'SUSPENDED' | 'EXPIRED' | 'CANCELED';
 
 export interface AccountSummary {
@@ -10,17 +61,146 @@ export interface AccountSummary {
   trialDaysLeft: number | null;
 }
 
+// ─── Assinatura e pagamentos ─────────────────────────────────────────────────
+
+export type BillingCycle = 'MONTHLY' | 'YEARLY';
+export type BillingMethod = 'CREDIT_CARD' | 'PIX' | 'BOLETO';
+export type SubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'EXPIRED';
+export type ChargeStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'RECEIVED'
+  | 'OVERDUE'
+  | 'REFUNDED'
+  | 'CANCELED'
+  | 'CHARGEBACK'
+  | 'FAILED';
+
+export interface PlanFeatures {
+  maxUsers: number;
+  maxVehicles: number;
+  aiMessagesPerMonth: number | null;
+  creditQueriesPerMonth: number | null;
+  whatsappNumbers: number;
+  modules: string[];
+  prioritySupport?: boolean;
+}
+
+export interface BillingPlan {
+  code: string;
+  name: string;
+  description: string | null;
+  priceCents: number;
+  priceYearlyCents: number | null;
+  highlight: boolean;
+  features: PlanFeatures;
+  cycles: BillingCycle[];
+}
+
+export interface BillingCharge {
+  id: string;
+  status: ChargeStatus;
+  method: BillingMethod;
+  amountCents: number;
+  description: string | null;
+  dueDate: string;
+  paidAt: string | null;
+  invoiceUrl: string | null;
+  bankSlipUrl: string | null;
+  receiptUrl: string | null;
+  nfseUrl: string | null;
+  nfseStatus: string | null;
+}
+
+export interface BillingSubscription {
+  status: SubscriptionStatus;
+  planCode: string;
+  planName: string;
+  cycle: BillingCycle;
+  method: BillingMethod;
+  priceCents: number;
+  startedAt: string;
+  currentPeriodEnd: string | null;
+  nextDueDate: string | null;
+  canceledAt: string | null;
+  cancelAtPeriodEnd: boolean;
+  card: { brand: string; last4: string; holder: string | null } | null;
+  connected: boolean;
+}
+
+export interface UsageStatus {
+  metric: 'AI_MESSAGE' | 'CREDIT_QUERY';
+  period: string;
+  used: number;
+  quota: number | null;
+  remaining: number | null;
+  exceeded: boolean;
+}
+
+export interface PlanLimitItem {
+  resource: string;
+  label: string;
+  used: number;
+  max: number;
+}
+
+export interface BillingOverview {
+  account: {
+    status: AccountStatus;
+    trialEndsAt: string | null;
+    billingName: string | null;
+    billingEmail: string | null;
+    billingDocument: string | null;
+    billingPhone: string | null;
+  };
+  subscription: BillingSubscription | null;
+  charges: BillingCharge[];
+  usage: UsageStatus[];
+  limits: { planCode: string; planName: string; items: PlanLimitItem[] } | null;
+  plans: BillingPlan[];
+  gatewayEnabled: boolean;
+  methodsByCycle: Record<BillingCycle, BillingMethod[]>;
+}
+
+export interface PayerDefaults {
+  name: string;
+  document: string;
+  email: string;
+  phone: string;
+}
+
+export interface SubscribeResult {
+  subscription: BillingSubscription | null;
+  /** Página hospedada do gateway - onde o cartão é digitado. */
+  checkoutUrl: string | null;
+  charge: BillingCharge | null;
+}
+
+export interface ChargePix {
+  payload: string;
+  qrCodeBase64: string | null;
+  expiresAt: string | null;
+}
+
 export interface PublicUser {
   id: string;
   name: string;
   email: string;
   role: Role;
-  /** Presente em /auth/me; ausente na resposta de login. */
+  /** Presentes em /auth/me; ausentes na resposta de login (que só identifica). */
+  profile?: { id: string; name: string } | null;
+  /** Lista efetiva - é o que `can()` consulta para acender menus e rotas. */
+  permissions?: Permission[];
   account?: AccountSummary | null;
 }
 
-export interface UserListItem extends PublicUser {
+export interface UserListItem {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
   active: boolean;
+  profile: { id: string; name: string } | null;
 }
 
 export type TicketStatus = 'NEW' | 'IN_PROGRESS' | 'WAITING_CUSTOMER' | 'CONVERTED' | 'LOST' | 'ARCHIVED';
@@ -152,10 +332,16 @@ export const PRIORITY_LABELS: Record<TicketPriority, string> = {
   URGENT: 'Urgente',
 };
 
+/** Rótulo do nível base. Onde houver perfil, prefira o nome dele - é o que o
+ *  lojista escreveu e reconhece ("Gerente de vendas", "Financeiro"). */
 export const ROLE_LABELS: Record<Role, string> = {
   ADMIN: 'Administrador',
   AGENT: 'Atendente',
 };
+
+/** Como chamar o acesso de alguém na tela: o perfil, com o nível como reserva. */
+export const accessLabel = (user: { role: Role; profile?: { name: string } | null } | null): string =>
+  user ? (user.profile?.name ?? ROLE_LABELS[user.role]) : '-';
 
 // ─── Integrações ─────────────────────────────────────────────────────────────
 export type IntegrationStatus = 'AVAILABLE' | 'CONNECTED' | 'AUTH_ERROR' | 'DISABLED';

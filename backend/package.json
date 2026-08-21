@@ -20,9 +20,11 @@
     "seed": "tsx prisma/seed.ts",
     "create:admin": "tsx scripts/create-admin.ts",
     "verify:isolation": "tsx scripts/verify-isolation.ts",
+    "verify:billing": "tsx scripts/verify-billing.ts",
     "verify:site-chat": "tsx scripts/verify-site-chat.ts",
     "verify:flow": "tsx scripts/verify-flow.ts",
     "verify:whatsapp": "tsx scripts/verify-whatsapp.ts",
+    "verify:permissions": "tsx scripts/verify-permissions.ts",
     "accounts": "tsx scripts/accounts-overview.ts",
     "seed:knowledge": "tsx scripts/seed-knowledge-templates.ts",
     "seed:washington": "tsx prisma/seed-washington.ts",
@@ -32,6 +34,7 @@
     "backfill:upload-urls": "tsx scripts/backfill-upload-urls.ts",
     "migrate:uploads": "tsx scripts/migrate-uploads-to-r2.ts",
     "expire-trials": "tsx scripts/expire-trials.ts",
+    "billing:cycle": "tsx scripts/billing-cycle.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "prisma": {
@@ -48,6 +51,7 @@
     "express-rate-limit": "^8.5.2",
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.2",
+    "resend": "^6.21.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { UserRole } from '@prisma/client';
-import { authenticate, requireRole } from '../../middleware/auth';
+import { requirePermission } from '../../middleware/permissions';
 import { ah } from '../../lib/errors';
 import * as integrations from './integrations.service';
 
@@ -13,7 +12,7 @@ import * as integrations from './integrations.service';
  * trocando um parâmetro.
  */
 export const integrationsRouter = Router();
-integrationsRouter.use(authenticate, requireRole(UserRole.ADMIN));
+integrationsRouter.use(requirePermission('integrations.manage'));
 
 integrationsRouter.get(
   '/',

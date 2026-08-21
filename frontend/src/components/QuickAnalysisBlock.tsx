@@ -21,7 +21,7 @@ interface PlatePreview {
  * (abre pop-up) e "puxar dados" de um carro na troca pela placa - tudo sem sair
  * da conversa.
  */
-export function QuickAnalysisBlock({ leadDocument }: { leadDocument: string | null }) {
+export function QuickAnalysisBlock({ leadId, leadDocument }: { leadId: string; leadDocument: string | null }) {
   const [doc, setDoc] = useState(leadDocument ? formatDocumentInput(leadDocument) : '');
   const [creditOpen, setCreditOpen] = useState(false);
 
@@ -113,7 +113,7 @@ export function QuickAnalysisBlock({ leadDocument }: { leadDocument: string | nu
         )}
       </div>
 
-      {creditOpen && <QuickCreditModal document={doc} onClose={() => setCreditOpen(false)} />}
+      {creditOpen && <QuickCreditModal document={doc} leadId={leadId} onClose={() => setCreditOpen(false)} />}
     </details>
   );
 }

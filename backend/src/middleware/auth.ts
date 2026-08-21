@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import type { UserRole } from '@prisma/client';
 import { env } from '../config/env';
-import { forbidden, unauthorized } from '../lib/errors';
+import { unauthorized } from '../lib/errors';
 
 export interface AccessTokenPayload {
   sub: string;
@@ -12,6 +12,10 @@ export interface AccessTokenPayload {
   accountId?: string | null;
 }
 
+/**
+ * Verifica o JWT e popula `req.user` com a identidade. NÃO decide acesso:
+ * quem pode o quê vem do perfil, resolvido em `middleware/permissions`.
+ */
 export function authenticate(req: Request, _res: Response, next: NextFunction) {
   const header = req.header('authorization');
   if (!header?.startsWith('Bearer ')) return next(unauthorized());
@@ -32,12 +36,4 @@ export function authenticate(req: Request, _res: Response, next: NextFunction) {
   } catch {
     return next(unauthorized('Sessão expirada ou token inválido', 'TOKEN_INVALID'));
   }
-}
-
-export function requireRole(...roles: UserRole[]) {
-  return (req: Request, _res: Response, next: NextFunction) => {
-    if (!req.user) return next(unauthorized());
-    if (!roles.includes(req.user.role)) return next(forbidden());
-    return next();
-  };
 }
