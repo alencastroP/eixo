@@ -30,6 +30,7 @@
     "backfill:accounts": "tsx scripts/backfill-accounts.ts",
     "backfill:storefronts": "tsx scripts/backfill-storefronts.ts",
     "backfill:upload-urls": "tsx scripts/backfill-upload-urls.ts",
+    "migrate:uploads": "tsx scripts/migrate-uploads-to-r2.ts",
     "expire-trials": "tsx scripts/expire-trials.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
@@ -38,6 +39,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
+    "@aws-sdk/client-s3": "^3.1115.0",
     "@prisma/client": "^6.10.0",
     "bcryptjs": "^3.0.0",
     "cors": "^2.8.5",

@@ -114,7 +114,7 @@ storefrontRouter.post(
   requireRole(UserRole.ADMIN),
   ah(async (req, res) => {
     const { kind, image } = imageSchema.parse(req.body);
-    const url = saveImageDataUrl(`storefronts/${req.account!.id}`, image);
+    const url = await saveImageDataUrl(`storefronts/${req.account!.id}`, image);
     res.status(201).json({ kind, url });
   }),
 );

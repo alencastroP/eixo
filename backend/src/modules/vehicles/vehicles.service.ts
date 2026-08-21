@@ -248,7 +248,7 @@ export async function updateVehicle(accountId: string, id: string, input: Vehicl
 export async function deleteVehicle(accountId: string, id: string) {
   const v = await prisma.vehicle.findFirst({ where: { id, accountId }, include: { photos: true } });
   if (!v) throw notFound('Veículo não encontrado');
-  for (const p of v.photos) deleteByPublicUrl(p.url);
+  await Promise.all(v.photos.map((p) => deleteByPublicUrl(p.url)));
   await prisma.vehicle.delete({ where: { id } });
 }
 
@@ -264,7 +264,7 @@ export async function addPhotos(accountId: string, vehicleId: string, images: st
   let position = v.photos.length;
   const hadCover = v.photos.some((p) => p.isCover);
   for (let i = 0; i < images.length; i++) {
-    const url = saveImageDataUrl(`vehicles/${vehicleId}`, images[i]);
+    const url = await saveImageDataUrl(`vehicles/${vehicleId}`, images[i]);
     await prisma.vehiclePhoto.create({
       data: { vehicleId, url, position, isCover: !hadCover && position === 0 },
     });
@@ -299,7 +299,7 @@ export async function reorderPhotos(accountId: string, vehicleId: string, order:
 export async function deletePhoto(accountId: string, vehicleId: string, photoId: string) {
   const photo = await prisma.vehiclePhoto.findFirst({ where: { id: photoId, vehicleId, vehicle: { accountId } } });
   if (!photo) throw notFound('Foto não encontrada');
-  deleteByPublicUrl(photo.url);
+  await deleteByPublicUrl(photo.url);
   await prisma.vehiclePhoto.delete({ where: { id: photoId } });
 
   // se a capa foi removida, promove a primeira restante

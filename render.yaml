@@ -62,6 +62,20 @@ services:
       # do front (onde não existem) em vez do domínio que as guarda.
       - key: API_PUBLIC_URL
         value: https://eixo-crm-api.onrender.com
+      # Bucket das imagens enviadas (logo/hero da vitrine, fotos de veiculo).
+      # OBRIGATORIO aqui: o plano free nao tem disco persistente, entao gravar
+      # em /uploads funciona ate o proximo deploy e some depois dele.
+      - key: R2_BUCKET
+        value: eixo-uploads
+      - key: R2_ENDPOINT
+        value: https://3de4cc4eb2a7e9a7e2daeafe46ce77b6.r2.cloudflarestorage.com
+      - key: R2_PUBLIC_URL
+        value: https://pub-095f7f3764b9447a972b89d2509917ac.r2.dev
+      # Credenciais do bucket - preencher no dashboard (nao versionadas).
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
       # A tela de Integrações exibe a URL de webhook de cada loja; precisa saber
       # o host do serviço de webhooks (que é outro serviço, outra URL).
       - key: WEBHOOK_PUBLIC_URL

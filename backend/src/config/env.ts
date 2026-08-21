@@ -86,6 +86,22 @@ export const env = {
   apiPublicUrl: (process.env.API_PUBLIC_URL ?? 'http://localhost:3001').replace(/\/+$/, ''),
 
   /**
+   * Bucket Cloudflare R2 das imagens enviadas. Preenchido = produção grava no
+   * bucket; vazio = grava em disco (desenvolvimento). Ver lib/storage.ts.
+   *
+   * Existe porque o serviço roda no plano free do Render, que não tem disco
+   * persistente: o /uploads é descartado a cada deploy.
+   */
+  r2: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID ?? '',
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? '',
+    bucket: process.env.R2_BUCKET ?? '',
+    endpoint: process.env.R2_ENDPOINT ?? '',
+    /** Host público de leitura (r2.dev ou domínio próprio), sem barra final. */
+    publicUrl: (process.env.R2_PUBLIC_URL ?? '').replace(/\/+$/, ''),
+  },
+
+  /**
    * Host público do serviço de webhooks - usado só para MONTAR a URL que o
    * lojista cola no painel da plataforma (`/webhooks/:platform/:webhookKey`).
    *
