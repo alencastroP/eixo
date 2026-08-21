@@ -5,6 +5,7 @@ const BRAND: Record<string, { bg: string; fg: string; mark: string }> = {
   olx: { bg: '#6E0AD6', fg: '#ffffff', mark: 'OLX' },
   mercadolivre: { bg: '#FFE600', fg: '#2D3277', mark: 'ML' },
   webmotors: { bg: '#E5484D', fg: '#ffffff', mark: 'W' },
+  whatsapp: { bg: '#25D366', fg: '#ffffff', mark: '✆' },
   manual: { bg: '#262B30', fg: '#C9CDD3', mark: '✎' },
 };
 

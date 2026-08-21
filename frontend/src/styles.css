@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   CRM AUTO — DESIGN SYSTEM "COCKPIT"
+   CRM AUTO - DESIGN SYSTEM "COCKPIT"
    Dark mode é o padrão (:root). Light mode via [data-theme="light"].
    Paleta: Asfalto (fundos) · Laranja Ignição #FF6B35 (ação) · Azul Elétrico
    #0B84FF (informação) · semânticos verde/âmbar/vermelho.
@@ -7,7 +7,7 @@
 
 :root,
 :root[data-theme='dark'] {
-  /* fundos — transição tonal de asfalto */
+  /* fundos - transição tonal de asfalto */
   --bg: #14171a;
   --surface: #1c2024;
   --surface-2: #22272c;
@@ -21,10 +21,10 @@
   --text-3: #6b7178;
 
   /* acentos */
-  --accent: #ff6b35; /* laranja ignição — CTAs, ações */
+  --accent: #ff6b35; /* laranja ignição - CTAs, ações */
   --accent-hover: #ff7d4d;
   --accent-contrast: #14171a;
-  --info: #0b84ff; /* azul elétrico — links, informação */
+  --info: #0b84ff; /* azul elétrico - links, informação */
   --info-hover: #2e97ff;
 
   /* semânticos */
@@ -407,7 +407,7 @@ select option {
   margin: 2px 0 4px;
 }
 
-/* modo claro: o rail assume o laranja da marca — ícones e estados invertem
+/* modo claro: o rail assume o laranja da marca - ícones e estados invertem
    para branco/contraste, já que o cinza e o laranja padrão somem sobre ele */
 :root[data-theme='light'] .rail {
   background: var(--accent);
@@ -446,7 +446,7 @@ select option {
   color: var(--text-2);
 }
 
-/* splash de autenticação — tela cheia, sem o rail, exibida ao validar a sessão */
+/* splash de autenticação - tela cheia, sem o rail, exibida ao validar a sessão */
 .splash {
   min-height: 100vh;
   width: 100%;
@@ -1804,7 +1804,7 @@ select option {
   max-width: 376px;
   padding: 34px 28px 24px;
 }
-/* detalhe premium — acabamento cromado, aplicado com extrema moderação */
+/* detalhe premium - acabamento cromado, aplicado com extrema moderação */
 .login-card-watermark {
   position: absolute;
   top: 18px;
@@ -1864,7 +1864,7 @@ select option {
   grid-template-columns: 1.05fr 0.95fr;
 }
 
-/* Painel-herói — cor 1: laranja ignição da marca */
+/* Painel-herói - cor 1: laranja ignição da marca */
 .auth-hero {
   position: relative;
   overflow: hidden;
@@ -1940,7 +1940,7 @@ select option {
   color: rgba(255, 255, 255, 0.72);
 }
 
-/* Painel de acesso — cor 2: fundo neutro da paleta */
+/* Painel de acesso - cor 2: fundo neutro da paleta */
 .auth-panel {
   display: flex;
   align-items: center;
@@ -3640,7 +3640,7 @@ select option {
   margin: 0 auto;
 }
 
-/* navegação por abas — controle segmentado moderno */
+/* navegação por abas - controle segmentado moderno */
 .tab-nav {
   display: flex;
   gap: 4px;
@@ -4871,7 +4871,7 @@ select option {
   }
 }
 
-/* Ajustes finos para telefones — Financeiro, Bureau e Integrações */
+/* Ajustes finos para telefones - Financeiro, Bureau e Integrações */
 @media (max-width: 680px) {
   .dash {
     padding: 18px 16px 40px;
@@ -6095,7 +6095,7 @@ select option {
   vertical-align: middle;
 }
 
-/* ═══ TRIAL / SaaS — login, cadastro, banner e bloqueio ═══════════════════════ */
+/* ═══ TRIAL / SaaS - login, cadastro, banner e bloqueio ═══════════════════════ */
 .login-divider {
   display: flex;
   align-items: center;
@@ -6281,7 +6281,7 @@ input.input-bad {
 
 /* ═══ ADMINISTRAÇÃO (central de módulos) ══════════════════════════════════
    Um botão por módulo, todos do mesmo tamanho, agrupados por assunto. Os que
-   ainda não existem ficam visíveis e inertes — o lugar deles já está marcado. */
+   ainda não existem ficam visíveis e inertes - o lugar deles já está marcado. */
 .admin-page {
   width: 100%;
 }
@@ -6514,3 +6514,50 @@ input.input-bad {
 .alert { padding: 10px 14px; margin-bottom: 16px; border: 1px solid var(--border); font-size: 14px; }
 .alert.error { border-color: var(--danger, #b3261e); color: var(--danger, #b3261e); }
 .alert.ok { border-color: var(--ok, #2f6b45); color: var(--ok, #2f6b45); }
+
+/* ─── Canais de atendimento (Meus Dados › Canais) ─────────────────────────── */
+
+.channel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  margin-top: 12px;
+}
+.channel-row-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.channel-row-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.channel-row-name { font-weight: 600; font-size: 14px; }
+.channel-row-sub { display: flex; align-items: center; gap: 6px; font-size: 12.5px; }
+.channel-row-sub.connected { color: var(--success); font-weight: 600; }
+
+.channel-picker {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.channel-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.channel-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.channel-option.taken { opacity: 0.6; }
+.channel-option-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.channel-option-number { font-weight: 600; font-size: 13.5px; }
+.channel-option-name { font-size: 12px; color: var(--text-muted); }
+.channel-option-taken { font-size: 11.5px; color: var(--warning, #b07d18); }

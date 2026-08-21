@@ -1,5 +1,7 @@
 import { api, type Session } from './client';
 import type {
+  ChannelPlatform,
+  ChannelSender,
   CompanySettings,
   CreditQuery,
   FinanceSummary,
@@ -24,6 +26,7 @@ import type {
   TicketPriority,
   TicketStats,
   TicketStatus,
+  UserChannel,
   UserListItem,
   VehicleCard,
   VehicleDetail,
@@ -188,6 +191,20 @@ export const creditApi = {
 export const leadsApi = {
   search: (search: string) =>
     api<LeadSearchResult[]>('/leads', { query: { search: search || undefined, limit: 10 } }),
+};
+
+/**
+ * Canais de atendimento do PRÓPRIO usuário (Meus Dados › Canais). Separado de
+ * `integrationsApi` porque aquele exige ADMIN: aqui qualquer atendente conecta
+ * o número dele.
+ */
+export const channelsApi = {
+  platforms: () => api<ChannelPlatform[]>('/channels/platforms'),
+  mine: () => api<UserChannel[]>('/channels'),
+  senders: (platform: string) => api<ChannelSender[]>(`/channels/${platform}/senders`),
+  connect: (platform: string, externalId: string) =>
+    api<UserChannel>(`/channels/${platform}/connect`, { method: 'POST', body: { externalId } }),
+  disconnect: (platform: string) => api<void>(`/channels/${platform}`, { method: 'DELETE' }),
 };
 
 export const storefrontApi = {

@@ -81,7 +81,7 @@ export interface Ticket {
   closedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  /** Preview da última mensagem — presente apenas na listagem. */
+  /** Preview da última mensagem - presente apenas na listagem. */
   lastMessage?: LastMessage | null;
 }
 
@@ -175,6 +175,8 @@ export interface Integration {
   description: string;
   docsUrl: string | null;
   supportsOutbound: boolean;
+  /** true = cada atendente conecta um remetente próprio em Meus Dados › Canais. */
+  supportsUserChannels: boolean;
   canValidate: boolean;
   credentialFields: CredentialField[];
   status: IntegrationStatus;
@@ -464,7 +466,7 @@ export interface CompanySettings {
 }
 
 /** Configuração da vitrine pública da conta (ver storefront/types.ts para o
- *  lado consumidor — aqui é o contrato da tela de administração). */
+ *  lado consumidor - aqui é o contrato da tela de administração). */
 export interface StorefrontSettings {
   slug: string;
   published: boolean;
@@ -508,10 +510,38 @@ const PLATFORM_LABELS: Record<string, string> = {
   olx: 'OLX',
   mercadolivre: 'Mercado Livre',
   webmotors: 'Webmotors',
+  whatsapp: 'WhatsApp',
   manual: 'Manual',
 };
 
 export const platformLabel = (slug: string): string => PLATFORM_LABELS[slug] ?? slug;
+
+// ─── Canais de atendimento do próprio usuário ────────────────────────────────
+
+/** Plataforma que oferece canal por atendente (hoje só o WhatsApp). */
+export interface ChannelPlatform {
+  platform: string;
+  displayName: string;
+}
+
+/** Canal que ESTE atendente conectou. */
+export interface UserChannel {
+  platform: string;
+  externalId: string;
+  displayNumber: string;
+  verifiedName: string | null;
+  connectedAt: string;
+}
+
+/** Remetente da conta da loja que o atendente pode reivindicar. */
+export interface ChannelSender {
+  externalId: string;
+  displayNumber: string;
+  verifiedName?: string;
+  /** Nome do colega que já usa este número, ou null se estiver livre. */
+  takenBy: string | null;
+  isMine: boolean;
+}
 
 /** Credencial de recepção de webhook de UMA loja (revelada sob demanda). */
 export interface WebhookSecret {
@@ -526,7 +556,7 @@ export interface WebhookSecret {
 
 export interface AgentProfileConfig {
   enabled: boolean;
-  /** Sempre preenchido pela API — cai no nome da conta quando não configurado. */
+  /** Sempre preenchido pela API - cai no nome da conta quando não configurado. */
   storeName: string | null;
   persona: string | null;
   rules: string | null;

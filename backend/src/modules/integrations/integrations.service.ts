@@ -24,6 +24,10 @@ const INBOUND_HEADER: Record<string, string> = {
   olx: 'x-olx-token',
   mercadolivre: 'x-signature (HMAC-SHA256 do corpo)',
   webmotors: 'x-webmotors-token',
+  // O WhatsApp é o único que não recebe o segredo em header: a Meta o pede uma
+  // vez, no campo "Verify token" da configuração do webhook, e a partir daí
+  // assina os eventos com o App Secret (que é credencial, não este segredo).
+  whatsapp: 'campo "Token de verificação" no painel da Meta',
 };
 
 /** Envelope cifrado do segredo de webhook daquela conta. */
@@ -39,6 +43,7 @@ function adapterMeta(platform: string) {
     description: adapter.description ?? '',
     docsUrl: adapter.docsUrl ?? null,
     supportsOutbound: Boolean(adapter.supportsOutbound),
+    supportsUserChannels: Boolean(adapter.supportsUserChannels),
     canValidate: typeof adapter.validateCredentials === 'function',
     credentialFields: adapter.credentialFields ?? [],
   };
@@ -46,7 +51,7 @@ function adapterMeta(platform: string) {
 
 type IntegrationRow = Prisma.IntegrationGetPayload<Record<string, never>>;
 
-/** Nunca devolve credenciais em claro — apenas a lista de campos preenchidos, mascarados. */
+/** Nunca devolve credenciais em claro - apenas a lista de campos preenchidos, mascarados. */
 function maskedCredentials(row: IntegrationRow | null): Array<{ key: string; masked: string }> {
   const meta = row ? adapterMeta(row.platform) : null;
   if (!row || !row.credentials || !meta) return [];
@@ -134,7 +139,7 @@ export async function getIntegration(accountId: string, platform: string) {
 
 /**
  * Upsert por (conta, plataforma). Na criação, gera de uma vez a chave de
- * roteamento e o segredo de webhook desta loja — assim a integração já nasce
+ * roteamento e o segredo de webhook desta loja - assim a integração já nasce
  * com endpoint próprio, sem depender de variável de ambiente compartilhada.
  */
 async function upsertIntegration(
@@ -291,7 +296,7 @@ export async function revealInboundSecret(accountId: string, platform: string, a
     where: { accountId_platform: { accountId, platform } },
   });
   if (!row) throw badRequest('Conecte a plataforma antes de configurar o webhook');
-  if (!isSealedSecret(row.inboundSecret)) throw badRequest('Segredo de webhook ausente — gere um novo');
+  if (!isSealedSecret(row.inboundSecret)) throw badRequest('Segredo de webhook ausente - gere um novo');
 
   await writeAudit(prisma, {
     entityType: 'USER',
@@ -312,7 +317,7 @@ export async function revealInboundSecret(accountId: string, platform: string, a
 }
 
 /**
- * Rotaciona o segredo. O anterior deixa de valer no ato — os leads da
+ * Rotaciona o segredo. O anterior deixa de valer no ato - os leads da
  * plataforma falham a verificação até o novo valor ser colado no painel dela.
  * A webhookKey (a URL) NÃO muda: rotacionar credencial não deveria obrigar a
  * reconfigurar o endereço.

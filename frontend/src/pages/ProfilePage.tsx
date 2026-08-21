@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { authApi } from '../api/endpoints';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { ChannelsCard } from '../components/ChannelsCard';
 import { PageHeader } from '../components/PageHeader';
 import { UserIcon } from '../components/icons';
 import { ROLE_LABELS } from '../types';
@@ -56,7 +57,7 @@ export function ProfilePage() {
           </label>
           <div className="field">
             <span>Papel</span>
-            <div className="static-field">{user ? ROLE_LABELS[user.role] : '—'}</div>
+            <div className="static-field">{user ? ROLE_LABELS[user.role] : '-'}</div>
           </div>
         </div>
 
@@ -84,6 +85,9 @@ export function ProfilePage() {
           </button>
         </div>
       </form>
+
+      {/* Fora do <form>: os botões de canal não podem disparar o submit do perfil. */}
+      <ChannelsCard />
     </div>
   );
 }

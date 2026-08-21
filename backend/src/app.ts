@@ -13,6 +13,7 @@ import { usersRouter } from './modules/users/users.routes';
 import { ticketsRouter } from './modules/tickets/tickets.routes';
 import { leadsRouter } from './modules/leads/leads.routes';
 import { integrationsRouter } from './modules/integrations/integrations.routes';
+import { channelsRouter } from './modules/channels/channels.routes';
 import { vehiclesRouter } from './modules/vehicles/vehicles.routes';
 import { creditRouter } from './modules/credit/credit.routes';
 import { financeRouter } from './modules/finance/finance.routes';
@@ -32,7 +33,7 @@ export function createApiApp() {
   app.use(securityHeaders);
   // origem por função: além do painel, cada vitrine de loja tem seu próprio
   // subdomínio (ver isAllowedOrigin). Requisições sem Origin (curl, health
-  // check do Render) seguem liberadas — CORS só governa chamadas de navegador.
+  // check do Render) seguem liberadas - CORS só governa chamadas de navegador.
   app.use(cors({ origin: (origin, cb) => cb(null, !origin || isAllowedOrigin(origin)) }));
   // limite generoso: uploads de fotos do estoque chegam como data URL base64 no JSON
   app.use(express.json({ limit: '30mb' }));
@@ -45,7 +46,7 @@ export function createApiApp() {
   app.use(UPLOADS_PUBLIC_PREFIX, express.static(UPLOADS_ROOT));
 
   // Rotas públicas (sem conta): autenticação, cadastro de trial e a vitrine
-  // das lojas — esta última resolve o tenant pelo slug do site publicado.
+  // das lojas - esta última resolve o tenant pelo slug do site publicado.
   app.use('/api/auth', authRouter);
   app.use('/api/trial', trialRouter);
   app.use('/api/site', publicSiteRouter);
@@ -58,6 +59,10 @@ export function createApiApp() {
   app.use('/api/tickets', tenant, ticketsRouter);
   app.use('/api/leads', tenant, leadsRouter);
   app.use('/api/integrations', tenant, integrationsRouter);
+  // Canais do próprio atendente (WhatsApp). Fora de /api/integrations de
+  // propósito: aquele router inteiro exige ADMIN, e aqui cada agente conecta o
+  // número dele.
+  app.use('/api/channels', tenant, channelsRouter);
   app.use('/api/vehicles', tenant, vehiclesRouter);
   app.use('/api/credit', tenant, creditRouter);
   app.use('/api/finance', tenant, financeRouter);

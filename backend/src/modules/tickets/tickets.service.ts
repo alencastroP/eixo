@@ -25,7 +25,7 @@ export const CLOSED_STATUSES: TicketStatus[] = [
   TicketStatus.ARCHIVED,
 ];
 
-// última mensagem com corpo — preview no estilo "inbox" da lista de tickets
+// última mensagem com corpo - preview no estilo "inbox" da lista de tickets
 const listInclude = {
   lead: true,
   assignedTo: { select: { id: true, name: true } },
@@ -124,9 +124,9 @@ export function serializeTicketDetail(t: TicketDetailRow) {
 /**
  * Escopo de leitura, em DUAS camadas que não se substituem:
  *
- *  1. TENANT (`accountId`) — fronteira rígida. Vale inclusive para o ADMIN:
+ *  1. TENANT (`accountId`) - fronteira rígida. Vale inclusive para o ADMIN:
  *     administrador é dono da própria loja, não da instalação.
- *  2. PAPEL — dentro da conta, o atendente vê só os próprios tickets e os
+ *  2. PAPEL - dentro da conta, o atendente vê só os próprios tickets e os
  *     livres; o admin vê todos os da conta dele.
  *
  * A ordem importa: aplicar apenas o filtro de papel deixaria um ADMIN de uma
@@ -576,7 +576,7 @@ export async function addInteraction(id: string, input: AddInteractionInput, use
       }
     }
 
-    // updatedAt é @updatedAt — qualquer update o toca; garante que o ticket suba na lista
+    // updatedAt é @updatedAt - qualquer update o toca; garante que o ticket suba na lista
     await tx.ticket.update({ where: { id: ticket.id }, data });
   });
 
@@ -586,7 +586,7 @@ export async function addInteraction(id: string, input: AddInteractionInput, use
 
   // Comunicação bidirecional: replica a resposta do operador de volta à plataforma
   // de origem (ex.: OLX), se a integração estiver conectada e com sync ativa.
-  // Não bloqueia nem falha o fluxo do CRM — o resultado vira log de despacho.
+  // Não bloqueia nem falha o fluxo do CRM - o resultado vira log de despacho.
   if (input.type === 'AGENT_REPLY' && replyInteractionId) {
     const vehicle = (ticket.vehicleRefExternal as NormalizedLead['vehicle']) ?? undefined;
     await dispatchOutboundReply({
@@ -598,6 +598,10 @@ export async function addInteraction(id: string, input: AddInteractionInput, use
       externalLeadId: ticket.lead.externalId,
       body: input.body,
       vehicle,
+      // Canais de mensageria (WhatsApp) respondem pelo número do atendente e
+      // endereçam pelo telefone do lead, não por um id de anúncio.
+      actorId: user.id,
+      leadPhone: ticket.lead.phone,
     });
   }
 

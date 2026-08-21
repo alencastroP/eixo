@@ -1,11 +1,11 @@
-// CRM Automotivo — Schema do módulo de Atendimento (Tickets)
+// CRM Automotivo - Schema do módulo de Atendimento (Tickets)
 //
 // Convenções:
 //  - PKs em cuid() (exceto Ticket.number, sequencial e amigável para humanos).
 //  - `platform` é uma String (slug do adapter em src/integrations), não um enum:
 //    adicionar uma nova plataforma NÃO exige migration.
 //  - Dados pessoais do lead (PII) ficam concentrados em `leads`, preparados
-//    para anonimização (LGPD — direito ao esquecimento).
+//    para anonimização (LGPD - direito ao esquecimento).
 
 generator client {
   provider = "prisma-client-js"
@@ -27,10 +27,10 @@ enum UserRole {
 enum AccountStatus {
   TRIAL // período gratuito em andamento
   ACTIVE // assinatura paga ativa
-  PAST_DUE // inadimplente (cobrança falhou) — bloqueia
-  SUSPENDED // suspensa manualmente pelo operador — bloqueia
-  EXPIRED // trial/assinatura vencido — bloqueia (dados preservados)
-  CANCELED // cancelada pelo cliente — bloqueia
+  PAST_DUE // inadimplente (cobrança falhou) - bloqueia
+  SUSPENDED // suspensa manualmente pelo operador - bloqueia
+  EXPIRED // trial/assinatura vencido - bloqueia (dados preservados)
+  CANCELED // cancelada pelo cliente - bloqueia
 }
 
 /// Estado de billing da assinatura (espelha o gateway quando integrado).
@@ -152,14 +152,62 @@ model User {
   refreshTokens   RefreshToken[]
   auditLogs       AuditLog[]
   creditQueries   CreditQuery[]
+  channels        UserChannel[]
 
   @@index([accountId])
   @@map("users")
 }
 
+/// Canal de atendimento conectado por UM atendente (hoje: WhatsApp Cloud API).
+///
+/// Existe separado de `Integration` porque as duas pontas do WhatsApp têm donos
+/// diferentes: a conta WhatsApp Business (WABA) é da LOJA e o admin a conecta em
+/// Integrações, enquanto o NÚMERO que fala com o cliente é de cada atendente e
+/// mora aqui. Sem essa separação, as respostas de todos sairiam pelo mesmo
+/// número e o cliente perderia a referência de com quem estava falando.
+///
+/// Não guarda credencial: o token de acesso é da WABA e vive cifrado em
+/// `Integration.credentials`. O que identifica o número na API da Meta é o
+/// `externalId` (phoneNumberId), que não é segredo.
+model UserChannel {
+  id       String @id @default(cuid())
+  platform String // slug do adapter (hoje só 'whatsapp')
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Tenant dono do canal. Redundante com user.accountId por decisão: o unique
+  /// abaixo precisa dele para impedir que duas lojas reivindiquem o mesmo número.
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  /// Identificador do número na plataforma (Cloud API: phoneNumberId).
+  externalId String
+  /// Número como a Meta o exibe (ex.: "+55 84 98801-3786") - só para a tela.
+  displayNumber String
+  /// Nome verificado do remetente exibido ao cliente no WhatsApp.
+  verifiedName String?
+
+  connectedAt   DateTime  @default(now())
+  lastCheckedAt DateTime?
+  lastError     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Um número atende por UMA caixa: se dois atendentes registrassem o mesmo
+  /// phoneNumberId, a resposta sairia pelo mesmo remetente e o roteamento de
+  /// entrada ficaria ambíguo.
+  @@unique([accountId, platform, externalId])
+  /// Um atendente tem no máximo um número por plataforma.
+  @@unique([userId, platform])
+  @@index([accountId, platform])
+  @@map("user_channels")
+}
+
 model RefreshToken {
   id        String    @id @default(cuid())
-  tokenHash String    @unique // sha256 do token — o valor bruto nunca é persistido
+  tokenHash String    @unique // sha256 do token - o valor bruto nunca é persistido
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
@@ -170,7 +218,7 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-/// Interessado/cliente em potencial. Contém PII — tratar conforme LGPD:
+/// Interessado/cliente em potencial. Contém PII - tratar conforme LGPD:
 /// nunca logar em texto claro; anonimizável via anonymizedAt.
 model Lead {
   id           String    @id @default(cuid())
@@ -178,23 +226,23 @@ model Lead {
   phone        String? // somente dígitos, normalizado na ingestão
   email        String?
   platform     String // slug da plataforma de origem (olx, mercadolivre, webmotors, manual)
-  externalId   String? // id do lead na plataforma de origem — chave de deduplicação
+  externalId   String? // id do lead na plataforma de origem - chave de deduplicação
   anonymizedAt DateTime? // LGPD: preenchido quando o titular exerce o direito ao esquecimento
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  /// Tenant dono do lead — fronteira de privacidade do SaaS. Sem ele, o mesmo
+  /// Tenant dono do lead - fronteira de privacidade do SaaS. Sem ele, o mesmo
   /// titular contatando duas lojas viraria UM registro compartilhado entre elas.
   accountId String
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  document String? // CPF/CNPJ do cliente (dígitos) — usado na consulta rápida
+  document String? // CPF/CNPJ do cliente (dígitos) - usado na consulta rápida
   extra    Json? // campos personalizados do formulário (config em Setting "leadForm")
 
   /// Perfil de compra coletado pelo agente ao longo da conversa (orçamento, carro
   /// na troca, forma de pagamento, urgência, preferências). Vai no prefixo do
   /// prompt para o agente parar de reperguntar o que já foi respondido.
-  /// É PII de preferência comercial — segue as mesmas regras de anonimização.
+  /// É PII de preferência comercial - segue as mesmas regras de anonimização.
   profile  Json?
 
   tickets       Ticket[]
@@ -257,7 +305,7 @@ model Ticket {
   interactions TicketInteraction[]
 
   @@index([accountId, status])
-  /// Consulta do motor de fluxo: "o que venceu?" — parcial na prática, já que a
+  /// Consulta do motor de fluxo: "o que venceu?" - parcial na prática, já que a
   /// maioria dos tickets tem nextActionAt nulo.
   @@index([nextActionAt])
   @@index([accountId, assignedToId])
@@ -283,7 +331,7 @@ model TicketInteraction {
   @@map("ticket_interactions")
 }
 
-/// Trilha de auditoria genérica — base dos relatórios futuros de performance
+/// Trilha de auditoria genérica - base dos relatórios futuros de performance
 /// (tempo por status, reatribuições, conversão por vendedor).
 model AuditLog {
   id         String   @id @default(cuid())
@@ -317,7 +365,7 @@ model WebhookEvent {
   processedAt   DateTime?
 
   /// Conta resolvida já na RECEPÇÃO, pela webhookKey da URL. O worker só
-  /// processa o que já chegou carimbado — nunca precisa adivinhar o tenant.
+  /// processa o que já chegou carimbado - nunca precisa adivinhar o tenant.
   accountId String
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
@@ -329,14 +377,14 @@ model WebhookEvent {
 /// Estado de conexão de uma plataforma PARA UMA CONTA no Módulo de Integrações.
 /// Uma linha por (conta, plataforma): cada lojista conecta a própria conta da
 /// OLX/ML/Webmotors, com credenciais próprias. As credenciais de API e o segredo
-/// de webhook ficam CIFRADOS em repouso (AES-256-GCM, ver src/lib/crypto.ts) —
+/// de webhook ficam CIFRADOS em repouso (AES-256-GCM, ver src/lib/crypto.ts) -
 /// o valor bruto nunca trafega de volta para o front (a API devolve máscara).
 model Integration {
   id            String            @id @default(cuid())
   platform      String // slug do adapter (olx, mercadolivre, ...)
   status        IntegrationStatus @default(AVAILABLE)
   syncEnabled   Boolean           @default(true) // sincronização de mensagens (in/out)
-  credentials   Json? // { iv, tag, data } — payload cifrado; nunca em texto claro
+  credentials   Json? // { iv, tag, data } - payload cifrado; nunca em texto claro
   accountLabel  String? // rótulo da conta conectada (retornado pela validação)
   connectedAt   DateTime?
   lastCheckedAt DateTime?
@@ -349,7 +397,7 @@ model Integration {
 
   /// Identificador OPACO que roteia o webhook até esta conta:
   ///   POST /webhooks/:platform/:webhookKey
-  /// Não é credencial — quem autentica é `inboundSecret`. Existe porque a URL
+  /// Não é credencial - quem autentica é `inboundSecret`. Existe porque a URL
   /// precisa dizer de qual loja é o lead ANTES de qualquer verificação, e
   /// descobrir isso testando o segredo contra todas as contas seria O(n) e
   /// vulnerável a timing attack.
@@ -385,9 +433,9 @@ model IntegrationDispatch {
   @@map("integration_dispatches")
 }
 
-/// Módulo de Análise de Crédito & Bureau — consultas de score/restrições por CPF/CNPJ.
+/// Módulo de Análise de Crédito & Bureau - consultas de score/restrições por CPF/CNPJ.
 /// `report` guarda o snapshot completo do diagnóstico no momento da consulta
-/// (histórico auditável). O documento é armazenado só em dígitos (PII — nunca logar).
+/// (histórico auditável). O documento é armazenado só em dígitos (PII - nunca logar).
 model CreditQuery {
   id       String        @id @default(cuid())
   document String // somente dígitos (CPF 11 / CNPJ 14)
@@ -419,7 +467,7 @@ model Setting {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SaaS MULTI-TENANT — Contas, Planos, Assinaturas e Trial
+// SaaS MULTI-TENANT - Contas, Planos, Assinaturas e Trial
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Catálogo de planos comercializáveis.
@@ -463,6 +511,7 @@ model Account {
   trialCpf     TrialCpfRegistry?
   vehicles     Vehicle[]
   storefront   Storefront?
+  userChannels UserChannel[]
   // Isolamento do atendimento: cada conta enxerga só o próprio funil.
   leads         Lead[]
   tickets       Ticket[]
@@ -493,7 +542,7 @@ model AgentProfile {
   storeName String?
   /// Tom e estilo em uma ou duas frases ("consultivo e direto, sem formalidade excessiva").
   persona   String?
-  /// Regras comerciais próprias da loja, em texto livre — entram no prompt como invioláveis.
+  /// Regras comerciais próprias da loja, em texto livre - entram no prompt como invioláveis.
   rules     String?
 
   /// Capacidades ligáveis. Desligar remove a ferramenta do agente, não só a menção
@@ -517,7 +566,7 @@ model AgentProfile {
 ///    ferramenta `consultar_conhecimento`, que hoje usa busca textual do Postgres.
 ///
 /// `embedding` fica reservado para quando/se a busca vetorial (pgvector) valer a
-/// pena — a interface da ferramenta não muda, só o corpo da busca.
+/// pena - a interface da ferramenta não muda, só o corpo da busca.
 model KnowledgeDoc {
   id        String  @id @default(cuid())
   accountId String
@@ -562,7 +611,7 @@ model FlowPolicy {
 
   /// SLA de primeira resposta HUMANA (minutos). Era env global; vira por conta.
   /// Este é o outro ramo do fluxo: aqui quem está devendo resposta é a loja,
-  /// então a ação é alertar a equipe — nunca cutucar o cliente.
+  /// então a ação é alertar a equipe - nunca cutucar o cliente.
   slaFirstResponseMin Int @default(30)
 
   /// "ai" gera a mensagem a partir da conversa; "template" usa texto fixo.
@@ -573,7 +622,7 @@ model FlowPolicy {
   @@map("flow_policies")
 }
 
-/// Vitrine pública (landing page) da conta — um site por lojista, alimentado
+/// Vitrine pública (landing page) da conta - um site por lojista, alimentado
 /// pelo próprio estoque. O endereço é o subdomínio derivado do `slug`
 /// (washington-veiculos.eixo.com.br); `/loja/:slug` funciona sempre, para
 /// desenvolvimento e pré-visualização.
@@ -596,7 +645,7 @@ model Storefront {
 }
 
 /// Assinatura da conta (1:1). Guarda o estado de billing e os pontos de extensão
-/// para o gateway de pagamento recorrente (Stripe/Pagar.me/Iugu — integração real depois).
+/// para o gateway de pagamento recorrente (Stripe/Pagar.me/Iugu - integração real depois).
 model Subscription {
   id        String             @id @default(cuid())
   accountId String             @unique
@@ -609,7 +658,7 @@ model Subscription {
   currentPeriodEnd DateTime? // fim do ciclo pago vigente
   canceledAt       DateTime?
 
-  // Hooks de billing — preenchidos quando o gateway for plugado.
+  // Hooks de billing - preenchidos quando o gateway for plugado.
   externalCustomerId     String?
   externalSubscriptionId String?
 
@@ -623,11 +672,11 @@ model Subscription {
 /// O CPF NUNCA é gravado em texto claro: `cpfHash` (SHA-256 + pepper) garante a
 /// unicidade sem reversibilidade; `cpfSealed` guarda o CPF cifrado (AES-256-GCM)
 /// só para uso administrativo/antifraude. A linha PERSISTE mesmo se a conta for
-/// removida (accountId vira NULL) — o bloqueio do CPF é permanente.
+/// removida (accountId vira NULL) - o bloqueio do CPF é permanente.
 model TrialCpfRegistry {
   id        String   @id @default(cuid())
   cpfHash   String   @unique
-  cpfSealed Json? // { iv, tag, data } — payload cifrado
+  cpfSealed Json? // { iv, tag, data } - payload cifrado
   accountId String?  @unique
   account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   usedAt    DateTime @default(now())
@@ -637,14 +686,14 @@ model TrialCpfRegistry {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MÓDULOS FUTUROS (placeholders — NÃO implementados no MVP)
-/// Módulo de Estoque / Garagem Digital — inventário de veículos da loja.
+// MÓDULOS FUTUROS (placeholders - NÃO implementados no MVP)
+/// Módulo de Estoque / Garagem Digital - inventário de veículos da loja.
 model Vehicle {
   id   String      @id @default(cuid())
   type VehicleType @default(CAR)
 
   /// Conta (tenant) dona do veículo. Nullable apenas por compatibilidade de
-  /// migração — a aplicação sempre popula (scripts/backfill-storefronts.ts
+  /// migração - a aplicação sempre popula (scripts/backfill-storefronts.ts
   /// vincula o estoque pré-existente à conta default). É a chave de isolamento
   /// da vitrine pública: um lojista nunca vê/expõe o estoque de outro.
   accountId String?
@@ -678,7 +727,7 @@ model Vehicle {
   showOnSite Boolean @default(true) @map("show_on_site")
   featured   Boolean @default(false)
 
-  /// ids do anúncio em cada plataforma — casa com Ticket.vehicle_ref_external
+  /// ids do anúncio em cada plataforma - casa com Ticket.vehicle_ref_external
   /// no plano de migração (backfill futuro liga tickets a veículos por aqui).
   externalRefs Json?
 
@@ -729,7 +778,7 @@ model VehicleCost {
   @@map("vehicle_costs")
 }
 
-/// Módulo Administrativo & Fiscal — lançamento do fluxo de caixa (a pagar/receber).
+/// Módulo Administrativo & Fiscal - lançamento do fluxo de caixa (a pagar/receber).
 model FinancialEntry {
   id          String          @id @default(cuid())
   type        FinancialType
@@ -782,7 +831,7 @@ model FiscalInvoice {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PRÓXIMO PASSO DE INTEGRAÇÃO (planejado — não neste módulo)
+// PRÓXIMO PASSO DE INTEGRAÇÃO (planejado - não neste módulo)
 // ─────────────────────────────────────────────────────────────────────────────
 // Ligar Ticket ⇄ Vehicle: migration adiciona `vehicleId String?` + FK em tickets;
 // backfill casando Ticket.vehicle_ref_external.externalId com Vehicle.externalRefs;

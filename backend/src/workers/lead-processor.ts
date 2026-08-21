@@ -9,7 +9,7 @@
  * Seguro para múltiplas instâncias: cada evento é "reivindicado" com um update
  * condicional (RECEIVED → PROCESSING); quem perder a corrida pula o evento.
  * Falhas fazem retry com backoff até WORKER_MAX_ATTEMPTS; payload inválido
- * (AdapterPayloadError) falha direto — retry não conserta payload malformado.
+ * (AdapterPayloadError) falha direto - retry não conserta payload malformado.
  */
 import '../integrations';
 import { WebhookEventStatus } from '@prisma/client';
@@ -45,6 +45,23 @@ export async function processPendingEvents(): Promise<number> {
     const event = await prisma.webhookEvent.findUniqueOrThrow({ where: { id } });
     try {
       const adapter = getAdapter(event.platform);
+
+      // Evento legítimo que não vira ticket (WhatsApp: recibo de entrega/leitura
+      // chega no mesmo webhook das mensagens). Encerra como PROCESSED sem
+      // ticket: marcar FAILED encheria a saúde da integração de erro falso.
+      if (adapter.shouldIgnore?.(event.payload)) {
+        await prisma.webhookEvent.update({
+          where: { id },
+          data: { status: WebhookEventStatus.PROCESSED, processedAt: new Date(), lastError: null },
+        });
+        processed += 1;
+        logger.debug('evento de webhook ignorado (sem mensagem de cliente)', {
+          eventId: id,
+          platform: event.platform,
+        });
+        continue;
+      }
+
       const normalized = adapter.normalize(event.payload);
       // A conta já veio carimbada na recepção (webhookKey → integração → conta);
       // o worker nunca precisa inferir o tenant a partir do payload.
@@ -67,7 +84,7 @@ export async function processPendingEvents(): Promise<number> {
       });
 
       // Interceptador do Agente de Pré-Venda IA: se o bot estiver ativo para
-      // este ticket, responde automaticamente. Fire-and-forget — o serviço
+      // este ticket, responde automaticamente. Fire-and-forget - o serviço
       // trata os próprios erros e nunca deve travar o processamento da fila.
       void handleInboundMessage(result.ticketId);
     } catch (err) {

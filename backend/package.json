@@ -2,7 +2,7 @@
   "name": "crm-backend",
   "version": "0.1.0",
   "private": true,
-  "description": "CRM Automotivo — API, serviço de webhooks e worker de leads (módulo de Atendimento/Tickets)",
+  "description": "CRM Automotivo - API, serviço de webhooks e worker de leads (módulo de Atendimento/Tickets)",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "dev:webhooks": "tsx watch src/webhook-server.ts",
@@ -22,6 +22,7 @@
     "verify:isolation": "tsx scripts/verify-isolation.ts",
     "verify:site-chat": "tsx scripts/verify-site-chat.ts",
     "verify:flow": "tsx scripts/verify-flow.ts",
+    "verify:whatsapp": "tsx scripts/verify-whatsapp.ts",
     "accounts": "tsx scripts/accounts-overview.ts",
     "seed:knowledge": "tsx scripts/seed-knowledge-templates.ts",
     "seed:washington": "tsx prisma/seed-washington.ts",
