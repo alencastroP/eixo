@@ -8,6 +8,18 @@ const KEYS = {
   user: 'crm.user',
 } as const;
 
+/**
+ * Presente (em `sessionStorage`) quando esta ABA foi aberta como sessão de
+ * suporte. `sessionStorage` é isolado por aba - é por isso que uma sessão de
+ * suporte nunca substitui a sessão normal do admin da plataforma no separador
+ * original: cada uma vive no seu próprio armazenamento.
+ */
+const SUPPORT_MODE_KEY = 'crm.supportMode';
+
+function storage(): Storage {
+  return sessionStorage.getItem(SUPPORT_MODE_KEY) === '1' ? sessionStorage : localStorage;
+}
+
 export interface Session {
   accessToken: string;
   refreshToken: string;
@@ -15,25 +27,70 @@ export interface Session {
 }
 
 export const tokenStore = {
-  getAccess: () => localStorage.getItem(KEYS.access),
-  getRefresh: () => localStorage.getItem(KEYS.refresh),
+  getAccess: () => storage().getItem(KEYS.access),
+  getRefresh: () => storage().getItem(KEYS.refresh),
   getUser(): PublicUser | null {
     try {
-      const raw = localStorage.getItem(KEYS.user);
+      const raw = storage().getItem(KEYS.user);
       return raw ? (JSON.parse(raw) as PublicUser) : null;
     } catch {
       return null;
     }
   },
   save(session: Session) {
-    localStorage.setItem(KEYS.access, session.accessToken);
-    localStorage.setItem(KEYS.refresh, session.refreshToken);
-    localStorage.setItem(KEYS.user, JSON.stringify(session.user));
+    storage().setItem(KEYS.access, session.accessToken);
+    storage().setItem(KEYS.refresh, session.refreshToken);
+    storage().setItem(KEYS.user, JSON.stringify(session.user));
   },
   clear() {
-    Object.values(KEYS).forEach((k) => localStorage.removeItem(k));
+    // limpa os dois armazenamentos e tira a aba do modo suporte - sem isso,
+    // logar de novo NESTA aba depois do fim de uma sessão de suporte ficaria
+    // preso no sessionStorage (perderia a sessão ao fechar a aba).
+    Object.values(KEYS).forEach((k) => {
+      localStorage.removeItem(k);
+      sessionStorage.removeItem(k);
+    });
+    sessionStorage.removeItem(SUPPORT_MODE_KEY);
   },
+  /**
+   * Sessão de suporte: só o access token (sem refresh), isolado nesta aba.
+   * O `user` (nome da conta do cliente, permissões etc.) não precisa vir
+   * junto - assim que o token entra no sessionStorage, o boot normal do
+   * `AuthContext` chama `GET /auth/me` e resolve tudo sozinho, do mesmo jeito
+   * que resolveria numa aba nova com um token qualquer já salvo.
+   */
+  enterSupportMode(accessToken: string) {
+    sessionStorage.setItem(SUPPORT_MODE_KEY, '1');
+    sessionStorage.setItem(KEYS.access, accessToken);
+  },
+  isSupportMode: () => sessionStorage.getItem(SUPPORT_MODE_KEY) === '1',
 };
+
+/**
+ * Chamada uma vez, síncrona, ANTES do React montar (ver main.tsx). Se a aba
+ * foi aberta pelo botão "Acessar como suporte" (`/support-session#token=...`),
+ * grava o token no sessionStorage desta aba e troca a URL para `/dashboard`
+ * ANTES do `AuthProvider` ler o storage pela primeira vez - depois desse
+ * ponto seria tarde demais (o estado inicial já teria sido calculado).
+ */
+export function consumeSupportSessionHash(): void {
+  if (location.pathname !== '/support-session') return;
+  const token = new URLSearchParams(location.hash.replace(/^#/, '')).get('token');
+  if (token) tokenStore.enterSupportMode(token);
+  history.replaceState(null, '', '/dashboard');
+}
+
+/** Lê o `exp` (segundos, epoch) de um JWT sem verificar assinatura - só para
+ *  exibir a contagem regressiva da sessão de suporte no front. */
+export function decodeJwtExpiry(token: string): Date | null {
+  try {
+    const [, payload] = token.split('.');
+    const json = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as { exp?: number };
+    return json.exp ? new Date(json.exp * 1000) : null;
+  } catch {
+    return null;
+  }
+}
 
 export class ApiError extends Error {
   constructor(

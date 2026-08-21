@@ -29,7 +29,11 @@ import type {
   LeadSearchResult,
   Paged,
   PermissionCatalog,
+  PlatformAccountDetail,
+  PlatformAccountOverview,
+  PlatformSupportSession,
   PublicUser,
+  StartSupportSessionResult,
   StorefrontSettings,
   Ticket,
   TicketDetail,
@@ -340,4 +344,23 @@ export const agentApi = {
   getFlow: () => api<FlowPolicyConfig>('/agent/flow'),
   saveFlow: (input: Partial<FlowPolicyConfig>) =>
     api<FlowPolicyConfig & { ticketsReprogramados: number }>('/agent/flow', { method: 'PUT', body: input }),
+};
+
+/** Módulo de Plataforma - só responde para a conta-plataforma (ver PLATFORM_ACCOUNT_ID). */
+export const platformApi = {
+  listAccounts: () => api<PlatformAccountOverview[]>('/platform/accounts'),
+  getAccount: (id: string) => api<PlatformAccountDetail>(`/platform/accounts/${id}`),
+  listActiveSessions: () => api<PlatformSupportSession[]>('/platform/support-sessions'),
+  startSupportSession: (accountId: string, input: { reason?: string; durationMinutes?: number }) =>
+    api<StartSupportSessionResult>(`/platform/accounts/${accountId}/support-sessions`, {
+      method: 'POST',
+      body: input,
+    }),
+  endSupportSession: (sessionId: string) =>
+    api<void>(`/platform/support-sessions/${sessionId}/end`, { method: 'POST' }),
+};
+
+/** Chamado de DENTRO da conta do cliente (aba de suporte) - encerra a própria sessão. */
+export const supportSessionApi = {
+  endMine: () => api<void>('/support-session/end', { method: 'POST' }),
 };

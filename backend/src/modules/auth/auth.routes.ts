@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate } from '../../middleware/auth';
 import { authRateLimit } from '../../middleware/security';
+import { env } from '../../config/env';
 import { ah, unauthorized } from '../../lib/errors';
 import { prisma } from '../../lib/prisma';
 import { serializeAccount } from '../billing/account.service';
@@ -65,6 +66,9 @@ authRouter.get(
       profile: access.profileId ? { id: access.profileId, name: access.profileName } : null,
       permissions: access.permissions,
       account: user.account ? serializeAccount(user.account) : null,
+      // Booleano rígido, independente do perfil/permissões: só true para quem
+      // pertence à ÚNICA conta configurada em PLATFORM_ACCOUNT_ID.
+      isPlatformAdmin: Boolean(env.platformAccountId) && user.accountId === env.platformAccountId,
     });
   }),
 );

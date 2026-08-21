@@ -20,6 +20,8 @@ import { InventoryPage } from './pages/InventoryPage';
 import { KanbanPage } from './pages/KanbanPage';
 import { AuditPage } from './pages/AuditPage';
 import { LoginPage } from './pages/LoginPage';
+import { PlatformPage } from './pages/PlatformPage';
+import { RequirePlatformAdmin } from './components/RequirePermission';
 import { TrialSignupPage } from './pages/TrialSignupPage';
 import { VehicleFormPage } from './pages/VehicleFormPage';
 import { slugFromHostname } from './storefront/resolveSlug';
@@ -263,6 +265,14 @@ export default function App() {
             <RequirePermission permission="integrations.manage">
               <IntegrationsPage />
             </RequirePermission>
+          }
+        />
+        <Route
+          path="/platform"
+          element={
+            <RequirePlatformAdmin>
+              <PlatformPage />
+            </RequirePlatformAdmin>
           }
         />
       </Route>

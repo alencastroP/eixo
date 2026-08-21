@@ -23,3 +23,15 @@ export function RequirePermission({ permission, children }: Props) {
   if (user && !can(...needed)) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
+
+/**
+ * Guarda do módulo de Plataforma - não é uma permissão de perfil, é o
+ * booleano rígido `isPlatformAdmin` que o servidor calcula a partir de
+ * PLATFORM_ACCOUNT_ID. Mesmo aviso do `RequirePermission`: é conveniência de
+ * navegação, quem barra de verdade é o `requirePlatformAccount` no servidor.
+ */
+export function RequirePlatformAdmin({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  if (user && !user.isPlatformAdmin) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}

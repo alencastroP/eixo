@@ -6186,6 +6186,75 @@ input.input-bad {
   background: var(--accent);
 }
 
+/* faixa de sessão de suporte - cor própria (aviso), pra nunca ser confundida
+   com o aviso de trial: um é comercial, o outro é "você tem acesso elevado
+   temporário ligado agora". */
+.support-banner {
+  background: color-mix(in srgb, var(--warning) 18%, var(--surface));
+  border-bottom-color: color-mix(in srgb, var(--warning) 40%, var(--border));
+}
+.support-banner .trial-banner-dot {
+  background: var(--warning);
+}
+.support-banner .trial-banner-cta {
+  background: var(--warning);
+  color: #1a1200;
+}
+.support-banner.urgent {
+  background: color-mix(in srgb, var(--danger) 18%, var(--surface));
+  border-bottom-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+}
+.support-banner.urgent .trial-banner-dot,
+.support-banner.urgent .trial-banner-cta {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* ─── Plataforma (todas as contas + sessões de suporte) ─────────────────── */
+.platform-sessions {
+  margin-bottom: 16px;
+}
+.platform-session-list,
+.platform-detail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.platform-session-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.platform-session-list li:last-child {
+  border-bottom: none;
+}
+.platform-detail-list li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.platform-detail-list li:last-child {
+  border-bottom: none;
+}
+.platform-detail-heading {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+  margin: 18px 0 8px;
+}
+.platform-detail-heading:first-child {
+  margin-top: 0;
+}
+
 /* tela de conta bloqueada */
 .blocked-card {
   text-align: center;
@@ -6869,26 +6938,35 @@ input.input-bad {
   margin-bottom: 16px;
 }
 
-/* Situação da conta - o estado escrito por extenso, não só uma cor. */
-.billing-page .badge[class*='status-'] {
+/* Situação da conta - o estado escrito por extenso, não só uma cor. Vale
+   tanto para a tela de Pagamentos (a própria conta) quanto para a tela de
+   Plataforma (todas as contas). */
+.billing-page .badge[class*='status-'],
+.platform-page .badge[class*='status-'] {
   background: color-mix(in srgb, var(--muted) 18%, transparent);
   color: var(--text);
 }
-.billing-page .badge.status-active {
+.billing-page .badge.status-active,
+.platform-page .badge.status-active {
   background: color-mix(in srgb, var(--success, #22c55e) 18%, transparent);
   color: var(--success, #22c55e);
 }
-.billing-page .badge.status-trial {
+.billing-page .badge.status-trial,
+.platform-page .badge.status-trial {
   background: color-mix(in srgb, var(--info) 18%, transparent);
   color: var(--info);
 }
 .billing-page .badge.status-past_due,
-.billing-page .badge.status-suspended {
+.billing-page .badge.status-suspended,
+.platform-page .badge.status-past_due,
+.platform-page .badge.status-suspended {
   background: color-mix(in srgb, var(--warning) 20%, transparent);
   color: var(--warning);
 }
 .billing-page .badge.status-expired,
-.billing-page .badge.status-canceled {
+.billing-page .badge.status-canceled,
+.platform-page .badge.status-expired,
+.platform-page .badge.status-canceled {
   background: color-mix(in srgb, var(--danger) 16%, transparent);
   color: var(--danger);
 }

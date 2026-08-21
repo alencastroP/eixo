@@ -24,12 +24,19 @@ const sha256 = (value: string) => createHash('sha256').update(value).digest('hex
 // tempo de resposta do login não revele se a conta existe (anti-enumeração).
 const DUMMY_HASH = '$2b$10$CwTycUXWue0Thq9StjUM0uJ8Hql8xM3iQnS0ubb2Yk5Zl6L6Q1Vy';
 
-export async function issueTokens(user: User) {
-  const accessToken = jwt.sign(
+/** Só a assinatura do access token - usada tanto no login normal quanto nas
+ *  sessões de suporte (que precisam de uma validade diferente dos 15min padrão
+ *  e nunca emitem refresh token). Ver modules/platform/platform.service.ts. */
+export function signAccessToken(user: User, expiresIn: jwt.SignOptions['expiresIn']) {
+  return jwt.sign(
     { role: user.role, name: user.name, email: user.email, accountId: user.accountId },
     env.jwt.accessSecret,
-    { subject: user.id, expiresIn: env.jwt.accessTtl as jwt.SignOptions['expiresIn'] },
+    { subject: user.id, expiresIn },
   );
+}
+
+export async function issueTokens(user: User) {
+  const accessToken = signAccessToken(user, env.jwt.accessTtl as jwt.SignOptions['expiresIn']);
 
   const refreshToken = randomBytes(48).toString('hex');
   await prisma.refreshToken.create({

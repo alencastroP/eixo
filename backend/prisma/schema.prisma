@@ -221,6 +221,12 @@ model User {
   channels         UserChannel[]
   termsAcceptances TermsAcceptance[]
 
+  /// Sessões de suporte que este usuário PEDIU (só existe para usuários da
+  /// conta-plataforma) e a sessão da qual ELE PRÓPRIO é o usuário temporário
+  /// (só existe para o "Suporte Eixo" criado dentro da conta do cliente).
+  supportSessionsRequested SupportSession[] @relation("SupportSessionRequestedBy")
+  supportSessionAsUser     SupportSession?  @relation("SupportSessionUser")
+
   @@index([accountId])
   @@index([profileId])
   @@map("users")
@@ -467,6 +473,41 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+/// Acesso temporário de suporte a uma conta de cliente, pedido por um usuário
+/// da conta-plataforma (ver `env.platformAccountId`). Não guarda credencial:
+/// o que dá acesso é o `supportUser`, um usuário real e visível dentro da
+/// conta do cliente, criado junto desta sessão e desativado quando ela acaba.
+model SupportSession {
+  id        String  @id @default(cuid())
+  accountId String // conta do CLIENTE sendo acessada
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  /// Quem, na conta-plataforma, pediu o acesso.
+  requestedById String
+  requestedBy   User   @relation("SupportSessionRequestedBy", fields: [requestedById], references: [id])
+
+  /// Usuário "Suporte Eixo" criado na conta do cliente para esta sessão.
+  /// 1:1 - cada sessão tem o seu próprio usuário, nunca reaproveitado.
+  supportUserId String @unique
+  supportUser   User   @relation("SupportSessionUser", fields: [supportUserId], references: [id], onDelete: Cascade)
+
+  /// Motivo informado por quem pediu (ex.: nº do chamado) - texto livre, para auditoria.
+  reason String?
+
+  startedAt DateTime  @default(now())
+  expiresAt DateTime
+  endedAt   DateTime?
+  /// 'EXPIRED' (varredura automática) | 'REVOKED' (encerrado por outro admin da
+  /// plataforma) | 'MANUAL' (quem abriu encerrou a própria sessão).
+  endedBy   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([accountId])
+  @@index([requestedById])
+  @@map("support_sessions")
+}
+
 /// Evento bruto recebido pelo serviço de webhooks. Persistido ANTES de qualquer
 /// processamento (fila em banco): picos ou payloads inválidos nunca perdem dados.
 /// O worker (src/workers/lead-processor.ts) consome, normaliza via adapter e
@@ -684,6 +725,10 @@ model Account {
   usageCounters    UsageCounter[]
   creditQueries    CreditQuery[]
   termsAcceptances TermsAcceptance[]
+  // Sessões de suporte ABERTAS NELA (a conta do cliente sendo acessada) - não
+  // confundir com as sessões que os usuários DESTA conta pedem, que só existem
+  // de fato quando esta é a conta-plataforma.
+  supportSessions  SupportSession[]
 
   @@index([status])
   @@index([trialEndsAt])

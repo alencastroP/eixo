@@ -3,7 +3,7 @@ import type { Prisma } from '@prisma/client';
 type Db = Prisma.TransactionClient;
 
 export interface AuditEntry {
-  entityType: 'TICKET' | 'LEAD' | 'USER' | 'ACCESS_PROFILE' | 'SUBSCRIPTION';
+  entityType: 'TICKET' | 'LEAD' | 'USER' | 'ACCESS_PROFILE' | 'SUBSCRIPTION' | 'ACCOUNT';
   entityId: string;
   action: string;
   actorId?: string | null;

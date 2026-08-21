@@ -3,12 +3,14 @@ import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../theme/ThemeContext';
 import { BrandLogo, BrandMark } from './BrandMark';
 import { MobileNav } from './MobileNav';
+import { SupportBanner } from './SupportBanner';
 import { TrialBanner, AccountBlocked } from './TrialBanner';
 import { UserMenu } from './UserMenu';
 import { ADMIN_PERMISSIONS, ADMIN_ROUTES } from '../pages/AdminPage';
 import {
   BarChartIcon,
   CarIcon,
+  DatabaseIcon,
   GaugeIcon,
   GridIcon,
   InboxIcon,
@@ -109,6 +111,17 @@ export function ProtectedLayout() {
             <GridIcon />
           </NavLink>
         )}
+        {/* Módulo à parte da Administração - só existe para a conta-plataforma
+            (booleano rígido do servidor, não uma permissão de perfil). */}
+        {user.isPlatformAdmin && (
+          <NavLink
+            to="/platform"
+            className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`}
+            title="Plataforma"
+          >
+            <DatabaseIcon />
+          </NavLink>
+        )}
         <div className="rail-spacer" />
         <button className="rail-btn" onClick={toggle} title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}>
           {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
@@ -116,6 +129,7 @@ export function ProtectedLayout() {
         <UserMenu />
       </nav>
       <div className="app-content">
+        <SupportBanner account={user.account} />
         <TrialBanner account={user.account} />
         <Outlet />
       </div>

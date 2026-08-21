@@ -192,6 +192,9 @@ export interface PublicUser {
   /** Lista efetiva - é o que `can()` consulta para acender menus e rotas. */
   permissions?: Permission[];
   account?: AccountSummary | null;
+  /** Booleano rígido do servidor: só true para a ÚNICA conta-plataforma
+   *  (PLATFORM_ACCOUNT_ID). Não é uma permissão - não depende de perfil. */
+  isPlatformAdmin?: boolean;
 }
 
 export interface UserListItem {
@@ -775,4 +778,63 @@ export interface FlowPolicyConfig {
   businessDaysOnly: boolean;
   slaFirstResponseMin: number;
   followUpMode: 'ai' | 'template';
+}
+
+// ─── Plataforma (super-admin: todas as contas + acesso de suporte) ──────────
+
+export interface PlatformPlanRef {
+  code: string;
+  name: string;
+  priceCents: number;
+}
+
+export interface PlatformSubscriptionRef {
+  status: SubscriptionStatus;
+  cycle: BillingCycle;
+  priceCents: number;
+  nextDueDate: string | null;
+  currentPeriodEnd?: string | null;
+}
+
+export interface PlatformAccountOverview {
+  id: string;
+  name: string;
+  status: AccountStatus;
+  createdAt: string;
+  plan: PlatformPlanRef | null;
+  subscription: PlatformSubscriptionRef | null;
+  activeUsers: number;
+  limits: { planCode: string; planName: string; items: PlanLimitItem[] } | null;
+  lastCharge: BillingCharge | null;
+}
+
+export interface PlatformAccountUser {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  active: boolean;
+  createdAt: string;
+  profile: { name: string } | null;
+}
+
+export interface PlatformAccountDetail extends Omit<PlatformAccountOverview, 'lastCharge'> {
+  charges: BillingCharge[];
+  users: PlatformAccountUser[];
+}
+
+export interface PlatformSupportSession {
+  id: string;
+  account: { id: string; name: string };
+  requestedBy: { id: string; name: string; email: string };
+  reason: string | null;
+  startedAt: string;
+  expiresAt: string;
+}
+
+/** Resposta ao abrir uma sessão de suporte - o token entra no `sessionStorage`
+ *  da nova aba, nunca no armazenamento da sessão normal do admin. */
+export interface StartSupportSessionResult {
+  accessToken: string;
+  session: { id: string; accountId: string; accountName: string; expiresAt: string };
 }

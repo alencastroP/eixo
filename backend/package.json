@@ -19,6 +19,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "seed": "tsx prisma/seed.ts",
     "create:admin": "tsx scripts/create-admin.ts",
+    "create:platform-account": "tsx scripts/create-platform-account.ts",
     "verify:isolation": "tsx scripts/verify-isolation.ts",
     "verify:billing": "tsx scripts/verify-billing.ts",
     "verify:site-chat": "tsx scripts/verify-site-chat.ts",
@@ -34,6 +35,7 @@
     "backfill:upload-urls": "tsx scripts/backfill-upload-urls.ts",
     "migrate:uploads": "tsx scripts/migrate-uploads-to-r2.ts",
     "expire-trials": "tsx scripts/expire-trials.ts",
+    "expire-support-sessions": "tsx scripts/expire-support-sessions.ts",
     "billing:cycle": "tsx scripts/billing-cycle.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },

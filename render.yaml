@@ -166,6 +166,13 @@ services:
       # o workers.dev - é o link que o cliente final vê.
       - key: APP_URL
         value: https://eixocrm.com
+      # Id da ÚNICA conta com acesso ao módulo de Plataforma (visão de todas as
+      # contas + acesso de suporte). Gerado por
+      # `npm run create:platform-account -- <email>` rodado contra o Neon de
+      # produção; preencher no dashboard depois disso - sem valor, o módulo
+      # fica fechado para todo mundo.
+      - key: PLATFORM_ACCOUNT_ID
+        sync: false
 
   # ─── Recepção de webhooks + worker de leads (processo independente) ────
   - type: web

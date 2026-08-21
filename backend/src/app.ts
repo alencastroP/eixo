@@ -26,6 +26,9 @@ import { agentRouter } from './modules/aiAgent/agent.routes';
 import { billingRouter } from './modules/billing/billing.routes';
 import { publicSiteRouter } from './modules/storefront/public.routes';
 import { webhookEventsRouter } from './webhooks/webhook-events.routes';
+import { requirePlatformAccount } from './modules/platform/platform.middleware';
+import { platformRouter } from './modules/platform/platform.routes';
+import { supportSessionRouter } from './modules/platform/support-session.routes';
 
 /** API principal do CRM (autenticada). A recepção de webhooks vive em outro processo. */
 export function createApiApp() {
@@ -84,6 +87,18 @@ export function createApiApp() {
   app.use('/api/storefront', tenant, storefrontRouter);
   app.use('/api/agent', tenant, agentRouter);
   app.use('/api/webhook-events', tenant, webhookEventsRouter);
+
+  // Módulo de Plataforma: visão de todas as contas + acesso de suporte.
+  // `requirePlatformAccount` roda ANTES de `loadPermissions` de propósito - a
+  // barreira aqui é de CONTA (só a operadora do Eixo passa), não de perfil.
+  app.use(
+    '/api/platform',
+    [authenticate, requirePlatformAccount, requireActiveAccount, loadPermissions],
+    platformRouter,
+  );
+  // Encerrar a PRÓPRIA sessão - chamado de DENTRO da conta do cliente, por
+  // isso fora do gate acima (ver support-session.routes.ts).
+  app.use('/api/support-session', [authenticate], supportSessionRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -168,6 +168,18 @@ export const env = {
   // Base para montar links absolutos nos e-mails (botão "Ver na plataforma").
   appUrl: (process.env.APP_URL ?? 'http://localhost:5173').replace(/\/+$/, ''),
 
+  /**
+   * Id da ÚNICA conta com acesso ao módulo de Plataforma (visão de todas as
+   * contas + acesso de suporte). Vazio = módulo inteiro fica fechado - nenhuma
+   * conta, nem a que viria a ser criada com este id depois, entra sem que a
+   * variável esteja preenchida.
+   *
+   * Deliberadamente uma env var, não uma coluna/flag no banco: trocar exige
+   * redeploy, o mesmo atrito que já existe para `CREDENTIALS_SECRET` e
+   * `TRIAL_CPF_PEPPER`. Ver middleware/platform.ts.
+   */
+  platformAccountId: process.env.PLATFORM_ACCOUNT_ID ?? '',
+
   // Agente de Pré-Venda IA (Claude). Sem apiKey, o bot fica indisponível e as
   // conversas seguem 100% humanas (o toggle no front aparece desabilitado).
   ai: {

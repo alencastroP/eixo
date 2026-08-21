@@ -239,6 +239,24 @@ export const PERMISSION_CATALOG: PermissionGroup[] = [
       },
     ],
   },
+  {
+    key: 'plataforma',
+    label: 'Plataforma',
+    hint: 'Gestão de todas as contas do Eixo. Só existe na conta operadora - em qualquer outra loja, estas permissões não abrem nada (ver PLATFORM_ACCOUNT_ID).',
+    permissions: [
+      {
+        key: 'platform.accounts.view',
+        label: 'Ver contas, faturas e limites',
+        description: 'Enxerga todas as contas cadastradas: plano, cobrança, usuários ativos e consumo dos limites.',
+      },
+      {
+        key: 'platform.support.access',
+        label: 'Acessar conta de cliente como suporte',
+        description: 'Abre uma sessão temporária de administrador dentro da conta de um cliente.',
+        implies: ['platform.accounts.view'],
+      },
+    ],
+  },
 ];
 
 const DEFS = new Map<string, PermissionDef>();
