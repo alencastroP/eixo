@@ -75,6 +75,17 @@ export const env = {
   },
 
   /**
+   * Host público desta própria API — usado para montar a URL ABSOLUTA das
+   * imagens enviadas (logo/hero da vitrine, fotos de veículo). Necessário
+   * porque em produção o front (Cloudflare Workers) e a API (Render) vivem em
+   * domínios diferentes: uma URL relativa como "/uploads/..." resolve contra
+   * a origem da página que a exibe, não contra quem guarda o arquivo — a
+   * imagem carrega em dev (o proxy do Vite cobre o mesmo host) e quebra em
+   * produção. Ver lib/storage.ts.
+   */
+  apiPublicUrl: (process.env.API_PUBLIC_URL ?? 'http://localhost:3001').replace(/\/+$/, ''),
+
+  /**
    * Host público do serviço de webhooks — usado só para MONTAR a URL que o
    * lojista cola no painel da plataforma (`/webhooks/:platform/:webhookKey`).
    *

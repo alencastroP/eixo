@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { env } from '../config/env';
 import { badRequest } from './errors';
 
 /**
@@ -18,6 +19,7 @@ const MIME_EXT: Record<string, string> = {
   'image/png': 'png',
   'image/webp': 'webp',
   'image/gif': 'gif',
+  'image/svg+xml': 'svg',
 };
 
 const DATA_URL_RE = /^data:(image\/[a-zA-Z+]+);base64,([A-Za-z0-9+/=]+)$/;
@@ -26,7 +28,12 @@ function ensureDir(dir: string) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
-/** Grava uma data URL de imagem e devolve a URL pública (/uploads/...). */
+/**
+ * Grava uma data URL de imagem e devolve a URL pública ABSOLUTA
+ * (`API_PUBLIC_URL` + /uploads/...). Precisa ser absoluta porque quem exibe a
+ * imagem (front em outro domínio) não é quem a serve (esta API) — ver
+ * `env.apiPublicUrl`.
+ */
 export function saveImageDataUrl(subdir: string, dataUrl: string): string {
   const match = DATA_URL_RE.exec(dataUrl.trim());
   if (!match) throw badRequest('Formato de imagem inválido (esperado data URL base64)');
@@ -48,13 +55,18 @@ export function saveImageDataUrl(subdir: string, dataUrl: string): string {
   ensureDir(dir);
   const filename = `${randomUUID()}.${ext}`;
   fs.writeFileSync(path.join(dir, filename), buffer);
-  return `${UPLOADS_PUBLIC_PREFIX}/${safeSub}/${filename}`;
+  return `${env.apiPublicUrl}${UPLOADS_PUBLIC_PREFIX}/${safeSub}/${filename}`;
 }
 
-/** Remove um arquivo a partir da URL pública. Silencioso se já não existir. */
+/**
+ * Remove um arquivo a partir da URL pública. Silencioso se já não existir.
+ * Aceita tanto a URL absoluta atual quanto o caminho relativo antigo (dados
+ * gravados antes desta URL passar a incluir o domínio).
+ */
 export function deleteByPublicUrl(publicUrl: string): void {
-  if (!publicUrl.startsWith(`${UPLOADS_PUBLIC_PREFIX}/`)) return;
-  const rel = publicUrl.slice(UPLOADS_PUBLIC_PREFIX.length + 1);
+  const urlPath = publicUrl.startsWith('/') ? publicUrl : new URL(publicUrl).pathname;
+  if (!urlPath.startsWith(`${UPLOADS_PUBLIC_PREFIX}/`)) return;
+  const rel = urlPath.slice(UPLOADS_PUBLIC_PREFIX.length + 1);
   const abs = path.join(UPLOADS_ROOT, rel);
   // proteção contra path traversal: precisa estar dentro de UPLOADS_ROOT
   if (!abs.startsWith(UPLOADS_ROOT)) return;

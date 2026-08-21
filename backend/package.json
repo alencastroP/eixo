@@ -28,6 +28,7 @@
     "purge": "tsx scripts/purge.ts",
     "backfill:accounts": "tsx scripts/backfill-accounts.ts",
     "backfill:storefronts": "tsx scripts/backfill-storefronts.ts",
+    "backfill:upload-urls": "tsx scripts/backfill-upload-urls.ts",
     "expire-trials": "tsx scripts/expire-trials.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },

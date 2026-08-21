@@ -55,6 +55,13 @@ services:
       # diferente chamando esta mesma API.
       - key: CORS_ORIGIN
         value: https://eixo.pedrovalencastro.workers.dev
+      # Host público desta própria API — usado para montar a URL absoluta das
+      # imagens enviadas (logo/hero da vitrine, fotos de veículo). Front e API
+      # vivem em domínios diferentes (Cloudflare Workers vs Render); sem isso
+      # as imagens são salvas com URL relativa, que resolve contra o domínio
+      # do front (onde não existem) em vez do domínio que as guarda.
+      - key: API_PUBLIC_URL
+        value: https://eixo-crm-api.onrender.com
       # A tela de Integrações exibe a URL de webhook de cada loja; precisa saber
       # o host do serviço de webhooks (que é outro serviço, outra URL).
       - key: WEBHOOK_PUBLIC_URL
