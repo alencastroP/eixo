@@ -89,7 +89,7 @@ export function LoginPage() {
           </button>
 
           <div className="login-divider">
-            <span>ainda não é cliente?</span>
+            <span>Ainda não é cliente?</span>
           </div>
           <Link to="/trial" className="btn btn-ghost btn-block trial-cta">
             🚀 Teste grátis de 15 dias

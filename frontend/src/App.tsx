@@ -35,6 +35,11 @@ const StorefrontLayout = lazy(() =>
 const StorefrontHome = lazy(() => import('./storefront/HomePage').then((m) => ({ default: m.HomePage })));
 const StorefrontVehicle = lazy(() => import('./storefront/VehiclePage').then((m) => ({ default: m.VehiclePage })));
 
+// Landing pública (eixocrm.com) - separada do resto porque ninguém logado a baixa.
+const LandingPage = lazy(() => import('./pages/LandingPage').then((m) => ({ default: m.LandingPage })));
+const LegalIndexPage = lazy(() => import('./pages/LegalPage').then((m) => ({ default: m.LegalIndexPage })));
+const LegalDocPage = lazy(() => import('./pages/LegalPage').then((m) => ({ default: m.LegalDocPage })));
+
 const storefrontFallback = <div className="page-loading">Carregando…</div>;
 
 export default function App() {
@@ -70,11 +75,36 @@ export default function App() {
         </Route>
       )}
 
+      {/* no subdomínio de uma loja a raiz é a vitrine (rota acima); fora dela é a landing pública */}
+      {!hostSlug && (
+        <Route
+          path="/"
+          element={
+            <Suspense fallback={storefrontFallback}>
+              <LandingPage />
+            </Suspense>
+          }
+        />
+      )}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/trial" element={<TrialSignupPage />} />
+      <Route
+        path="/legal"
+        element={
+          <Suspense fallback={storefrontFallback}>
+            <LegalIndexPage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/legal/:slug"
+        element={
+          <Suspense fallback={storefrontFallback}>
+            <LegalDocPage />
+          </Suspense>
+        }
+      />
       <Route element={<ProtectedLayout />}>
-        {/* no subdomínio de uma loja a raiz é a vitrine (rota acima), não o painel */}
-        {!hostSlug && <Route path="/" element={<Navigate to="/dashboard" replace />} />}
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route
           path="/tickets"
