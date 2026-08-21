@@ -1,7 +1,7 @@
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../theme/ThemeContext';
-import { BrandMark } from './BrandMark';
+import { BrandLogo, BrandMark } from './BrandMark';
 import { MobileNav } from './MobileNav';
 import { TrialBanner, AccountBlocked } from './TrialBanner';
 import { UserMenu } from './UserMenu';
@@ -32,8 +32,8 @@ export function ProtectedLayout() {
   if (initializing) {
     return (
       <div className="splash">
-        <BrandMark variant="white" size={40} glow className="splash-mark dark-only" />
-        <BrandMark variant="asphalt" size={40} className="splash-mark light-only" />
+        <BrandLogo tone="onDark" size={40} className="splash-mark dark-only" />
+        <BrandLogo tone="onLight" size={40} className="splash-mark light-only" />
         <p>Carregando…</p>
       </div>
     );
@@ -49,8 +49,10 @@ export function ProtectedLayout() {
   return (
     <div className="app-shell">
       <nav className="rail">
-        <div className="rail-logo" title="CRM Auto — Atendimento">
-          <BrandMark variant="asphalt" size={20} />
+        <div className="rail-logo" title="Eixo">
+          {/* ladrilho laranja: a marca sai vazada em branco, como na versão de
+              fundo escuro da identidade */}
+          <BrandMark variant="white" size={18} />
         </div>
         <NavLink to="/dashboard" className={({ isActive }) => `rail-btn ${isActive ? 'active' : ''}`} title="Painel">
           <GaugeIcon />

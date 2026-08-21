@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
-import { BrandMark } from '../components/BrandMark';
+import { BrandLogo } from '../components/BrandMark';
 
 const HERO_FEATURES = [
   'Atendimento e funil de vendas num só lugar',
@@ -40,11 +40,10 @@ export function LoginPage() {
       <aside className="auth-hero">
         <div className="auth-hero-glow" aria-hidden />
         <div className="auth-hero-inner">
-          <span className="auth-hero-mark">
-            <BrandMark variant="white" size={30} glow />
-          </span>
+          {/* A assinatura já contém o símbolo — o ladrilho separado que existia
+              aqui repetia a marca duas vezes na mesma dobra. */}
           <h2 className="auth-hero-title">
-            CRM<span>Auto</span>
+            <BrandLogo tone="white" />
           </h2>
           <p className="auth-hero-tag">A plataforma dos bons negócios sobre rodas.</p>
           <ul className="auth-hero-features">

@@ -1,0 +1,8 @@
+<!-- Eixo — símbolo, grafite, SEM FUNDO. Para impressão em uma cor e fundos claros. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="424" viewBox="0 0 100 106">
+  <g fill="#26262B">
+    <rect x="0" y="0" width="100" height="28" rx="6"/>
+    <rect x="0" y="39" width="70" height="28" rx="6"/>
+    <rect x="0" y="78" width="100" height="28" rx="6"/>
+  </g>
+</svg>
