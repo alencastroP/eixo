@@ -36,11 +36,11 @@ export function LoginPage() {
 
   return (
     <div className="auth-split">
-      {/* Painel-herói (cor 1 — laranja ignição da marca) */}
+      {/* Painel-herói (cor 1 - laranja ignição da marca) */}
       <aside className="auth-hero">
         <div className="auth-hero-glow" aria-hidden />
         <div className="auth-hero-inner">
-          {/* A assinatura já contém o símbolo — o ladrilho separado que existia
+          {/* A assinatura já contém o símbolo - o ladrilho separado que existia
               aqui repetia a marca duas vezes na mesma dobra. */}
           <h2 className="auth-hero-title">
             <BrandLogo tone="white" />
@@ -60,7 +60,7 @@ export function LoginPage() {
         <span className="auth-hero-foot">© {new Date().getFullYear()} CRM Auto</span>
       </aside>
 
-      {/* Painel de acesso (cor 2 — fundo neutro da paleta), login puxado à direita */}
+      {/* Painel de acesso (cor 2 - fundo neutro da paleta), login puxado à direita */}
       <main className="auth-panel">
         <form className="auth-card" onSubmit={handleSubmit}>
           <div className="auth-card-head">
@@ -94,12 +94,6 @@ export function LoginPage() {
           <Link to="/trial" className="btn btn-ghost btn-block trial-cta">
             🚀 Teste grátis de 15 dias
           </Link>
-
-          <div className="login-hint">
-            <strong>Acesso de demonstração</strong>
-            <span>admin@crm.local · Admin@123</span>
-            <span>carlos@crm.local · Vendedor@123</span>
-          </div>
         </form>
       </main>
     </div>
