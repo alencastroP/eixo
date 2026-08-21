@@ -50,11 +50,13 @@ services:
       - key: TRIAL_CPF_PEPPER
         generateValue: true
       # URLs públicas do frontend - libera CORS. Não é segredo, por isso vai
-      # literal. Ao publicar as vitrines em subdomínio próprio, acrescente o
-      # curinga do domínio (ex.: ",https://*.eixo.com.br"): cada loja é um host
-      # diferente chamando esta mesma API.
+      # literal. eixocrm.com é o domínio próprio (custom domain do Worker
+      # "eixo" no Cloudflare); o workers.dev fica de fallback. Ao publicar as
+      # vitrines em subdomínio próprio, acrescente o curinga do domínio (ex.:
+      # ",https://*.eixocrm.com"): cada loja é um host diferente chamando
+      # esta mesma API.
       - key: CORS_ORIGIN
-        value: https://eixo.pedrovalencastro.workers.dev
+        value: https://eixocrm.com,https://eixo.pedrovalencastro.workers.dev
       # Host público desta própria API - usado para montar a URL absoluta das
       # imagens enviadas (logo/hero da vitrine, fotos de veículo). Front e API
       # vivem em domínios diferentes (Cloudflare Workers vs Render); sem isso
@@ -160,9 +162,10 @@ services:
       - key: EMAIL_REPLY_TO
         sync: false
       # Mesma URL do front usada em CORS_ORIGIN - é para onde os botões dos
-      # e-mails apontam ("Ver fatura", "Escolher plano").
+      # e-mails apontam ("Ver fatura", "Escolher plano"). Domínio próprio, não
+      # o workers.dev - é o link que o cliente final vê.
       - key: APP_URL
-        value: https://eixo.pedrovalencastro.workers.dev
+        value: https://eixocrm.com
 
   # ─── Recepção de webhooks + worker de leads (processo independente) ────
   - type: web
