@@ -53,7 +53,7 @@ export function InboxPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Escopo (Todos/Meus/Não atribuídos) vive na URL — assim persiste ao trocar
+  // Escopo (Todos/Meus/Não atribuídos) vive na URL - assim persiste ao trocar
   // para o Kanban e voltar, em vez de resetar a cada navegação de submódulo.
   const view = (searchParams.get('scope') as ViewKey | null) ?? 'all';
   // filtros iniciais podem vir da URL (drill-down do dashboard: ?status= / ?platform=)

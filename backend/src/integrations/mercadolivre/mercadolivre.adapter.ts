@@ -8,7 +8,7 @@ import { hmacSha256Hex, normalizePhone, safeEqual } from '../core/verify';
  *
  * Na integração oficial, o ML envia notificações "magras" (topic + resource) e a
  * aplicação busca o recurso completo na API autenticada. Aqui, sem credenciais de
- * parceiro, o mock recebe o lead completo no corpo — a troca futura acontece só
+ * parceiro, o mock recebe o lead completo no corpo - a troca futura acontece só
  * dentro deste adapter, sem tocar no core.
  *
  * Autenticação: HMAC-SHA256 do corpo bruto no header `x-signature`

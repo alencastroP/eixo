@@ -12,7 +12,7 @@ usersRouter.use(authenticate);
 
 const publicSelect = { id: true, name: true, email: true, role: true, active: true, createdAt: true } as const;
 
-// Lista usada nos seletores de atribuição — ESCOPADA à conta do solicitante
+// Lista usada nos seletores de atribuição - ESCOPADA à conta do solicitante
 // (isolamento multi-tenant: um admin nunca enxerga usuários de outra conta).
 usersRouter.get(
   '/',
@@ -43,7 +43,7 @@ usersRouter.post(
       throw conflict('Já existe um usuário com este e-mail');
     }
     const user = await prisma.user.create({
-      // herda a conta de quem cria — isolamento multi-tenant
+      // herda a conta de quem cria - isolamento multi-tenant
       data: { name: input.name, email, passwordHash: hashPassword(input.password), role: input.role, accountId: req.user!.accountId },
       select: publicSelect,
     });

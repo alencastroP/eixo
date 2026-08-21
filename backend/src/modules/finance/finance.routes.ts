@@ -5,7 +5,7 @@ import { authenticate, requireRole } from '../../middleware/auth';
 import { ah } from '../../lib/errors';
 import * as finance from './finance.service';
 
-/** Módulo Administrativo & Fiscal — restrito a ADMIN (gestor/lojista). */
+/** Módulo Administrativo & Fiscal - restrito a ADMIN (gestor/lojista). */
 export const financeRouter = Router();
 financeRouter.use(authenticate, requireRole(UserRole.ADMIN));
 

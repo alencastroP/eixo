@@ -18,7 +18,7 @@ const PAGE_SIZE = 12;
 
 /**
  * Recortes rápidos do estoque. Faixa de preço vira priceMin/priceMax e câmbio/
- * tração viram `tag` — os três filtram no servidor, para a contagem e a
+ * tração viram `tag` - os três filtram no servidor, para a contagem e a
  * paginação continuarem verdadeiras.
  */
 const CHIPS: { key: string; query: Partial<SiteVehicleQuery> }[] = [

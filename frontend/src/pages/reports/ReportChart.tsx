@@ -36,7 +36,7 @@ interface Props {
   onDrill: (key: string) => void;
 }
 
-/** Cromo do gráfico por tema — eixos/guias em azul elétrico (diretriz da marca). */
+/** Cromo do gráfico por tema - eixos/guias em azul elétrico (diretriz da marca). */
 function useChrome() {
   const { theme } = useTheme();
   const dark = theme === 'dark';

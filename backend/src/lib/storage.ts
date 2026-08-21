@@ -8,7 +8,7 @@ import { badRequest } from './errors';
  * Armazenamento de imagens em disco (dev). Em produção, trocar por um bucket
  * (S3/GCS) mantendo a mesma interface: o resto do código só conhece a URL pública.
  *
- * As fotos chegam como data URL (base64) no corpo JSON — evita adicionar
+ * As fotos chegam como data URL (base64) no corpo JSON - evita adicionar
  * dependência de upload multipart. São decodificadas e gravadas em /uploads.
  */
 export const UPLOADS_ROOT = path.resolve(process.cwd(), 'uploads');
@@ -31,7 +31,7 @@ function ensureDir(dir: string) {
 /**
  * Grava uma data URL de imagem e devolve a URL pública ABSOLUTA
  * (`API_PUBLIC_URL` + /uploads/...). Precisa ser absoluta porque quem exibe a
- * imagem (front em outro domínio) não é quem a serve (esta API) — ver
+ * imagem (front em outro domínio) não é quem a serve (esta API) - ver
  * `env.apiPublicUrl`.
  */
 export function saveImageDataUrl(subdir: string, dataUrl: string): string {

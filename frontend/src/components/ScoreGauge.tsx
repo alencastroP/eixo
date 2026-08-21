@@ -36,7 +36,7 @@ function arcPath(from: number, to: number, cx: number, cy: number, r: number) {
 }
 
 /**
- * Velocímetro do Score — tacômetro semicircular com 3 zonas de risco e ponteiro.
+ * Velocímetro do Score - tacômetro semicircular com 3 zonas de risco e ponteiro.
  * Puro SVG, sem dependências.
  *
  * Movimento (design system): as zonas se desenham em cascata de 120ms e o
@@ -65,7 +65,7 @@ export function ScoreGauge({ score, band, size = 300 }: ScoreGaugeProps) {
       {/* trilho de fundo */}
       <path d={arcPath(0, MAX, cx, cy, r)} fill="none" stroke="var(--surface-2)" strokeWidth={stroke} strokeLinecap="round" />
 
-      {/* zonas coloridas — cada uma se desenha da esquerda para a direita */}
+      {/* zonas coloridas - cada uma se desenha da esquerda para a direita */}
       {ZONES.map((z, i) => {
         const from = z.from + (z.from === 0 ? 0 : 6);
         const to = z.to - (z.to === MAX ? 0 : 6);
@@ -116,7 +116,7 @@ export function ScoreGauge({ score, band, size = 300 }: ScoreGaugeProps) {
         1000
       </text>
 
-      {/* ponteiro — varre da base até a leitura */}
+      {/* ponteiro - varre da base até a leitura */}
       <g
         style={
           {

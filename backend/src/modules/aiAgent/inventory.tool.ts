@@ -8,7 +8,7 @@ import { prisma } from '../../lib/prisma';
  * "Corolla até 80 mil, automático, abaixo de 60 mil km" é uma cláusula WHERE.
  * Embeddings devolvem o que é semanticamente próximo, e proximidade semântica
  * não respeita teto de preço: quem pede "até 80 mil" não pode receber um carro
- * de 95 mil. Além disso o estoque muda o tempo todo — carro vendido some do SQL
+ * de 95 mil. Além disso o estoque muda o tempo todo - carro vendido some do SQL
  * no mesmo instante, enquanto um índice vetorial só some depois de reindexar.
  *
  * ── Isolamento ──────────────────────────────────────────────────────────────
@@ -42,7 +42,7 @@ const brl = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', c
 
 /**
  * Serializa para o modelo apenas o que é público. Custo de compra, margem,
- * placa, chassi e renavam nunca entram — a mesma fronteira que a vitrine aplica.
+ * placa, chassi e renavam nunca entram - a mesma fronteira que a vitrine aplica.
  * O modelo não pode revelar o que nunca recebeu.
  */
 function publicView(v: {
@@ -73,7 +73,7 @@ function publicView(v: {
   };
 }
 
-/** Busca no pátio da conta. Devolve poucas opções — o agente não deve despejar lista. */
+/** Busca no pátio da conta. Devolve poucas opções - o agente não deve despejar lista. */
 export async function searchInventory(accountId: string, input: InventorySearchInput, limit = 5) {
   const and: Prisma.VehicleWhereInput[] = [
     { accountId },
@@ -88,7 +88,7 @@ export async function searchInventory(accountId: string, input: InventorySearchI
   const tipo = input.tipo ? TYPE_MAP[input.tipo.trim().toLowerCase()] : undefined;
   if (tipo) and.push({ type: tipo });
 
-  // Filtros numéricos são exatos de propósito — é o motivo de não usar vetor.
+  // Filtros numéricos são exatos de propósito - é o motivo de não usar vetor.
   if (typeof input.precoMax === 'number' && input.precoMax > 0) and.push({ salePrice: { lte: input.precoMax } });
   if (typeof input.precoMin === 'number' && input.precoMin > 0) and.push({ salePrice: { gte: input.precoMin } });
   if (typeof input.anoMin === 'number' && input.anoMin > 1950) and.push({ yearModel: { gte: input.anoMin } });

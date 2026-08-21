@@ -5,8 +5,8 @@ import { prisma } from '../../lib/prisma';
  * perfil de compra já coletado do lead.
  *
  * ── Sobre a estratégia de conhecimento (RAG) ────────────────────────────────
- * O corpus de uma revenda — garantia, financiamento, avaliação de usado,
- * horários, formas de pagamento — costuma ter poucos milhares de tokens. Nesse
+ * O corpus de uma revenda - garantia, financiamento, avaliação de usado,
+ * horários, formas de pagamento - costuma ter poucos milhares de tokens. Nesse
  * tamanho, INJETAR tudo no prefixo cacheado do prompt bate busca vetorial em
  * todos os critérios que importam: o modelo enxerga o corpus inteiro (não existe
  * "o trecho certo não foi recuperado"), não há chunking para calibrar, não há
@@ -18,7 +18,7 @@ import { prisma } from '../../lib/prisma';
  * injeção é trocada por recuperação sob demanda (ferramenta
  * `consultar_conhecimento`, busca textual do Postgres em português).
  *
- * A troca é automática e o agente não sabe qual modo está ativo — é decisão de
+ * A troca é automática e o agente não sabe qual modo está ativo - é decisão de
  * infraestrutura, não de prompt.
  */
 
@@ -113,7 +113,7 @@ export async function resolveKnowledge(accountId: string): Promise<KnowledgeReso
  *
  * A semântica padrão (`websearch_to_tsquery` sem operador) é E: exige TODOS os
  * termos. Numa base de conhecimento isso derruba a revocação a quase zero,
- * porque cliente e documento usam palavras diferentes para a mesma coisa — o
+ * porque cliente e documento usam palavras diferentes para a mesma coisa - o
  * cliente pergunta "posso parcelar" e o documento diz "prazo de até 48 vezes".
  * Nenhum documento contém a frase inteira do cliente.
  *
@@ -137,7 +137,7 @@ function toOrQuery(question: string): string {
  * Busca textual na base de conhecimento (Postgres full-text, dicionário
  * português: aplica stemming e remove stopwords).
  *
- * O filtro por accountId é parâmetro vinculado, nunca interpolado — a base de
+ * O filtro por accountId é parâmetro vinculado, nunca interpolado - a base de
  * uma loja nunca aparece na conversa de outra.
  */
 export async function searchKnowledge(accountId: string, question: string, limit = 4) {

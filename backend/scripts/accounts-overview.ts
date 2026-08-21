@@ -3,7 +3,7 @@
  *
  *   npm run accounts
  *
- * Leitura pura — não escreve nada. Serve para conferir de fora que o
+ * Leitura pura - não escreve nada. Serve para conferir de fora que o
  * isolamento está de pé: cada linha é um tenant, e os números só contam
  * registros daquela conta.
  */
@@ -38,7 +38,7 @@ async function main() {
       accountId: a.id,
       conta: a.name,
       status: a.status,
-      vitrine: a.storefront ? `/loja/${a.storefront.slug}${a.storefront.published ? '' : ' (despublicada)'}` : '—',
+      vitrine: a.storefront ? `/loja/${a.storefront.slug}${a.storefront.published ? '' : ' (despublicada)'}` : '-',
       usuarios: a._count.users,
       veiculos: a._count.vehicles,
       leads: a._count.leads,
@@ -48,7 +48,7 @@ async function main() {
     })),
   );
 
-  // Endpoints de recepção — um por (conta, plataforma). A webhookKey não é
+  // Endpoints de recepção - um por (conta, plataforma). A webhookKey não é
   // segredo (só roteia), então pode ser listada; o inboundSecret NÃO aparece
   // aqui: ele só sai pela rota auditada de revelação, na tela de Integrações.
   const integrations = await prisma.integration.findMany({

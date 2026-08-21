@@ -1,5 +1,5 @@
 /**
- * Prova de isolamento entre contas — roda contra o banco configurado.
+ * Prova de isolamento entre contas - roda contra o banco configurado.
  *
  *   npm run verify:isolation
  *
@@ -23,7 +23,7 @@ function check(label: string, condition: boolean, detail = '') {
   const mark = condition ? '  ok  ' : ' FALHA';
   if (!condition) failures += 1;
   // eslint-disable-next-line no-console
-  console.log(`[${mark}] ${label}${detail ? ` — ${detail}` : ''}`);
+  console.log(`[${mark}] ${label}${detail ? ` - ${detail}` : ''}`);
 }
 
 async function makeAccount(name: string) {
@@ -51,7 +51,7 @@ async function makeAccount(name: string) {
 
 async function main() {
   // eslint-disable-next-line no-console
-  console.log(`\nIsolamento por conta — verificação (sufixo ${SUFFIX})\n`);
+  console.log(`\nIsolamento por conta - verificação (sufixo ${SUFFIX})\n`);
 
   const A = await makeAccount('LojaA');
   const B = await makeAccount('LojaB');

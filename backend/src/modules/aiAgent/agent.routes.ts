@@ -9,7 +9,7 @@ import { rescheduleAccount, resolvePolicyRow } from '../flow/flow.service';
 
 /**
  * Configuração do agente e do fluxo, POR CONTA (apenas ADMIN).
- * `req.account!.id` é sempre a origem do tenant — nunca corpo nem query.
+ * `req.account!.id` é sempre a origem do tenant - nunca corpo nem query.
  */
 export const agentRouter = Router();
 agentRouter.use(authenticate, requireRole(UserRole.ADMIN));
@@ -152,7 +152,7 @@ agentRouter.put(
       create: { accountId, ...data },
     });
 
-    // A mudança vale para as conversas EM ANDAMENTO, não só para as futuras —
+    // A mudança vale para as conversas EM ANDAMENTO, não só para as futuras -
     // é o que o lojista espera ao mexer no ajuste.
     const rescheduled = await rescheduleAccount(accountId);
     const row = await prisma.flowPolicy.findUnique({ where: { accountId } });

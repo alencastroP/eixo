@@ -1,4 +1,4 @@
-/** Contratos da vitrine pública — espelham os serializadores de
+/** Contratos da vitrine pública - espelham os serializadores de
  *  backend/src/modules/storefront/storefront.service.ts. */
 
 export interface StorefrontBrand {
@@ -138,14 +138,14 @@ export interface ChatMessage {
 
 export interface ChatReply {
   token: string;
-  /** id da última interação conhecida — devolvido no próximo envio/consulta */
+  /** id da última interação conhecida - devolvido no próximo envio/consulta */
   cursor: string | null;
   messages: ChatMessage[];
   aiEnabled: boolean;
   handedOff: boolean;
   /**
    * Formato antigo (uma resposta solta, sem id). Frontend e API sobem em
-   * serviços separados — Cloudflare e Render —, então existe uma janela em que
+   * serviços separados (Cloudflare e Render), então existe uma janela em que
    * este widget fala com a API anterior. Some quando o deploy da API alcançar.
    */
   reply?: string | null;

@@ -1,4 +1,4 @@
-# Auditoria Técnica — CRM Automotivo
+# Auditoria Técnica - CRM Automotivo
 
 **Escopo:** LGPD · Arquitetura/Código · Pentest estático (revisão sem ataques reais)
 **Data:** 2026-07-04
@@ -10,7 +10,7 @@
 
 O projeto está **arquiteturalmente maduro e acima da média** em segurança para um MVP: camadas bem separadas (routes → service → prisma), validação de entrada com **Zod em 100% dos endpoints**, ORM parametrizado (sem SQL cru), **redação automática de PII nos logs**, criptografia AES-256-GCM das credenciais de integração em repouso, e **anonimização LGPD (direito ao esquecimento) já implementada**.
 
-A auditoria encontrou **0 vulnerabilidades críticas** e **0 dependências com CVE** (`npm audit` limpo em back e front). As lacunas relevantes eram de **hardening operacional** (rate limiting, cabeçalhos de segurança) e de **completude LGPD** (direito de acesso/portabilidade e política de retenção) — **todas corrigidas nesta auditoria** e verificadas end-to-end.
+A auditoria encontrou **0 vulnerabilidades críticas** e **0 dependências com CVE** (`npm audit` limpo em back e front). As lacunas relevantes eram de **hardening operacional** (rate limiting, cabeçalhos de segurança) e de **completude LGPD** (direito de acesso/portabilidade e política de retenção) - **todas corrigidas nesta auditoria** e verificadas end-to-end.
 
 | Frente | Situação antes | Situação depois |
 |---|---|---|
@@ -32,7 +32,7 @@ A auditoria encontrou **0 vulnerabilidades críticas** e **0 dependências com C
 | S4 | **Média** | Recepção de webhooks sem rate limit (inundação da fila) | Limiter dedicado: 120 req/min | `middleware/security.ts`, `webhook-server.ts` |
 | S5 | **Baixa** | Login com `bcrypt.compareSync` (bloqueia event loop) + timing revela existência de conta | `bcrypt.compare` assíncrono + hash "isca" (constant-time anti-enumeração) | `modules/auth/auth.service.ts` |
 | S6 | **Baixa** | Limite global de requisições ausente | Limiter global brando: 300 req/min por IP | `app.ts` |
-| L1 | **Alta (LGPD)** | Sem direito de acesso/portabilidade (art. 18 II/V) | `GET /api/leads/:id/export` — JSON portável com todos os dados do titular | `modules/leads/leads.routes.ts` |
+| L1 | **Alta (LGPD)** | Sem direito de acesso/portabilidade (art. 18 II/V) | `GET /api/leads/:id/export` - JSON portável com todos os dados do titular | `modules/leads/leads.routes.ts` |
 | L2 | **Média (LGPD)** | Sem política de retenção/expurgo (art. 15/16) | `lib/retention.ts` + `npm run purge` (webhook payloads, tokens, consultas de crédito, auditoria) | `lib/retention.ts`, `scripts/purge.ts` |
 
 **Verificação executada (não apenas typecheck):**
@@ -43,7 +43,7 @@ A auditoria encontrou **0 vulnerabilidades críticas** e **0 dependências com C
 
 ---
 
-## 3. LGPD — Análise detalhada
+## 3. LGPD - Análise detalhada
 
 ### 3.1 Inventário de dados pessoais tratados
 
@@ -59,10 +59,10 @@ A auditoria encontrou **0 vulnerabilidades críticas** e **0 dependências com C
 
 | Direito | Status |
 |---|---|
-| Acesso / Portabilidade | ✅ **Implementado** — `GET /api/leads/:id/export` (JSON estruturado) |
-| Eliminação / Esquecimento | ✅ **Já existia** — `POST /api/leads/:id/anonymize` (anonimiza lead, mensagens e payloads brutos; preserva métricas) |
+| Acesso / Portabilidade | ✅ **Implementado** - `GET /api/leads/:id/export` (JSON estruturado) |
+| Eliminação / Esquecimento | ✅ **Já existia** - `POST /api/leads/:id/anonymize` (anonimiza lead, mensagens e payloads brutos; preserva métricas) |
 | Confirmação de tratamento | ✅ Coberto pela exportação |
-| Retenção / término do tratamento | ✅ **Implementado** — `lib/retention.ts` + `npm run purge` |
+| Retenção / término do tratamento | ✅ **Implementado** - `lib/retention.ts` + `npm run purge` |
 
 ### 3.3 Boas práticas já presentes
 - **Minimização em logs**: `lib/logger.ts` mascara e-mail, telefone, CPF/CNPJ e segredos recursivamente antes de serializar.
@@ -74,13 +74,13 @@ A auditoria encontrou **0 vulnerabilidades críticas** e **0 dependências com C
 
 ---
 
-## 4. Pentest estático — checklist OWASP
+## 4. Pentest estático - checklist OWASP
 
 | Categoria | Resultado |
 |---|---|
-| **Injeção SQL/NoSQL/Comando** | ✅ Sem risco — Prisma parametriza tudo; nenhum `$queryRaw`/`exec`/`eval` no código |
-| **XSS** (stored/reflected/DOM) | ✅ Sem risco — React escapa por padrão; **nenhum** `dangerouslySetInnerHTML`/`innerHTML`/`eval` |
-| **CSRF** | ✅ Mitigado por design — autenticação via **Bearer token** (sem cookies de sessão ambientes) |
+| **Injeção SQL/NoSQL/Comando** | ✅ Sem risco - Prisma parametriza tudo; nenhum `$queryRaw`/`exec`/`eval` no código |
+| **XSS** (stored/reflected/DOM) | ✅ Sem risco - React escapa por padrão; **nenhum** `dangerouslySetInnerHTML`/`innerHTML`/`eval` |
+| **CSRF** | ✅ Mitigado por design - autenticação via **Bearer token** (sem cookies de sessão ambientes) |
 | **Autenticação / sessão** | ✅ JWT 15 min + refresh rotativo com hash SHA-256, revogação e expiração; algoritmo fixado (S3) |
 | **Autorização quebrada / IDOR** | ✅ Tickets têm escopo por papel (`scopeFor`); admin-only nos módulos sensíveis. ⚠️ Ver N1 (crédito) |
 | **Exposição de dados sensíveis** | ✅ Erros genéricos ao cliente (stack só em log); PII redigida em log |
@@ -102,8 +102,8 @@ A auditoria encontrou **0 vulnerabilidades críticas** e **0 dependências com C
 1. **Base legal e Aviso de Privacidade**: definir e publicar o Aviso de Privacidade e o mapeamento de base legal por tratamento (tabela 3.1). Vincular o aceite ao fluxo de captação de leads.
 2. **Consentimento para consulta de crédito**: a consulta de CPF/CNPJ (humana ou via Agente de IA) deve registrar consentimento explícito do titular. *Sugestão de implementação:* campo `consentAt`/`consentSource` em `Lead` (migration) e checagem antes da tool `consultar_credito_cliente`.
 3. **Transferência a terceiros (Agente de IA)**: o conteúdo das conversas é enviado à **Anthropic** para gerar respostas. Isso precisa constar no Aviso de Privacidade e em um DPA (Data Processing Agreement). Decidir se o bot fica ativo por padrão.
-4. **Janelas de retenção**: os padrões (webhook 90d, crédito 365d, auditoria 730d) são pontos de partida — validar com o jurídico/DPO e ajustar via `.env`.
-5. **Criptografia do CPF/CNPJ em repouso**: `CreditQuery.document` e `Lead.document` ficam em texto claro (dígitos) porque são usados em busca por igualdade e deduplicação. Criptografar exige **cifra determinística/tokenização** para preservar a busca — decisão de arquitetura + custo.
+4. **Janelas de retenção**: os padrões (webhook 90d, crédito 365d, auditoria 730d) são pontos de partida - validar com o jurídico/DPO e ajustar via `.env`.
+5. **Criptografia do CPF/CNPJ em repouso**: `CreditQuery.document` e `Lead.document` ficam em texto claro (dígitos) porque são usados em busca por igualdade e deduplicação. Criptografar exige **cifra determinística/tokenização** para preservar a busca - decisão de arquitetura + custo.
 6. **DPO e canal do titular**: designar encarregado (DPO) e expor um canal para requisições de titular (hoje as operações são feitas por admin via API).
 
 ---
@@ -111,13 +111,13 @@ A auditoria encontrou **0 vulnerabilidades críticas** e **0 dependências com C
 ## 6. Débitos técnicos (pré-produção, não bloqueantes)
 
 - **Testes automatizados ausentes** nos fluxos críticos (auth, autorização por papel, ingestão de leads, consulta de crédito). *Recomendação:* suíte de integração (Vitest + supertest) cobrindo login/refresh, IDOR de tickets, e o pipeline webhook→ticket antes do go-live.
-- **Limpeza de refresh tokens** agora existe (`purge`), mas convém agendá-la (cron/Task Scheduler) — documentado em `INTEGRATION.md`.
+- **Limpeza de refresh tokens** agora existe (`purge`), mas convém agendá-la (cron/Task Scheduler) - documentado em `INTEGRATION.md`.
 - **Observabilidade**: logs estruturados existem; falta métricas/tracing (OpenTelemetry) para produção.
-- **`trust proxy`** já é ativado em produção para IP real no rate limit — confirmar a topologia do proxy/LB.
+- **`trust proxy`** já é ativado em produção para IP real no rate limit - confirmar a topologia do proxy/LB.
 
 ---
 
-## 7. Arquitetura — avaliação
+## 7. Arquitetura - avaliação
 
 **Pontos fortes:** separação clara de responsabilidades; serviço de webhooks isolado e escalável horizontalmente (fila em banco com retry/backoff); worker idempotente com claim condicional; adapters de plataforma plugáveis; sem segredos hardcoded (fallbacks de dev explícitos, `required()` derruba o boot em produção se faltar segredo). Paginação presente nas listagens principais; sem N+1 evidente (includes com `take` controlado).
 

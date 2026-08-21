@@ -4,7 +4,7 @@ import { AdapterPayloadError, type LeadSourceAdapter, type NormalizedLead, type 
 import { normalizePhone, safeEqual } from '../core/verify';
 
 /**
- * Adapter Webmotors (mock estruturado — API real exige credenciamento de lojista).
+ * Adapter Webmotors (mock estruturado - API real exige credenciamento de lojista).
  * Payload em PascalCase, como as APIs .NET da Webmotors/Santander.
  * Autenticação: token no header `x-webmotors-token`, próprio de cada conta.
  * Payload de exemplo: backend/samples/webmotors-lead.json

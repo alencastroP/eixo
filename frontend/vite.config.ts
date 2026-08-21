@@ -6,7 +6,7 @@ const LOCAL_API = 'http://localhost:3001';
 /**
  * Em dev o front sempre chama caminhos relativos (`/api`, `/uploads`) e quem
  * decide para onde eles vão é este proxy. Isso mantém o navegador falando com
- * localhost:5173, então não há CORS no meio — o que importa porque a API do
+ * localhost:5173, então não há CORS no meio - o que importa porque a API do
  * Render só libera a origem do painel publicado, não a da máquina de quem
  * desenvolve.
  *
@@ -44,7 +44,7 @@ export default defineConfig(({ mode }) => {
       {
         name: 'eixo:dev-api-banner',
         configureServer(server) {
-          // Bater na API do Render é mexer em dados reais — o aviso precisa
+          // Bater na API do Render é mexer em dados reais - o aviso precisa
           // estar à vista toda vez que o servidor sobe.
           server.httpServer?.once('listening', () => {
             server.config.logger.info(

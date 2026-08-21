@@ -4,7 +4,7 @@
  * Regra central anti-fraude: **um CPF só pode iniciar UM trial na vida**. A
  * unicidade é garantida no banco (constraint em `trial_cpf_registry.cpfHash`),
  * não só na aplicação. O CPF é validado pelo algoritmo oficial (mod 11) e nunca
- * é gravado em texto claro (hash + cifra — ver lib/cpf-token).
+ * é gravado em texto claro (hash + cifra - ver lib/cpf-token).
  */
 import { AccountStatus, Prisma, SubscriptionStatus, UserRole } from '@prisma/client';
 import { badRequest, conflict } from '../../lib/errors';
@@ -48,7 +48,7 @@ export async function signupTrial(input: TrialSignupInput, meta: { ip?: string }
   // (b) CPF já usou trial? consulta a tabela dedicada ANTES de criar a conta
   const priorCpf = await prisma.trialCpfRegistry.findUnique({ where: { cpfHash } });
   if (priorCpf) {
-    // (log anti-fraude — sem PII em texto claro)
+    // (log anti-fraude - sem PII em texto claro)
     logger.warn('tentativa de reuso de CPF no trial', {
       cpf: maskDocument(cpfDigits),
       ip: meta.ip,
@@ -107,7 +107,7 @@ export async function signupTrial(input: TrialSignupInput, meta: { ip?: string }
     // auto-login: emite a sessão já autenticada
     return issueTokens(user);
   } catch (err) {
-    // corrida: dois cadastros simultâneos do mesmo CPF — a constraint única vence
+    // corrida: dois cadastros simultâneos do mesmo CPF - a constraint única vence
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
       const target = (err.meta?.target as string[] | undefined)?.join(',') ?? '';
       if (target.includes('cpfHash')) throw new CpfAlreadyUsedError();

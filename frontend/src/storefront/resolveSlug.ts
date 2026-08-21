@@ -4,7 +4,7 @@
  * Em produção cada loja mora no próprio subdomínio
  * (`washington-veiculos.eixo.com.br`), então o slug vem do hostname. Em
  * desenvolvimento e nas pré-visualizações não há DNS curinga, e o caminho
- * `/loja/:slug` cumpre o mesmo papel — por isso as duas formas convivem.
+ * `/loja/:slug` cumpre o mesmo papel - por isso as duas formas convivem.
  */
 
 /** Rótulos que pertencem à plataforma, não a uma loja. */
@@ -28,7 +28,7 @@ export function slugFromHostname(hostname = window.location.hostname): string | 
   return first;
 }
 
-/** true quando o host atual é o de uma loja — a raiz "/" deve abrir a vitrine. */
+/** true quando o host atual é o de uma loja - a raiz "/" deve abrir a vitrine. */
 export const isStorefrontHost = () => slugFromHostname() !== null;
 
 /**

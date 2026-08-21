@@ -7,7 +7,7 @@
  *
  * Antes, o nome do lead e o veículo de interesse eram interpolados DENTRO do
  * system prompt. Isso deixava o prefixo diferente em toda conversa e tornava o
- * cache inútil — pior, mascarado, porque não dá erro nenhum.
+ * cache inútil - pior, mascarado, porque não dá erro nenhum.
  *
  * Agora:
  *   buildStablePrefix()  → persona + regras + conhecimento da loja. Igual byte a
@@ -31,7 +31,7 @@ export interface TurnContext {
 const brl = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
 /**
- * Prefixo ESTÁVEL. Nada aqui pode variar entre conversas da mesma conta — sem
+ * Prefixo ESTÁVEL. Nada aqui pode variar entre conversas da mesma conta - sem
  * data, sem id, sem nome de cliente. Ver o cabeçalho do arquivo.
  */
 export function buildStablePrefix(profile: AgentProfileResolved, knowledge: string | null): string {
@@ -82,7 +82,7 @@ Acolher o interessado, entender a necessidade, qualificar o lead e encaminhar pa
   const howto: string[] = [];
   if (profile.canSearchInventory) {
     howto.push(
-      '- "buscar_veiculos": use assim que o cliente indicar o que procura (marca, faixa de preço, tipo). Prefira 2 ou 3 opções na resposta, com preço e ano — nunca despeje a lista inteira.',
+      '- "buscar_veiculos": use assim que o cliente indicar o que procura (marca, faixa de preço, tipo). Prefira 2 ou 3 opções na resposta, com preço e ano - nunca despeje a lista inteira.',
     );
   }
   if (profile.canQuoteCredit) {
@@ -119,7 +119,7 @@ ${knowledge}`);
 }
 
 /**
- * Contexto do turno. Vai como mensagem, depois do prefixo cacheado — pode variar
+ * Contexto do turno. Vai como mensagem, depois do prefixo cacheado - pode variar
  * à vontade sem custo de cache.
  */
 export function buildTurnContext(ctx: TurnContext): string {
@@ -129,7 +129,7 @@ export function buildTurnContext(ctx: TurnContext): string {
     const price = ctx.vehiclePrice != null ? ` (anunciado por ${brl(ctx.vehiclePrice)})` : '';
     lines.push(`- Veículo que originou o contato: ${ctx.vehicleTitle}${price}`);
   } else {
-    lines.push('- Veículo de interesse: ainda não identificado — descubra na conversa.');
+    lines.push('- Veículo de interesse: ainda não identificado - descubra na conversa.');
   }
 
   const rendered = renderLeadProfile(ctx.profile);

@@ -100,7 +100,7 @@ const SECTIONS: Section[] = [
   },
   {
     title: 'Plataforma',
-    hint: 'Em construção — os módulos abaixo abrem em breve.',
+    hint: 'Em construção - os módulos abaixo abrem em breve.',
     tiles: [
       {
         label: 'Pagamentos',
@@ -112,7 +112,7 @@ const SECTIONS: Section[] = [
 ];
 
 /**
- * A própria central e tudo que mora dentro dela — o rail e a barra do celular
+ * A própria central e tudo que mora dentro dela - o rail e a barra do celular
  * usam a lista para manter o alvo "Administração" aceso nas telas filhas.
  */
 export const ADMIN_ROUTES: string[] = [
@@ -128,7 +128,7 @@ export function AdminPage() {
         icon={<GridIcon size={19} />}
         eyebrow="Administração"
         title="Central de Administração"
-        subtitle="Configuração da loja, canais de venda e controle da conta — disponível apenas para administradores."
+        subtitle="Configuração da loja, canais de venda e controle da conta - disponível apenas para administradores."
       />
 
       {SECTIONS.map((section) => (

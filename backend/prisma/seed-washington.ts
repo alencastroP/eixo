@@ -1,5 +1,5 @@
 /**
- * Provisionamento da conta Washington Veículos (São Gonçalo do Amarante/RN) —
+ * Provisionamento da conta Washington Veículos (São Gonçalo do Amarante/RN) -
  * primeira loja com vitrine pública configurada.
  *
  *   npm run seed:washington
@@ -8,7 +8,7 @@
  * usuário administrador, a configuração da vitrine (publicada) e o estoque
  * inicial transcrito do site atual da loja.
  *
- * As FOTOS não são semeadas de propósito — entram pelo CRM (Estoque → editar
+ * As FOTOS não são semeadas de propósito - entram pelo CRM (Estoque → editar
  * veículo → galeria), que é de onde a vitrine as lê.
  *
  * Credenciais criadas (trocar no primeiro acesso):
@@ -31,7 +31,7 @@ const CONFIG: StorefrontConfig = {
   brand: {
     name: 'Washington Veículos',
     tagline: 'Seminovos selecionados em São Gonçalo do Amarante',
-    // arquivo em frontend/public/logos — o lojista pode substituir pelo
+    // arquivo em frontend/public/logos - o lojista pode substituir pelo
     // original enviando em Vitrine → Identidade (ver PENDENCIAS-VITRINE.md)
     logoUrl: '/logos/washington-veiculos.svg',
     primary: '#f5a623',
@@ -65,14 +65,14 @@ const CONFIG: StorefrontConfig = {
     {
       icon: 'wrench',
       title: 'Revisado antes da entrega',
-      text: 'Mecânica, elétrica e estética revisadas — o carro sai pronto para rodar.',
+      text: 'Mecânica, elétrica e estética revisadas - o carro sai pronto para rodar.',
     },
   ],
   about: {
     title: 'Quem é a Washington Veículos',
     text:
       'Somos uma revenda de São Gonçalo do Amarante que trabalha com carros e utilitários seminovos escolhidos um a um. '
-      + 'Cada veículo passa por checagem de documentação e revisão mecânica antes de ser anunciado — é assim que a gente '
+      + 'Cada veículo passa por checagem de documentação e revisão mecânica antes de ser anunciado - é assim que a gente '
       + 'consegue olhar no olho do cliente e garantir o que está vendendo. Atendemos toda a Grande Natal, com avaliação '
       + 'do seu usado na troca e financiamento junto aos principais bancos.',
   },
@@ -80,7 +80,7 @@ const CONFIG: StorefrontConfig = {
     phone: '(84) 98801-3786',
     whatsapp: WHATSAPP,
     email: ADMIN_EMAIL,
-    address: 'Rua das Açucenas, 426 — Jardins',
+    address: 'Rua das Açucenas, 426 - Jardins',
     city: 'São Gonçalo do Amarante',
     state: 'RN',
     hours: 'Seg a Sex: 8h às 17h · Sáb: 8h às 17h',
@@ -91,10 +91,10 @@ const CONFIG: StorefrontConfig = {
   financing: { downPercent: 20, months: 48, monthlyRate: 1.99 },
   sections: { featured: true, inventory: true, highlights: true, financing: true, sell: true, about: true, contact: true },
   seo: {
-    title: 'Washington Veículos — Seminovos em São Gonçalo do Amarante/RN',
+    title: 'Washington Veículos | Seminovos em São Gonçalo do Amarante/RN',
     description:
       'Carros e utilitários seminovos revisados, com procedência verificada. Aceitamos troca e financiamos em até 60x. '
-      + 'Rua das Açucenas, 426 — Jardins, São Gonçalo do Amarante/RN.',
+      + 'Rua das Açucenas, 426 - Jardins, São Gonçalo do Amarante/RN.',
   },
 };
 
@@ -149,7 +149,7 @@ async function main() {
   const plan =
     (await prisma.plan.findUnique({ where: { code: 'pro' } })) ??
     (await prisma.plan.findFirst({ where: { active: true } }));
-  if (!plan) throw new Error('Nenhum plano cadastrado — rode `npm run backfill:accounts` antes.');
+  if (!plan) throw new Error('Nenhum plano cadastrado - rode `npm run backfill:accounts` antes.');
 
   const existingAccount = await prisma.account.findFirst({ where: { name: ACCOUNT_NAME } });
   const account =
@@ -189,7 +189,7 @@ async function main() {
     },
   });
 
-  // 4) estoque inicial (só na primeira execução — depois o CRM é a fonte)
+  // 4) estoque inicial (só na primeira execução - depois o CRM é a fonte)
   const alreadyHasStock = await prisma.vehicle.count({ where: { accountId: account.id } });
   if (alreadyHasStock === 0) {
     for (const { featured, ...vehicle } of STOCK) {
@@ -205,7 +205,7 @@ async function main() {
   console.log('');
   console.log(`Conta "${ACCOUNT_NAME}" pronta.`);
   console.log(`  Vitrine:  /loja/${SLUG}   (subdomínio: ${SLUG}.<seu-domínio>)`);
-  console.log(`  Acesso:   ${ADMIN_EMAIL} / Washington@123  — troque a senha no primeiro login`);
+  console.log(`  Acesso:   ${ADMIN_EMAIL} / Washington@123  - troque a senha no primeiro login`);
   console.log('  Fotos:    adicione pelo CRM em Estoque → editar veículo → galeria');
 }
 

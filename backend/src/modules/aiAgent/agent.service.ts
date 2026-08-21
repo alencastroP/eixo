@@ -4,7 +4,7 @@
  * Ponto de entrada `handleInboundMessage(ticketId)`: chamado pelo worker logo
  * após uma mensagem do lead ser ingerida. Se o bot estiver ativo para aquela
  * conversa, monta o contexto (últimas 10 mensagens), chama a Anthropic Messages
- * API com as ferramentas e conduz o loop de tool-use manualmente — para poder
+ * API com as ferramentas e conduz o loop de tool-use manualmente - para poder
  * interceptar, executar no CRM e registrar cada ação.
  *
  * Nunca lança para o chamador: qualquer falha é logada e a conversa segue
@@ -158,7 +158,7 @@ export async function handleInboundMessage(ticketId: string): Promise<void> {
     const vehicleRef = (ticket.vehicleRefExternal as NormalizedLead['vehicle']) ?? undefined;
 
     // O contexto volátil (lead, veículo, perfil) entra como MENSAGEM, depois do
-    // prefixo cacheado — interpolá-lo no system prompt invalidaria o cache em
+    // prefixo cacheado - interpolá-lo no system prompt invalidaria o cache em
     // toda conversa, silenciosamente.
     const turnContext = buildTurnContext({
       leadName: ticket.lead.name,

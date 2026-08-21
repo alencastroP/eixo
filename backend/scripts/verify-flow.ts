@@ -1,5 +1,5 @@
 /**
- * Verificação do motor de fluxo — lógica de tempo, sem tocar no banco.
+ * Verificação do motor de fluxo - lógica de tempo, sem tocar no banco.
  *
  *   npm run verify:flow
  *
@@ -14,7 +14,7 @@ let failures = 0;
 function check(label: string, condition: boolean, detail = '') {
   if (!condition) failures += 1;
   // eslint-disable-next-line no-console
-  console.log(`[${condition ? '  ok  ' : ' FALHA'}] ${label}${detail ? ` — ${detail}` : ''}`);
+  console.log(`[${condition ? '  ok  ' : ' FALHA'}] ${label}${detail ? ` - ${detail}` : ''}`);
 }
 
 /** Instante em hora local de São Paulo (UTC-3), para os testes de janela. */
@@ -40,7 +40,7 @@ const base = {
 
 function main() {
   // eslint-disable-next-line no-console
-  console.log('\nMotor de fluxo — verificação\n');
+  console.log('\nMotor de fluxo - verificação\n');
 
   // ── Janela de silêncio ────────────────────────────────────────────────────
   check('meio-dia está liberado', !isQuiet(spTime(12), policy));

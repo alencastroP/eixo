@@ -9,14 +9,14 @@ import { CloseIcon, MessageIcon, SendIcon, WhatsAppIcon } from './icons';
  *
  * Do lado de fora é o widget de chat que todo visitante reconhece: launcher
  * redondo, painel flutuante, bolhas e respostas sugeridas. Por dentro, cada
- * conversa é um TICKET real do CRM — a primeira mensagem passa por
+ * conversa é um TICKET real do CRM - a primeira mensagem passa por
  * `ingestNormalizedLead` (a mesma porta dos leads de OLX/ML) e é respondida
  * pelo Agente de Pré-Venda IA. O atendente acompanha pela Caixa de Entrada e
  * assume quando quiser.
  *
  * CANAL DE VOLTA. Enviar não basta: quando um humano assume, a IA se desliga e o
  * POST do envio não tem mais o que responder. Por isso o widget CONSULTA o
- * servidor de tempos em tempos (`chatMessages`) — é assim que o que o atendente
+ * servidor de tempos em tempos (`chatMessages`) - é assim que o que o atendente
  * escreve na Caixa de Entrada aparece aqui. O transbordo passa a conversa para
  * uma pessoa, não encerra o chat; o WhatsApp continua oferecido como atalho,
  * nunca como saída obrigatória.
@@ -94,7 +94,7 @@ export function AiChatWidget({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   /** marca d'água da conversa: última interação já exibida (ver ChatReply.cursor) */
   const cursorRef = useRef<string | null>(sessionStorage.getItem(cursorKey(slug)));
-  /** ids já na tela — a defesa contra bolha repetida */
+  /** ids já na tela - a defesa contra bolha repetida */
   const seenRef = useRef(new Set<string>());
   // em refs, não em state: o timer da consulta não deve ser recriado a cada
   // envio nem a cada abrir/fechar do painel
@@ -140,7 +140,7 @@ export function AiChatWidget({
     [slug],
   );
 
-  /** Último nome humano da leva — é quem está do outro lado agora. */
+  /** Último nome humano da leva - é quem está do outro lado agora. */
   const rememberAgent = (list: ChatMessage[]) => {
     const human = [...list].reverse().find((m) => m.from === 'agent' && m.author);
     if (human?.author) setAgent(human.author);
@@ -149,7 +149,7 @@ export function AiChatWidget({
   /**
    * Anexa o que veio do servidor descartando id repetido. A consulta e o envio
    * podem trazer a mesma resposta (o cursor é lido antes das mensagens, de
-   * propósito — ver chat.service.ts), e repetir uma bolha é bem pior do que
+   * propósito - ver chat.service.ts), e repetir uma bolha é bem pior do que
    * pedi-la duas vezes.
    */
   const merge = useCallback((incoming: ChatMessage[] | undefined) => {
@@ -175,7 +175,7 @@ export function AiChatWidget({
     if (next) {
       setMessages((list) => [
         ...list,
-        { role: 'sys', at: Date.now(), text: 'Um vendedor entrou na conversa — pode continuar por aqui mesmo.' },
+        { role: 'sys', at: Date.now(), text: 'Um vendedor entrou na conversa - pode continuar por aqui mesmo.' },
       ]);
     }
   }, []);
@@ -221,7 +221,7 @@ export function AiChatWidget({
       // com um humano na conversa, a resposta chega pela consulta em segundos e
       // um aviso desses só atrapalharia.
       if (result.messages?.length === 0 && !result.aiEnabled) {
-        push({ role: 'sys', text: 'Recebemos sua mensagem — nossa equipe já vai responder por aqui.' });
+        push({ role: 'sys', text: 'Recebemos sua mensagem - nossa equipe já vai responder por aqui.' });
       }
       applyHandoff(result.handedOff);
     } catch (err) {
@@ -237,7 +237,7 @@ export function AiChatWidget({
 
   /**
    * Consulta periódica: é ela que traz a resposta do atendente humano. Fica
-   * parada enquanto a aba está oculta ou um envio está em curso — no primeiro
+   * parada enquanto a aba está oculta ou um envio está em curso - no primeiro
    * caso ninguém está lendo, no segundo o próprio envio já devolve o que há de
    * novo.
    */
@@ -262,7 +262,7 @@ export function AiChatWidget({
           cursorRef.current = null;
           if (!alive) return;
           setExpired(true);
-          // sem token, a próxima mensagem abre outra conversa — e para isso a
+          // sem token, a próxima mensagem abre outra conversa - e para isso a
           // identificação precisa ser pedida de novo
           setIdentified(false);
           setToken(null);

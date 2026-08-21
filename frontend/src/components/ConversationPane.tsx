@@ -27,8 +27,8 @@ function metaStr(metadata: Record<string, unknown> | null, key: string): string 
 /** De quanto em quanto tempo a conversa aberta se atualiza sozinha. */
 const REFRESH_MS = 10_000;
 
-const statusLabel = (v: string | null) => (v ? (STATUS_LABELS[v as TicketStatus] ?? v) : '—');
-const priorityLabel = (v: string | null) => (v ? (PRIORITY_LABELS[v as TicketPriority] ?? v) : '—');
+const statusLabel = (v: string | null) => (v ? (STATUS_LABELS[v as TicketStatus] ?? v) : '-');
+const priorityLabel = (v: string | null) => (v ? (PRIORITY_LABELS[v as TicketPriority] ?? v) : '-');
 
 function TimelineItem({ interaction, leadName }: { interaction: Interaction; leadName: string }) {
   const { type, body, metadata, author, createdAt } = interaction;
@@ -69,7 +69,7 @@ function TimelineItem({ interaction, leadName }: { interaction: Interaction; lea
     case 'INTERNAL_NOTE':
       return (
         <div className="note-block">
-          <div className="note-header">📌 Nota interna · {author?.name ?? '—'}</div>
+          <div className="note-header">📌 Nota interna · {author?.name ?? '-'}</div>
           <div className="note-body">{body}</div>
           <div className="msg-caption">{time}</div>
         </div>
@@ -178,7 +178,7 @@ export function ConversationPane({ ticketId, onTicketUpdated }: Props) {
    * Atualização periódica da conversa aberta.
    *
    * O chat da vitrine é ao vivo: o visitante escreve e espera resposta na hora.
-   * Sem isto o atendente só veria a réplica do cliente recarregando a página —
+   * Sem isto o atendente só veria a réplica do cliente recarregando a página -
    * e a conversa, que do outro lado parece um messenger, viraria um monólogo.
    * Só troca o estado quando algo de fato mudou, para não repintar a tela (nem
    * a lista de tickets) de dez em dez segundos à toa.
@@ -427,10 +427,10 @@ export function ConversationPane({ ticketId, onTicketUpdated }: Props) {
               <dd>{ticket.lead.name}</dd>
               <dt>Telefone</dt>
               <dd>
-                {ticket.lead.phone ? <a href={`tel:+55${ticket.lead.phone}`}>{formatPhone(ticket.lead.phone)}</a> : '—'}
+                {ticket.lead.phone ? <a href={`tel:+55${ticket.lead.phone}`}>{formatPhone(ticket.lead.phone)}</a> : '-'}
               </dd>
               <dt>E-mail</dt>
-              <dd>{ticket.lead.email ? <a href={`mailto:${ticket.lead.email}`}>{ticket.lead.email}</a> : '—'}</dd>
+              <dd>{ticket.lead.email ? <a href={`mailto:${ticket.lead.email}`}>{ticket.lead.email}</a> : '-'}</dd>
             </dl>
           </details>
 
@@ -439,7 +439,7 @@ export function ConversationPane({ ticketId, onTicketUpdated }: Props) {
             {ticket.vehicle ? (
               <dl className="side-props">
                 <dt>Anúncio</dt>
-                <dd>{ticket.vehicle.title ?? '—'}</dd>
+                <dd>{ticket.vehicle.title ?? '-'}</dd>
                 {price && (
                   <>
                     <dt>Preço</dt>

@@ -7,9 +7,9 @@ import type { AgentProfileConfig, FlowPolicyConfig, KnowledgeDoc } from '../type
  * Configuração do Agente de IA e do motor de fluxo, por loja.
  *
  * Três blocos que respondem a perguntas diferentes:
- *  Persona      — como o agente fala e o que ele pode fazer;
- *  Conhecimento — o que ele sabe sobre esta loja;
- *  Fluxo        — o que acontece quando o cliente some.
+ *  Persona      - como o agente fala e o que ele pode fazer;
+ *  Conhecimento - o que ele sabe sobre esta loja;
+ *  Fluxo        - o que acontece quando o cliente some.
  */
 
 type Tab = 'persona' | 'conhecimento' | 'fluxo';
@@ -285,7 +285,7 @@ export function AgentConfigPage() {
               {profile.knowledge.mode === 'injected' ? (
                 <>
                   Modo <strong>completo</strong>: todo o conteúdo vai junto em cada conversa, então o agente
-                  enxerga tudo. É o melhor resultado — e o que cabe até o limite acima.
+                  enxerga tudo. É o melhor resultado - e o que cabe até o limite acima.
                 </>
               ) : (
                 <>
@@ -363,7 +363,7 @@ export function AgentConfigPage() {
               <strong>Automação de tempo ativa</strong>
               <span className="muted small">
                 Desligada, nada é enviado automaticamente. Ligue só quando os tempos abaixo estiverem
-                do jeito que você quer — a partir daí o sistema fala com clientes em nome da loja.
+                do jeito que você quer - a partir daí o sistema fala com clientes em nome da loja.
               </span>
             </span>
           </label>
@@ -442,7 +442,7 @@ export function AgentConfigPage() {
               <span>Não enviar em sábados e domingos</span>
             </label>
             <span className="muted small">
-              Mensagem vencida dentro da janela não é perdida — ela espera e sai no primeiro horário liberado.
+              Mensagem vencida dentro da janela não é perdida - ela espera e sai no primeiro horário liberado.
             </span>
           </fieldset>
 
@@ -458,7 +458,7 @@ export function AgentConfigPage() {
             </div>
             <span className="muted small">
               Este é o outro lado do fluxo: quando é o <strong>cliente</strong> que está esperando a loja,
-              ninguém recebe mensagem automática — o atendimento sobe para urgente e a equipe é alertada.
+              ninguém recebe mensagem automática - o atendimento sobe para urgente e a equipe é alertada.
             </span>
           </label>
 

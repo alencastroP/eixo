@@ -49,7 +49,7 @@ export async function login(email: string, password: string) {
     include: { account: true },
   });
   // compara sempre (mesmo sem usuário) para não vazar existência por timing;
-  // bcrypt.compare é assíncrono — não bloqueia o event loop sob carga.
+  // bcrypt.compare é assíncrono - não bloqueia o event loop sob carga.
   const ok = user ? await bcrypt.compare(password, user.passwordHash) : await bcrypt.compare(password, DUMMY_HASH);
   if (!user || !user.active || !ok) {
     throw unauthorized('E-mail ou senha inválidos', 'BAD_CREDENTIALS');

@@ -3,13 +3,13 @@
  *
  * Regra do projeto: telefone, e-mail e documentos de leads NUNCA aparecem em
  * texto claro nos logs de aplicação. Todo metadado passa por redact() antes de
- * ser serializado. Os dados íntegros continuam no banco — a restrição é de log.
+ * ser serializado. Os dados íntegros continuam no banco - a restrição é de log.
  */
 
 type Level = 'debug' | 'info' | 'warn' | 'error';
 
 const EMAIL_RE = /([A-Za-z0-9._%+-]{1,64})@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
-// Sequências de 8+ dígitos (com separadores comuns) — cobre telefones BR com/sem DDI.
+// Sequências de 8+ dígitos (com separadores comuns) - cobre telefones BR com/sem DDI.
 const PHONE_RE = /(?:\+?\d[\s().-]?){8,15}\d/g;
 
 const SECRET_KEY_RE = /(pass(word)?|senha|secret|token|authorization|api[-_]?key|credential)/i;

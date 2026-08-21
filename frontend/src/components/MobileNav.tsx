@@ -29,7 +29,7 @@ interface Item {
   admin?: boolean;
 }
 
-/** Os destinos que cabem na barra — o resto vai para "Mais". */
+/** Os destinos que cabem na barra - o resto vai para "Mais". */
 const PRIMARY: Item[] = [
   { to: '/dashboard', label: 'Painel', icon: <GaugeIcon size={20} /> },
   { to: '/tickets', label: 'Atendimento', icon: <InboxIcon size={20} /> },
@@ -48,7 +48,7 @@ const SECONDARY: Item[] = [
 
 /**
  * Barra inferior do celular: 5 alvos de 44px e uma folha "Mais" com o resto.
- * Só aparece abaixo de 880px — o rail lateral some no mesmo ponto, então a
+ * Só aparece abaixo de 880px - o rail lateral some no mesmo ponto, então a
  * folha precisa cobrir tudo que ele oferecia, inclusive encerrar a sessão.
  */
 export function MobileNav({ isAdmin }: { isAdmin: boolean }) {

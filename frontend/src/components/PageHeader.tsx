@@ -11,7 +11,7 @@ interface PageHeaderProps {
   subtitle?: ReactNode;
   /** Controles à direita (botões, filtros de período, etc.). */
   actions?: ReactNode;
-  /** Link de volta — substitui o ícone por uma seta de navegação. */
+  /** Link de volta - substitui o ícone por uma seta de navegação. */
   back?: { to: string; label?: string };
 }
 

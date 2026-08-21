@@ -78,7 +78,7 @@ Content-Type: application/json
 ### CRM → Integrações → (plataforma) → "Endereço de recepção desta loja",
 ### ou direto no banco:
 ###     SELECT platform, "webhookKey" FROM integrations;
-### Não existe mais token global em .env — cada loja tem o seu.
+### Não existe mais token global em .env - cada loja tem o seu.
 
 @webhookKey = COLE_A_WEBHOOK_KEY_DA_LOJA
 @olxSecret = COLE_O_SEGREDO_REVELADO_NA_TELA
@@ -97,7 +97,7 @@ x-webmotors-token: {{olxSecret}}
 
 < ./samples/webmotors-lead.json
 
-### Lead Mercado Livre — exige HMAC-SHA256 do corpo em x-signature.
+### Lead Mercado Livre - exige HMAC-SHA256 do corpo em x-signature.
 ### Gere a assinatura com PowerShell (corpo EXATAMENTE igual ao enviado, e a
 ### chave sendo o segredo DAQUELA LOJA):
 ###   $body = [IO.File]::ReadAllBytes("samples/mercadolivre-lead.json")

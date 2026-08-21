@@ -163,7 +163,7 @@ export function VehicleFormPage() {
         km: d.km ? String(d.km) : f.km,
         fipePrice: d.fipePrice ? String(d.fipePrice) : f.fipePrice,
       }));
-      setPlateMsg(res.source === 'mock' ? 'Dados pré-preenchidos (simulação — API de placas será integrada).' : 'Dados encontrados.');
+      setPlateMsg(res.source === 'mock' ? 'Dados pré-preenchidos (simulação - API de placas será integrada).' : 'Dados encontrados.');
     } catch (err) {
       setPlateMsg(err instanceof ApiError ? err.message : 'Falha na consulta');
     } finally {
@@ -247,7 +247,7 @@ export function VehicleFormPage() {
       {error && <div className="alert alert-error">{error}</div>}
 
       <form onSubmit={submit} className="veh-form">
-        {/* SEÇÃO 1 — Identificação */}
+        {/* SEÇÃO 1 - Identificação */}
         <section className="form-section">
           <div className="section-head">
             <span className="section-num">1</span>
@@ -308,7 +308,7 @@ export function VehicleFormPage() {
             <label className="field">
               <span>Combustível</span>
               <select value={form.fuel} onChange={(e) => set('fuel', e.target.value)}>
-                <option value="">—</option>
+                <option value="">-</option>
                 {FUEL_OPTIONS.map((f) => (
                   <option key={f} value={f}>
                     {f}
@@ -375,7 +375,7 @@ export function VehicleFormPage() {
           </div>
         </section>
 
-        {/* SEÇÃO 2 — Precificação */}
+        {/* SEÇÃO 2 - Precificação */}
         <section className="form-section">
           <div className="section-head">
             <span className="section-num">2</span>
@@ -398,7 +398,7 @@ export function VehicleFormPage() {
             </div>
             <div className={`margin-card ${margin && margin.value < 0 ? 'negative' : ''}`}>
               <span className="margin-label">Margem estimada</span>
-              <span className="margin-value">{margin ? formatBRL(margin.value) : '—'}</span>
+              <span className="margin-value">{margin ? formatBRL(margin.value) : '-'}</span>
               {margin && <span className="margin-pct">{margin.pct.toFixed(1)}% sobre a venda</span>}
               {detail && detail.totalCosts > 0 && (
                 <span className="margin-note muted small">Inclui {formatBRL(detail.totalCosts)} em gastos lançados</span>
@@ -407,7 +407,7 @@ export function VehicleFormPage() {
           </div>
         </section>
 
-        {/* SEÇÃO 3 — Galeria */}
+        {/* SEÇÃO 3 - Galeria */}
         <section className="form-section">
           <div className="section-head">
             <span className="section-num">3</span>
@@ -422,7 +422,7 @@ export function VehicleFormPage() {
           )}
         </section>
 
-        {/* SEÇÃO 4 — Opcionais */}
+        {/* SEÇÃO 4 - Opcionais */}
         <section className="form-section">
           <div className="section-head">
             <span className="section-num">4</span>
@@ -450,7 +450,7 @@ export function VehicleFormPage() {
           </label>
         </section>
 
-        {/* SEÇÃO 5 — Descrição do anúncio (co-piloto de IA) */}
+        {/* SEÇÃO 5 - Descrição do anúncio (co-piloto de IA) */}
         <section className="form-section">
           <div className="section-head">
             <span className="section-num">5</span>

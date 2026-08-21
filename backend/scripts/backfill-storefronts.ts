@@ -4,7 +4,7 @@
  *   npm run backfill:storefronts
  *
  * - Vincula todo veículo sem `accountId` à conta default (a mesma criada pelo
- *   backfill de contas) — o estoque pré-SaaS passa a ter dono.
+ *   backfill de contas) - o estoque pré-SaaS passa a ter dono.
  * - Cria uma vitrine DESPUBLICADA para cada conta que ainda não tem,
  *   com slug derivado do nome da loja.
  *
@@ -24,7 +24,7 @@ async function main() {
       (await prisma.account.findFirst({ orderBy: { createdAt: 'asc' } }));
 
     if (!account) {
-      throw new Error('Nenhuma conta encontrada — rode `npm run backfill:accounts` antes deste script.');
+      throw new Error('Nenhuma conta encontrada - rode `npm run backfill:accounts` antes deste script.');
     }
     const { count } = await prisma.vehicle.updateMany({ where: { accountId: null }, data: { accountId: account.id } });
     // eslint-disable-next-line no-console

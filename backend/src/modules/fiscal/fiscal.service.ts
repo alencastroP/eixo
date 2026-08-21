@@ -8,7 +8,7 @@ import { prisma } from '../../lib/prisma';
 const dec = (d: Prisma.Decimal): number => Number(d);
 
 /**
- * Alíquotas e regras de base de cálculo (mock — simplificado para demonstração).
+ * Alíquotas e regras de base de cálculo (mock - simplificado para demonstração).
  * Ponto central: para veículo USADO, o ICMS incide sobre a MARGEM de lucro
  * (venda − compra), não sobre o valor total. Notas de entrada de PF e devolução
  * de consignado não têm incidência de ICMS.
@@ -55,7 +55,7 @@ export function computeTax(
         taxBase: 0,
         taxRate: 0,
         taxAmount: 0,
-        taxLabel: 'Entrada de Pessoa Física — sem incidência de ICMS',
+        taxLabel: 'Entrada de Pessoa Física - sem incidência de ICMS',
       };
     case FiscalKind.NFE_RETURN:
       return {
@@ -63,7 +63,7 @@ export function computeTax(
         taxBase: 0,
         taxRate: 0,
         taxAmount: 0,
-        taxLabel: 'Devolução de consignado — sem incidência de ICMS',
+        taxLabel: 'Devolução de consignado - sem incidência de ICMS',
       };
   }
 }

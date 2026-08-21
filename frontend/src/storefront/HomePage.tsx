@@ -63,7 +63,7 @@ export function HomePage() {
               className={`sf-hero-media ${hero.imageUrl ? '' : 'is-empty'}`}
               style={hero.imageUrl ? { backgroundImage: `url(${hero.imageUrl})` } : undefined}
             >
-              {!hero.imageUrl && <span className="sf-placeholder">foto — vitrine da loja</span>}
+              {!hero.imageUrl && <span className="sf-placeholder">foto - vitrine da loja</span>}
             </div>
           </div>
         </div>
@@ -246,11 +246,11 @@ export function HomePage() {
             <div className="sf-info-cell">
               <span className="sf-eyebrow">Onde estamos</span>
               <p>
-                {contact.address || '—'}
+                {contact.address || '-'}
                 {(contact.city || contact.state) && (
                   <>
                     <br />
-                    {[contact.city, contact.state].filter(Boolean).join(' — ')}
+                    {[contact.city, contact.state].filter(Boolean).join(' - ')}
                   </>
                 )}
               </p>
@@ -262,11 +262,11 @@ export function HomePage() {
             </div>
             <div className="sf-info-cell">
               <span className="sf-eyebrow">Atendimento</span>
-              <p>{contact.hours || '—'}</p>
+              <p>{contact.hours || '-'}</p>
             </div>
             <div className="sf-info-cell">
               <span className="sf-eyebrow">Contato</span>
-              <p>{contact.phone || contact.email || '—'}</p>
+              <p>{contact.phone || contact.email || '-'}</p>
               <button className="sf-info-link" onClick={() => openChat()}>
                 Falar com o atendente virtual →
               </button>

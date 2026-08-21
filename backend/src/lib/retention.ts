@@ -1,9 +1,9 @@
 /**
- * Política de retenção e expurgo (LGPD art. 15/16 — término do tratamento).
+ * Política de retenção e expurgo (LGPD art. 15/16 - término do tratamento).
  *
  * Remove dados pessoais que não precisam mais ser mantidos, respeitando as
  * janelas configuráveis em `env.retention`. Idempotente e seguro para rodar
- * periodicamente (cron/agendador). NÃO apaga tickets/leads em si — apenas os
+ * periodicamente (cron/agendador). NÃO apaga tickets/leads em si - apenas os
  * dados brutos e derivados com prazo de validade.
  */
 import { WebhookEventStatus } from '@prisma/client';
@@ -36,7 +36,7 @@ export async function runRetentionPurge(): Promise<PurgeReport> {
     },
   });
 
-  // 3) consultas de crédito além da janela (dado financeiro sensível — CPF/CNPJ)
+  // 3) consultas de crédito além da janela (dado financeiro sensível - CPF/CNPJ)
   const creditQueries = await prisma.creditQuery.deleteMany({
     where: { createdAt: { lt: daysAgo(env.retention.creditQueryDays) } },
   });

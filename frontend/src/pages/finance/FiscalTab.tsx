@@ -33,9 +33,9 @@ function previewTax(kind: FiscalKind, operationValue: number, costPrice: number)
     return { base: operationValue, rate: ISS_RATE, tax: operationValue * ISS_RATE, label: 'ISS sobre o serviço' };
   }
   if (kind === 'NFE_ENTRY') {
-    return { base: 0, rate: 0, tax: 0, label: 'Entrada de PF — sem incidência de ICMS' };
+    return { base: 0, rate: 0, tax: 0, label: 'Entrada de PF - sem incidência de ICMS' };
   }
-  return { base: 0, rate: 0, tax: 0, label: 'Devolução — sem incidência de ICMS' };
+  return { base: 0, rate: 0, tax: 0, label: 'Devolução - sem incidência de ICMS' };
 }
 
 export function FiscalTab() {

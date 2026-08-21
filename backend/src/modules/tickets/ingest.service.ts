@@ -17,7 +17,7 @@ export interface IngestResult {
 
 /**
  * Núcleo da ingestão: recebe um lead já normalizado (qualquer plataforma) e o
- * transforma em ticket — criando um novo ou anexando a mensagem a um ticket
+ * transforma em ticket - criando um novo ou anexando a mensagem a um ticket
  * aberto recente do mesmo lead na mesma plataforma (deduplicação).
  *
  * Usado pelo worker de webhooks, pela vitrine e pelo seed; não conhece payloads
@@ -26,7 +26,7 @@ export interface IngestResult {
  * `accountId` é o primeiro parâmetro por ser a fronteira do tenant: TODA busca
  * de deduplicação é feita dentro da conta. Sem isso, o mesmo cliente falando
  * com duas lojas seria deduplicado no mesmo lead e uma veria a conversa da
- * outra — o vazamento que este módulo existe para impedir.
+ * outra - o vazamento que este módulo existe para impedir.
  */
 export async function ingestNormalizedLead(
   accountId: string,
@@ -115,7 +115,7 @@ export async function ingestNormalizedLead(
       };
       if (!existing.vehicleRefExternal && n.vehicle) data.vehicleRefExternal = toJson(n.vehicle);
 
-      // o cliente respondeu — ticket volta para atendimento
+      // o cliente respondeu - ticket volta para atendimento
       if (existing.status === TicketStatus.WAITING_CUSTOMER) {
         data.status = TicketStatus.IN_PROGRESS;
         await tx.ticketInteraction.create({
@@ -171,7 +171,7 @@ export async function ingestNormalizedLead(
     return { ticketId: ticket.id, leadId: lead.id, created: true };
   });
 
-  // Relógio do fluxo: fora da transação de propósito — recalcular envolve ler a
+  // Relógio do fluxo: fora da transação de propósito - recalcular envolve ler a
   // política da conta e não deve prolongar o lock da ingestão.
   await rescheduleTicket(result.ticketId);
   return result;

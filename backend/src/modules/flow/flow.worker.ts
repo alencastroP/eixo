@@ -18,7 +18,7 @@ import { computeNextAction, getPolicy, type ResolvedPolicy } from './flow.servic
  * ── Idempotência ────────────────────────────────────────────────────────────
  * O claim é o mesmo padrão da fila de webhooks: um UPDATE condicional que só
  * vence se `nextActionAt` ainda for o valor observado. Duas instâncias do worker
- * disputando o mesmo ticket resultam em uma vencedora e uma que segue adiante —
+ * disputando o mesmo ticket resultam em uma vencedora e uma que segue adiante -
  * nunca duas mensagens para o mesmo cliente.
  */
 
@@ -128,7 +128,7 @@ async function runClose(ticket: { id: string; accountId: string }): Promise<void
 
 /**
  * Alerta de SLA: o CLIENTE está esperando a LOJA. Aqui não se manda nada ao
- * cliente — sobe a prioridade e registra o alerta para a equipe.
+ * cliente - sobe a prioridade e registra o alerta para a equipe.
  */
 async function runSlaAlerts(now: Date): Promise<number> {
   const policies = await prisma.flowPolicy.findMany({ where: { enabled: true } });
@@ -191,7 +191,7 @@ export async function processDueTickets(now = new Date()): Promise<number> {
       const policy = await getPolicy(ticket.accountId);
       const decision = computeNextAction(ticket, policy, now);
 
-      // A política pode ter mudado entre o agendamento e agora — reavalia.
+      // A política pode ter mudado entre o agendamento e agora - reavalia.
       if (!decision) continue;
       if (decision.at > now) {
         await prisma.ticket.update({ where: { id: ticket.id }, data: { nextActionAt: decision.at } });

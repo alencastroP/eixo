@@ -1,5 +1,5 @@
 /**
- * Prova do caminho de volta do chat da vitrine — roda contra o banco configurado.
+ * Prova do caminho de volta do chat da vitrine - roda contra o banco configurado.
  *
  *   npm run verify:site-chat
  *
@@ -8,12 +8,12 @@
  * visitante. Ao final apaga tudo que criou (as contas saem por CASCADE).
  *
  * Existe porque este defeito é invisível no código: a resposta do atendente era
- * gravada certinho no ticket e simplesmente não tinha por onde voltar ao site —
+ * gravada certinho no ticket e simplesmente não tinha por onde voltar ao site -
  * a vitrine não é uma plataforma externa com adapter de outbound. Compilava,
  * passava em qualquer revisão de tipo, e o cliente ficava falando sozinho.
  *
  * O agente de IA é desligado na conta de teste (AgentProfile.enabled = false):
- * o que se prova aqui é o transporte das mensagens, não o modelo — e assim a
+ * o que se prova aqui é o transporte das mensagens, não o modelo - e assim a
  * verificação não gasta chamada de API.
  */
 import { AccountStatus, TicketStatus, UserRole } from '@prisma/client';
@@ -28,7 +28,7 @@ function check(label: string, condition: boolean, detail = '') {
   const mark = condition ? '  ok  ' : ' FALHA';
   if (!condition) failures += 1;
   // eslint-disable-next-line no-console
-  console.log(`[${mark}] ${label}${detail ? ` — ${detail}` : ''}`);
+  console.log(`[${mark}] ${label}${detail ? ` - ${detail}` : ''}`);
 }
 
 async function makeStore(name: string) {
@@ -65,7 +65,7 @@ const ticketOf = (token: string) => token.split('.')[0];
 
 async function main() {
   // eslint-disable-next-line no-console
-  console.log(`\nChat da vitrine — verificação do caminho de volta (sufixo ${SUFFIX})\n`);
+  console.log(`\nChat da vitrine - verificação do caminho de volta (sufixo ${SUFFIX})\n`);
 
   const loja = await makeStore('LojaChat');
   const outra = await makeStore('LojaVizinha');

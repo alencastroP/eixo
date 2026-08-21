@@ -6,7 +6,7 @@ import { accessMessage, getAccount, isBlocked } from '../modules/billing/account
  * Guard de tenant: resolve a conta do usuário autenticado, injeta `req.account`
  * e BLOQUEIA o acesso se a conta estiver expirada/inadimplente/suspensa/cancelada.
  *
- * Deve rodar depois de `authenticate`. É o portão de acesso do SaaS — aplicado
+ * Deve rodar depois de `authenticate`. É o portão de acesso do SaaS - aplicado
  * às rotas de negócio (tickets, veículos, crédito, etc.). O status é sempre
  * relido do banco (não do JWT), então uma expiração via cron passa a valer na
  * requisição seguinte, mesmo com token ainda válido.

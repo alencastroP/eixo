@@ -58,7 +58,7 @@ export function SettingsPage() {
         icon={<SettingsIcon size={19} />}
         eyebrow="Configurações"
         title="Formulário de Clientes/Leads"
-        subtitle="Escolha quais campos aparecem — e quais são obrigatórios — no cadastro de leads."
+        subtitle="Escolha quais campos aparecem - e quais são obrigatórios - no cadastro de leads."
       />
 
       <div className="settings-card">

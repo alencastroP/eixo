@@ -2,7 +2,7 @@ import type { DocType } from '../../lib/document';
 import { formatDocument } from '../../lib/document';
 
 /**
- * Bureau de crédito MOCKADO — determinístico por documento (mesmo CPF/CNPJ →
+ * Bureau de crédito MOCKADO - determinístico por documento (mesmo CPF/CNPJ →
  * mesmo resultado). Substituir por integração real (Serasa/SPC/Boa Vista)
  * mantendo o contrato CreditReport; nada no restante do módulo precisa mudar.
  */
@@ -120,7 +120,7 @@ export function generateReport(digits: string, docType: DocType): CreditReport {
   const count = protests + negativacoes + badChecks + judicialActions;
   const totalAmount = count === 0 ? 0 : round(count * (800 + rand() * 6000), 50);
 
-  // crédito estimado — cresce com o score; CNPJ tem teto maior
+  // crédito estimado - cresce com o score; CNPJ tem teto maior
   const ceiling = docType === 'CNPJ' ? 220000 : 120000;
   const limit = band === 'HIGH_RISK' && count > 2 ? 0 : round(Math.pow(score / 1000, 1.4) * ceiling, 500);
   const downPaymentPct = band === 'LOW_RISK' ? 0 : band === 'MEDIUM_RISK' ? 20 : 40;

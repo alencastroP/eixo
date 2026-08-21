@@ -1,5 +1,5 @@
 /**
- * Serviço de recepção de webhooks — processo INDEPENDENTE da API principal.
+ * Serviço de recepção de webhooks - processo INDEPENDENTE da API principal.
  *
  * Pode escalar horizontalmente (N instâncias atrás de um load balancer) sem
  * afetar o CRM: a única responsabilidade é autenticar e enfileirar o payload

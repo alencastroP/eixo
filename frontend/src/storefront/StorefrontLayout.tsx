@@ -10,7 +10,7 @@ import './storefront.css';
 /**
  * Casca da vitrine: resolve a loja, aplica a identidade visual e desenha barra
  * superior, cabeçalho e rodapé. As páginas (home e detalhe do veículo) entram
- * pelo <Outlet> e recebem os dados já carregados via contexto — uma requisição
+ * pelo <Outlet> e recebem os dados já carregados via contexto - uma requisição
  * só, mesmo navegando entre elas.
  */
 
@@ -86,7 +86,7 @@ export function StorefrontLayout() {
     if (!site) return;
     const { seo, brand } = site.store;
     const previousTitle = document.title;
-    document.title = seo.title || `${brand.name} — Seminovos`;
+    document.title = seo.title || `${brand.name} | Seminovos`;
 
     const meta = document.querySelector<HTMLMetaElement>('meta[name="description"]') ?? document.createElement('meta');
     meta.name = 'description';
@@ -125,7 +125,7 @@ export function StorefrontLayout() {
   const { brand, contact } = site.store;
   const home = `/loja/${slug}`;
   const phoneDigits = contact.phone.replace(/\D/g, '');
-  const cityLine = [contact.city, contact.state].filter(Boolean).join(' — ');
+  const cityLine = [contact.city, contact.state].filter(Boolean).join(' - ');
 
   const Logo = () => (
     <>
@@ -286,7 +286,7 @@ function monogram(name: string): string {
 }
 
 /**
- * Preto ou branco sobre a cor da loja, pela luminância relativa (WCAG) —
+ * Preto ou branco sobre a cor da loja, pela luminância relativa (WCAG) -
  * garante contraste legível em botões independentemente da cor escolhida.
  */
 function onAccent(hex: string): string {

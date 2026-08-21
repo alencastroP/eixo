@@ -6,7 +6,7 @@ import { ah } from '../../lib/errors';
 import * as integrations from './integrations.service';
 
 /**
- * Módulo de Integrações — administração da PRÓPRIA conta (apenas ADMIN).
+ * Módulo de Integrações - administração da PRÓPRIA conta (apenas ADMIN).
  *
  * `req.account!.id` é sempre a fonte do tenant; a conta nunca vem do corpo nem
  * da query, então um admin não consegue operar a integração de outra loja

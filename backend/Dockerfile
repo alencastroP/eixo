@@ -1,4 +1,4 @@
-# Imagem base compartilhada — Debian slim (não alpine) porque o engine do
+# Imagem base compartilhada - Debian slim (não alpine) porque o engine do
 # Prisma precisa de OpenSSL com glibc; evita o ajuste de binaryTargets do musl.
 FROM node:20-slim AS base
 RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
@@ -24,7 +24,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/package.json ./package.json
 
-# server.ts escuta 3001, webhook-server.ts escuta 3002 — o comando real
+# server.ts escuta 3001, webhook-server.ts escuta 3002 - o comando real
 # (qual dos dois processos sobe) é definido por serviço no render.yaml.
 EXPOSE 3001 3002
 CMD ["node", "dist/server.js"]

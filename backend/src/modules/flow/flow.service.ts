@@ -118,7 +118,7 @@ export interface TicketClock {
 const OPEN_STATUSES = ['NEW', 'IN_PROGRESS', 'WAITING_CUSTOMER'];
 
 /**
- * Quando a próxima ação automática deste ticket vence — ou null se ele não está
+ * Quando a próxima ação automática deste ticket vence - ou null se ele não está
  * sob o motor de fluxo.
  *
  * O ticket sai do motor quando: a política está desligada, o ticket foi fechado,
@@ -150,7 +150,7 @@ export function computeNextAction(
     }
   }
 
-  // Encerrar é ação interna — não acorda ninguém, então ignora a janela.
+  // Encerrar é ação interna - não acorda ninguém, então ignora a janela.
   return { at: closeAt, kind: 'close' };
 }
 
@@ -176,7 +176,7 @@ export async function rescheduleTicket(ticketId: string): Promise<void> {
 /**
  * Reprograma todos os tickets abertos de uma conta. Usado quando a loja altera a
  * política: a mudança passa a valer para as conversas em andamento, não só para
- * as futuras — que é o comportamento que o lojista espera ao mexer no ajuste.
+ * as futuras - que é o comportamento que o lojista espera ao mexer no ajuste.
  */
 export async function rescheduleAccount(accountId: string): Promise<number> {
   const policy = await getPolicy(accountId);

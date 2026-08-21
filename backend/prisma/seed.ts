@@ -5,7 +5,7 @@
  * (ingestNormalizedLead + serviços de ticket), então linha do tempo, auditoria,
  * SLA e deduplicação ficam idênticos ao comportamento real.
  *
- * Credenciais (apenas dev — troque em produção):
+ * Credenciais (apenas dev - troque em produção):
  *   admin@crm.local  / Admin@123    (Administrador)
  *   carlos@crm.local / Vendedor@123 (Atendente)
  *   ana@crm.local    / Vendedor@123 (Atendente)
@@ -29,7 +29,7 @@ import type { CurrentUser } from '../src/modules/tickets/tickets.service';
 const HOUR = 3_600_000;
 
 /**
- * Estoque de demonstração (sem fotos — adicionadas pela UI via upload).
+ * Estoque de demonstração (sem fotos - adicionadas pela UI via upload).
  *
  * O estoque é escopado por conta: se já houver uma conta no banco (ordem
  * habitual do setup: seed → backfill:accounts), o demo nasce vinculado a ela.
@@ -156,7 +156,7 @@ async function main() {
   await seedFinance();
 
   if ((await prisma.ticket.count()) > 0) {
-    console.log('Seed: já existem tickets — mantendo dados atuais (apenas usuários garantidos).');
+    console.log('Seed: já existem tickets - mantendo dados atuais (apenas usuários garantidos).');
     return;
   }
 
@@ -207,7 +207,7 @@ async function main() {
   await backdateTicket(t3.ticketId, 120);
   await tickets.addInteraction(
     t3.ticketId,
-    { type: 'AGENT_REPLY', body: 'Oi, Maria! Sim, ABS de série. Financiamos em até 48x — me passa seu CPF por telefone que simulo pra você.' },
+    { type: 'AGENT_REPLY', body: 'Oi, Maria! Sim, ABS de série. Financiamos em até 48x - me passa seu CPF por telefone que simulo pra você.' },
     asUser(carlos),
   );
   await tickets.addInteraction(

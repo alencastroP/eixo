@@ -26,7 +26,7 @@ export function IntegrationModal({ integration, onClose, onChanged }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   // O segredo só existe em memória enquanto o modal está aberto e o usuário
-  // pediu para ver — nunca vem no carregamento normal da tela.
+  // pediu para ver - nunca vem no carregamento normal da tela.
   const [secret, setSecret] = useState<WebhookSecret | null>(null);
   const [copied, setCopied] = useState<null | 'url' | 'secret'>(null);
 
@@ -148,7 +148,7 @@ export function IntegrationModal({ integration, onClose, onChanged }: Props) {
   const outboundNote = useMemo(() => {
     if (!detail) return '';
     if (!detail.supportsOutbound) return 'Esta plataforma ainda não suporta envio de respostas pelo CRM.';
-    if (!detail.syncEnabled) return 'Sincronização pausada — respostas não são replicadas.';
+    if (!detail.syncEnabled) return 'Sincronização pausada - respostas não são replicadas.';
     return 'Respostas enviadas no CRM são replicadas ao cliente na plataforma.';
   }, [detail]);
 
@@ -188,7 +188,7 @@ export function IntegrationModal({ integration, onClose, onChanged }: Props) {
                 <strong>Como conectar</strong>
                 <ol>
                   <li>Gere suas credenciais de API no painel de desenvolvedor da plataforma.</li>
-                  <li>Cole os valores abaixo — eles ficam cifrados em repouso.</li>
+                  <li>Cole os valores abaixo - eles ficam cifrados em repouso.</li>
                   <li>Ative a sincronização de mensagens para começar a receber leads.</li>
                 </ol>
                 {detail.docsUrl && (
@@ -262,7 +262,7 @@ export function IntegrationModal({ integration, onClose, onChanged }: Props) {
                 <div className="webhook-box">
                   <div className="flow-title">Endereço de recepção desta loja</div>
                   <p className="muted small">
-                    Cole esta URL no painel da {detail.displayName}. Ela é exclusiva da sua conta — os
+                    Cole esta URL no painel da {detail.displayName}. Ela é exclusiva da sua conta - os
                     leads que chegarem por ela entram somente no seu funil.
                   </p>
                   <div className="webhook-field">

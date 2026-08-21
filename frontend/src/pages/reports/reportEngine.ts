@@ -1,9 +1,9 @@
 /**
- * Motor de relatórios (BI) — 100% no cliente, dados simulados.
+ * Motor de relatórios (BI) - 100% no cliente, dados simulados.
  *
  * Um "schema" descreve cada módulo base (Vendas, Estoque, …) com seus campos
  * (dimensões e métricas). Sobre esse schema roda um agregador genérico que
- * agrupa, filtra, ordena e — o ponto central — permite Drill Down: ao clicar
+ * agrupa, filtra, ordena e - o ponto central - permite Drill Down: ao clicar
  * numa fatia/barra, empilhamos um filtro e trocamos a dimensão de agrupamento
  * pela dimensão "filha" (drillTo), recalculando os números de verdade.
  */
@@ -23,7 +23,7 @@ export interface Field {
   type: FieldType;
   /** Dimensão-filha revelada no drill down (ex.: estado → cidade). */
   drillTo?: string;
-  /** Ordem natural (meses, faixas etárias) — usada na ordenação por rótulo. */
+  /** Ordem natural (meses, faixas etárias) - usada na ordenação por rótulo. */
   ordered?: string[];
   /** Métrica: agregações permitidas e formatação do valor. */
   aggs?: Agg[];
@@ -104,11 +104,11 @@ export function defaultConfig(moduleKey: string): ReportConfig {
 
 /* ─────────────────────────── Paletas (validadas via skill dataviz) ─────────── */
 
-/** Categóricas para pizza/multi-série — passam nos 6 checks do validador. */
+/** Categóricas para pizza/multi-série - passam nos 6 checks do validador. */
 export const CATEGORICAL_DARK = ['#E05F2A', '#0B84FF', '#1FA35C', '#9B6DFF', '#C0850C', '#E5484D'];
 export const CATEGORICAL_LIGHT = ['#E0551F', '#0B6FD6', '#1F9D57', '#7C5CE0', '#B7791F', '#CF3339'];
 
-/** Série única (barras/linha) — laranja ignição da marca. */
+/** Série única (barras/linha) - laranja ignição da marca. */
 export const SERIES_PRIMARY = '#FF6B35';
 
 /* ─────────────────────────── Gerador determinístico ────────────────────────── */
@@ -497,7 +497,7 @@ export function computeReport(
 
   const groups = new Map<string, Row[]>();
   for (const row of rows) {
-    const k = String(row[dimensionKey] ?? '—');
+    const k = String(row[dimensionKey] ?? '-');
     const bucket = groups.get(k);
     if (bucket) bucket.push(row);
     else groups.set(k, [row]);

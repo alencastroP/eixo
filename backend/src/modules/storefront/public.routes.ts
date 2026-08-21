@@ -9,7 +9,7 @@ import * as storefront from './storefront.service';
 import { fetchChatMessages, sendChatMessage } from './chat.service';
 
 /**
- * Rotas ABERTAS da vitrine — servem visitantes anônimos do site da loja.
+ * Rotas ABERTAS da vitrine - servem visitantes anônimos do site da loja.
  *
  * Nada aqui passa por `authenticate`/`requireActiveAccount`: a conta é resolvida
  * pelo `:slug` da vitrine publicada. Consequências que o código honra:
@@ -59,7 +59,7 @@ publicSiteRouter.get(
  *
  * `origin` diz de qual bloco veio (interesse em veículo, financiamento, venda do
  * usado, contato) e vira o assunto da mensagem. `website` é o honeypot: campo
- * escondido no HTML que só um bot preenche — respondemos 202 sem criar nada,
+ * escondido no HTML que só um bot preenche - respondemos 202 sem criar nada,
  * para o bot não descobrir que foi barrado.
  */
 const leadSchema = z.object({
@@ -69,7 +69,7 @@ const leadSchema = z.object({
   message: z.string().trim().max(1000).optional(),
   vehicleId: z.string().trim().optional(),
   origin: z.enum(['vehicle', 'financing', 'sell', 'contact']).default('contact'),
-  // honeypot: aceito na validação de propósito — a rejeição acontece no handler,
+  // honeypot: aceito na validação de propósito - a rejeição acontece no handler,
   // com 202, para o bot não aprender que o campo o denunciou.
   website: z.string().max(200).optional(),
 });
@@ -90,7 +90,7 @@ publicSiteRouter.post(
 
     const slug = req.params.slug;
     // resolve antes de qualquer escrita: vitrine despublicada não gera lead.
-    // O slug é o que define a conta dona deste lead — visitante anônimo nunca
+    // O slug é o que define a conta dona deste lead - visitante anônimo nunca
     // informa tenant, ele é derivado do site em que a pessoa está navegando.
     const accountId = await storefront.resolveAccountId(slug);
 
@@ -145,7 +145,7 @@ publicSiteRouter.post(
 
 /**
  * Canal de VOLTA da conversa: o widget pergunta o que a loja respondeu desde o
- * cursor. É por aqui que a resposta do atendente humano chega ao site — depois
+ * cursor. É por aqui que a resposta do atendente humano chega ao site - depois
  * do transbordo a IA está desligada, então o POST acima não tem o que devolver.
  *
  * Limite próprio (por minuto): esta rota é uma leitura indexada e é chamada em

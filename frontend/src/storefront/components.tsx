@@ -9,10 +9,10 @@ export const formatKm = (km: number) => `${new Intl.NumberFormat('pt-BR').format
 
 export const vehicleTitle = (v: { brand: string; model: string }) => `${v.brand} ${v.model}`;
 
-/** Câmbio não é campo do estoque — vem do texto da versão, como o lojista cadastra. */
+/** Câmbio não é campo do estoque - vem do texto da versão, como o lojista cadastra. */
 export const gearboxOf = (version: string | null) => (/autom/i.test(version ?? '') ? 'Automático' : 'Manual');
 
-/** Selo do card: tração, ano recente ou preço de entrada — nessa ordem. */
+/** Selo do card: tração, ano recente ou preço de entrada - nessa ordem. */
 export function vehicleTag(v: SiteVehicle): { label: string; accent: boolean } | null {
   if (/4x4/i.test(v.version ?? '')) return { label: '4x4', accent: false };
   if (v.featured) return { label: 'Destaque', accent: true };
@@ -29,7 +29,7 @@ export function installmentOf(price: number | null, financing: StorefrontFinanci
   return (financed * rate) / (1 - (1 + rate) ** -financing.months);
 }
 
-/** Link de conversa já com a mensagem pronta — o visitante só aperta enviar. */
+/** Link de conversa já com a mensagem pronta - o visitante só aperta enviar. */
 export function whatsappLink(whatsapp: string, message: string): string {
   return `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
 }
@@ -109,7 +109,7 @@ export function VehicleCard({
         <h3 className="sf-card-title">
           <Link to={to}>{vehicle.model}</Link>
         </h3>
-        <p className="sf-card-version">{vehicle.version ?? '—'}</p>
+        <p className="sf-card-version">{vehicle.version ?? '-'}</p>
 
         <dl className="sf-specs">
           <div className="sf-spec">

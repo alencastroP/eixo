@@ -22,11 +22,11 @@ import { TrialSignupPage } from './pages/TrialSignupPage';
 import { VehicleFormPage } from './pages/VehicleFormPage';
 import { slugFromHostname } from './storefront/resolveSlug';
 
-// Relatórios/BI carrega o Recharts (pesado) — code-split para não inflar o bundle inicial.
+// Relatórios/BI carrega o Recharts (pesado) - code-split para não inflar o bundle inicial.
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 
 // A vitrine pública tem CSS e componentes próprios, que nenhum usuário do CRM
-// baixa — por isso entra em chunk separado, como os relatórios.
+// baixa - por isso entra em chunk separado, como os relatórios.
 const StorefrontLayout = lazy(() =>
   import('./storefront/StorefrontLayout').then((m) => ({ default: m.StorefrontLayout })),
 );

@@ -6,7 +6,7 @@
  *
  * Antes do fix, toda imagem enviada (logo/hero da vitrine, fotos de veículo)
  * era salva como "/uploads/...". Essa URL relativa resolve contra o domínio
- * de quem EXIBE a página — em produção o front (Cloudflare Workers) e a API
+ * de quem EXIBE a página - em produção o front (Cloudflare Workers) e a API
  * (Render) são domínios diferentes, então a imagem sempre quebrava depois de
  * publicada. Este script reescreve os registros antigos para a URL absoluta,
  * sem tocar nos que já estão corretos.

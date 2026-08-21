@@ -8,7 +8,7 @@ import { generateReport, type CreditReport } from './bureau.mock';
 interface Actor {
   id: string;
   name: string;
-  /** Conta do operador — usada para não vincular consulta a titular de outra loja. */
+  /** Conta do operador - usada para não vincular consulta a titular de outra loja. */
   accountId: string;
 }
 

@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const establish = useCallback(async (session: Session) => {
     tokenStore.save(session);
     // enriquece com /me para trazer os dados da conta (status/dias de trial),
-    // que a resposta de login/signup não inclui — habilita banner e bloqueio.
+    // que a resposta de login/signup não inclui - habilita banner e bloqueio.
     try {
       setUser(await authApi.me());
     } catch {

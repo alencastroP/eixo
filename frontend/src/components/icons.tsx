@@ -113,7 +113,7 @@ export const PlugIcon = (p: IconProps) => (
   </svg>
 );
 
-/** Agente de IA: faísca dupla — a convenção visual de "assistido por IA". */
+/** Agente de IA: faísca dupla - a convenção visual de "assistido por IA". */
 export const SparkIcon = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M14 3 15.6 7.4 20 9l-4.4 1.6L14 15l-1.6-4.4L8 9l4.4-1.6L14 3z" />

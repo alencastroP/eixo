@@ -7,7 +7,7 @@ declare global {
       user?: { id: string; role: UserRole; name: string; email: string; accountId: string | null };
       /** Conta ativa resolvida pelo guard requireActiveAccount. */
       account?: { id: string; status: string; trialEndsAt: Date | null };
-      /** Corpo bruto da requisição — necessário para verificação HMAC de webhooks. */
+      /** Corpo bruto da requisição - necessário para verificação HMAC de webhooks. */
       rawBody?: Buffer;
     }
   }

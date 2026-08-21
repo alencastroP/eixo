@@ -1,5 +1,5 @@
 /**
- * Validação e máscara de CPF no cliente — feedback rápido ao usuário.
+ * Validação e máscara de CPF no cliente - feedback rápido ao usuário.
  * A validação AUTORITATIVA é sempre a do back-end (nunca confiar só no client).
  * Algoritmo idêntico ao do backend (lib/document.ts, mod 11).
  */

@@ -15,7 +15,7 @@ interface Props {
 
 /**
  * Filtro "Todos / Meus / Não atribuídos", centralizado no módulo de Tickets.
- * Usado tanto pela Caixa de entrada quanto pelo Kanban — mesmo componente,
+ * Usado tanto pela Caixa de entrada quanto pelo Kanban - mesmo componente,
  * mesmo comportamento, para não haver dois lugares definindo o mesmo escopo.
  */
 export function TicketScopeFilter({ value, onChange, totalCount, unassignedCount }: Props) {

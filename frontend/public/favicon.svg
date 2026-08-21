@@ -1,4 +1,4 @@
-<!-- Eixo — símbolo sem fundo. Transparente de propósito: o laranja tem
+<!-- Eixo - símbolo sem fundo. Transparente de propósito: o laranja tem
      contraste tanto na aba clara quanto na escura, então um arquivo só serve
      aos dois temas do navegador. Versões com fundo: /brand/tile-*.svg -->
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 128 128">

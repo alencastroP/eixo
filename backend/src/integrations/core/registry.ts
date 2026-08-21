@@ -14,7 +14,7 @@ export function findAdapter(platform: string): LeadSourceAdapter | null {
   return adapters.get(platform.toLowerCase()) ?? null;
 }
 
-/** Versão estrita — usada pelo worker, onde plataforma desconhecida é erro de processamento. */
+/** Versão estrita - usada pelo worker, onde plataforma desconhecida é erro de processamento. */
 export function getAdapter(platform: string): LeadSourceAdapter {
   const adapter = findAdapter(platform);
   if (!adapter) throw new Error(`Nenhum adapter registrado para a plataforma: ${platform}`);

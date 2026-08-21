@@ -17,7 +17,7 @@ export function isBlocked(status: AccountStatus): boolean {
 export function accessMessage(status: AccountStatus): string {
   switch (status) {
     case AccountStatus.EXPIRED:
-      return 'Seu período de teste terminou. Assine um plano para reativar o acesso — seus dados foram preservados.';
+      return 'Seu período de teste terminou. Assine um plano para reativar o acesso - seus dados foram preservados.';
     case AccountStatus.PAST_DUE:
       return 'Há uma pendência de pagamento na sua conta. Regularize para reativar o acesso.';
     case AccountStatus.SUSPENDED:

@@ -18,7 +18,7 @@ interface PlatePreview {
 
 /**
  * Ações rápidas de análise na lateral do chat: consulta de score por CPF/CNPJ
- * (abre pop-up) e "puxar dados" de um carro na troca pela placa — tudo sem sair
+ * (abre pop-up) e "puxar dados" de um carro na troca pela placa - tudo sem sair
  * da conversa.
  */
 export function QuickAnalysisBlock({ leadDocument }: { leadDocument: string | null }) {

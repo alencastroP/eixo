@@ -1,4 +1,4 @@
-# Guia de Integração para Produção — CRM Automotivo
+# Guia de Integração para Produção - CRM Automotivo
 
 Este documento lista **tudo que precisa ser preenchido/plugado** para o sistema sair
 do modo mock/dev e ir ao ar. O código está estruturado para que cada troca seja
@@ -13,7 +13,7 @@ do modo mock/dev e ir ao ar. O código está estruturado para que cada troca sej
 - [ ] Rodar `npm run build` + `npm run prisma:deploy` + `npm run seed` (1ª vez)
 - [ ] Configurar `CORS_ORIGIN` com o domínio real do frontend
 - [ ] Definir tokens/segredos de webhook por plataforma (OLX/ML/Webmotors)
-- [ ] Definir `ANTHROPIC_API_KEY` (Agente de IA) — opcional
+- [ ] Definir `ANTHROPIC_API_KEY` (Agente de IA) - opcional
 - [ ] Substituir mocks das APIs externas (seções 2 a 6) conforme necessidade
 - [ ] Agendar `npm run purge` (retenção LGPD) via cron
 - [ ] Servir o frontend atrás de HTTPS com CSP própria
@@ -24,7 +24,7 @@ do modo mock/dev e ir ao ar. O código está estruturado para que cada troca sej
 ## 1. Banco de dados real
 
 **Hoje:** desenvolvimento usa `embedded-postgres` (script `npm run db:dev`, porta 5433).
-O código de produção **já usa Prisma apontando para `DATABASE_URL`** — não há mock de
+O código de produção **já usa Prisma apontando para `DATABASE_URL`** - não há mock de
 banco a trocar, apenas a string de conexão.
 
 ### Passo a passo
@@ -37,7 +37,7 @@ banco a trocar, apenas a string de conexão.
    ```bash
    npm run prisma:deploy      # prisma migrate deploy (idempotente, sem prompts)
    ```
-4. (1ª vez) popule dados iniciais — **ajuste as senhas do seed antes**:
+4. (1ª vez) popule dados iniciais - **ajuste as senhas do seed antes**:
    ```bash
    npm run seed
    ```
@@ -46,7 +46,7 @@ banco a trocar, apenas a string de conexão.
    npm run build
    npm run start           # API (porta PORT, padrão 3001)
    npm run start:webhooks  # recepção de webhooks (WEBHOOK_PORT, padrão 3002)
-   npm run start:worker    # worker de leads — em produção, processo próprio
+   npm run start:worker    # worker de leads - em produção, processo próprio
                            # (e defina WORKER_INLINE=false no webhook-server)
    ```
 
@@ -63,7 +63,7 @@ Cada plataforma é um **adapter** em `backend/src/integrations/<plataforma>/`. T
 implementam a mesma interface (`core/types.ts → LeadSourceAdapter`): `verifyRequest`,
 `normalize`, `validateCredentials`, `sendReply`. **É aqui que os 3 pontos mock são trocados.**
 
-### 2.1 Recepção de leads (INBOUND) — já funcional
+### 2.1 Recepção de leads (INBOUND) - já funcional
 - **Endpoint:** `POST /webhooks/:platform` (ex.: `/webhooks/olx`) no serviço de webhooks.
 - **Autenticação:** header por plataforma. OLX: `x-olx-token` = `OLX_WEBHOOK_TOKEN`.
   Mercado Livre: HMAC do corpo bruto com `MERCADOLIVRE_WEBHOOK_SECRET`. Webmotors:
@@ -75,7 +75,7 @@ implementam a mesma interface (`core/types.ts → LeadSourceAdapter`): `verifyRe
   o worker normaliza com **retry e backoff** (`WORKER_MAX_ATTEMPTS`, `WORKER_RETRY_DELAY_MS`).
   Payload malformado falha direto (não adianta repetir).
 
-### 2.2 Validação de credenciais + envio de resposta (OUTBOUND) — **MOCK a trocar**
+### 2.2 Validação de credenciais + envio de resposta (OUTBOUND) - **MOCK a trocar**
 - **Onde:** funções `validate<Plataforma>Credentials` e `send<Plataforma>Reply` em cada
   `*.adapter.ts`. Ex.: `olx.adapter.ts:55` (validação) e `olx.adapter.ts:73` (envio).
 - **Autenticação:** as credenciais do lojista são cifradas em repouso (AES-256-GCM) e
@@ -91,7 +91,7 @@ implementam a mesma interface (`core/types.ts → LeadSourceAdapter`): `verifyRe
   if (!resp.ok) return { ok: false, error: `OLX ${resp.status}` };
   return { ok: true, externalRef: (await resp.json()).id };
   ```
-- **Tratamento de erro:** `sendReply` **nunca lança** — devolve `{ ok, error }`; o
+- **Tratamento de erro:** `sendReply` **nunca lança** - devolve `{ ok, error }`; o
   resultado vira log de despacho (`integration_dispatches`, status SENT/FAILED/SKIPPED)
   e não bloqueia a resposta no CRM. Mantenha esse contrato.
 
@@ -103,12 +103,12 @@ implementam a mesma interface (`core/types.ts → LeadSourceAdapter`): `verifyRe
 
 ---
 
-## 3. Agente de Pré-Venda IA (Anthropic Claude) — **integração real, só falta a chave**
+## 3. Agente de Pré-Venda IA (Anthropic Claude) - **integração real, só falta a chave**
 
 - **Onde:** `backend/src/modules/aiAgent/` (`agent.service.ts`, `tools.ts`, `prompt.ts`).
   Já usa a **SDK oficial** `@anthropic-ai/sdk` (não é mock).
 - **Autenticação:** `ANTHROPIC_API_KEY`. Sem a chave, `aiEnabled()` é `false` e o bot fica
-  dormente (atendimento 100% humano) — nada quebra.
+  dormente (atendimento 100% humano) - nada quebra.
 - **Modelo:** `ANTHROPIC_MODEL` (padrão `claude-opus-4-8`). Para alto volume/menor
   latência e custo, use `claude-sonnet-5` ou `claude-haiku-4-5`.
 - **Endpoint:** `POST https://api.anthropic.com/v1/messages` (a SDK cuida disso).
@@ -122,7 +122,7 @@ ANTHROPIC_MODEL=claude-opus-4-8
 
 ---
 
-## 4. Bureau de crédito (Serasa / SPC / Boa Vista) — **MOCK a trocar**
+## 4. Bureau de crédito (Serasa / SPC / Boa Vista) - **MOCK a trocar**
 
 - **Onde:** `backend/src/modules/credit/bureau.mock.ts` → função `generateReport(digits, docType)`.
   Determinística (mesmo documento → mesmo resultado).
@@ -145,7 +145,7 @@ ANTHROPIC_MODEL=claude-opus-4-8
 
 ---
 
-## 5. Emissão de Nota Fiscal (SEFAZ / NF-e, NFS-e) — **MOCK a trocar**
+## 5. Emissão de Nota Fiscal (SEFAZ / NF-e, NFS-e) - **MOCK a trocar**
 
 - **Onde:** `backend/src/modules/fiscal/fiscal.service.ts` → função de emissão (`fiscal.service.ts:144`)
   e geração de chave de acesso (`:71`). Hoje simula autorização (>90% autorizadas) e gera
@@ -172,13 +172,13 @@ ANTHROPIC_MODEL=claude-opus-4-8
 ### 6.1 Armazenamento de imagens (estoque)
 - **Onde:** `backend/src/lib/storage.ts`. Hoje grava em `./uploads` (disco local).
 - **Substituição:** trocar `saveImageDataUrl`/`deleteByPublicUrl` por SDK do bucket
-  (S3/GCS). O resto do código só conhece a **URL pública** retornada — assinatura mantida.
+  (S3/GCS). O resto do código só conhece a **URL pública** retornada - assinatura mantida.
 - **Produção:** servir as imagens por CDN e remover o `express.static('/uploads')`.
 
 ### 6.2 Descrição de anúncio por IA (opcional)
 - **Onde:** `backend/src/modules/vehicles/description.generator.ts`. Hoje é composição por
   regras (offline, determinística). Para usar IA real, substituir o corpo por uma chamada
-  ao Claude com os mesmos campos — assinatura e retorno permanecem iguais.
+  ao Claude com os mesmos campos - assinatura e retorno permanecem iguais.
 
 ### 6.3 Retenção de dados (LGPD)
 - **Comando:** `npm run purge` (implementado em `lib/retention.ts`).
@@ -191,7 +191,7 @@ ANTHROPIC_MODEL=claude-opus-4-8
 
 ---
 
-## 7. Variáveis de ambiente — referência
+## 7. Variáveis de ambiente - referência
 
 Arquivo modelo completo: **`backend/.env.example`**. Segredos que **precisam ser
 preenchidos** antes do go-live:
@@ -199,8 +199,8 @@ preenchidos** antes do go-live:
 | Variável | Obrigatória | Descrição |
 |---|---|---|
 | `DATABASE_URL` | ✅ | Conexão PostgreSQL de produção (com `sslmode=require`) |
-| `JWT_ACCESS_SECRET` | ✅ | Segredo forte (≥32 bytes aleatórios) — assina os access tokens |
-| `CREDENTIALS_SECRET` | ✅ | Segredo forte — cifra credenciais de integração em repouso |
+| `JWT_ACCESS_SECRET` | ✅ | Segredo forte (≥32 bytes aleatórios) - assina os access tokens |
+| `CREDENTIALS_SECRET` | ✅ | Segredo forte - cifra credenciais de integração em repouso |
 | `CORS_ORIGIN` | ✅ | Domínio(s) do frontend, separados por vírgula |
 | `OLX_WEBHOOK_TOKEN` / `MERCADOLIVRE_WEBHOOK_SECRET` / `WEBMOTORS_WEBHOOK_TOKEN` | ⚠️ | Por plataforma que for ativar |
 | `ANTHROPIC_API_KEY` | ⚠️ | Só se o Agente de IA for usado |

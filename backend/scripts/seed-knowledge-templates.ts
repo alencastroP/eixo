@@ -1,5 +1,5 @@
 /**
- * Cria a estrutura da base de conhecimento de uma loja — DESATIVADA.
+ * Cria a estrutura da base de conhecimento de uma loja - DESATIVADA.
  *
  *   npm run seed:knowledge                 (conta mais antiga)
  *   npm run seed:knowledge -- <accountId>
@@ -9,7 +9,7 @@
  *
  * O motivo é direto: o conteúdo desta base vira afirmação do agente para
  * clientes reais. Prazo de garantia, entrada mínima, bancos parceiros e prazo
- * de entrega são compromissos comerciais da loja — um valor plausível inventado
+ * de entrega são compromissos comerciais da loja - um valor plausível inventado
  * aqui viraria promessa feita em nome dela. Desativado, nada disso chega a
  * ninguém; preenchido e ativado, o agente para de responder "vou confirmar com
  * o vendedor" nas perguntas mais comuns do funil.
@@ -87,7 +87,7 @@ const TEMPLATES: Template[] = [
 
 function render(t: Template): string {
   return [
-    '[A PREENCHER — este documento está desativado e não é usado pelo agente.]',
+    '[A PREENCHER - este documento está desativado e não é usado pelo agente.]',
     '',
     'Responda as perguntas abaixo com as condições reais da loja e apague as que',
     'não se aplicam. Depois ative o documento na tela do Agente de IA.',

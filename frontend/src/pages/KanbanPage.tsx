@@ -10,7 +10,7 @@ import { avatarColor, initials, timeAgo } from '../utils/format';
 
 const PAGE_SIZE = 100;
 
-/** Submódulo do Atendimento — mesmo escopo (Todos/Meus/Não atribuídos) da Caixa de entrada. */
+/** Submódulo do Atendimento - mesmo escopo (Todos/Meus/Não atribuídos) da Caixa de entrada. */
 export function KanbanPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();

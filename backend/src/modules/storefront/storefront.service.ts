@@ -13,7 +13,7 @@ import { getCompany } from '../settings/settings.service';
  * é normalizado aqui (defaults + merge) para o resto do código sempre receber
  * a configuração completa.
  *
- * Este módulo também é o ÚNICO lugar que serializa veículo para o público —
+ * Este módulo também é o ÚNICO lugar que serializa veículo para o público -
  * os serializadores do estoque expõem custo, margem, placa e chassi, que jamais
  * podem sair pela rota aberta.
  */
@@ -177,7 +177,7 @@ function serialize(store: Storefront) {
 /**
  * Vitrine da conta, criada sob demanda no primeiro acesso à tela de
  * configuração. Nasce despublicada, com slug derivado do nome da conta e os
- * dados de contato já pré-preenchidos a partir do cadastro da empresa —
+ * dados de contato já pré-preenchidos a partir do cadastro da empresa -
  * o lojista só ajusta e publica.
  */
 export async function getOrCreateStorefront(accountId: string) {
@@ -187,7 +187,7 @@ export async function getOrCreateStorefront(accountId: string) {
   const account = await prisma.account.findUnique({ where: { id: accountId }, select: { name: true } });
 
   // `settings.company` ainda é uma tabela GLOBAL (chave → JSON, sem accountId).
-  // Aproveitá-la para pré-preencher só é seguro quando existe uma única conta —
+  // Aproveitá-la para pré-preencher só é seguro quando existe uma única conta -
   // com mais de uma, os dados pertenceriam a outro lojista. Quando o retrofit
   // de isolamento chegar a `settings`, esta condição pode cair.
   const soleAccount = (await prisma.account.count()) === 1;
@@ -260,7 +260,7 @@ const publicWhere = (accountId: string): Prisma.VehicleWhereInput => ({
 
 /**
  * Resolve o slug para a conta dona. Vitrine despublicada, conta bloqueada
- * (inadimplente/expirada) ou slug inexistente respondem igual — 404 — para não
+ * (inadimplente/expirada) ou slug inexistente respondem igual - 404 - para não
  * revelar a existência de contas.
  */
 async function resolvePublished(slug: string) {
@@ -314,7 +314,7 @@ function serializePublicDetail(v: PublicRow) {
 }
 
 /**
- * Recortes rápidos do estoque. O CRM não tem campo de câmbio nem de tração — a
+ * Recortes rápidos do estoque. O CRM não tem campo de câmbio nem de tração - a
  * informação vive no texto da versão ("1.0 Flex 4P Manual"), que é como o
  * lojista já cadastra e como as plataformas de anúncio publicam. Filtrar por
  * aqui mantém contagem e paginação corretas no servidor.
@@ -392,7 +392,7 @@ export async function getPublicVehicle(slug: string, id: string) {
   return serializePublicDetail(v);
 }
 
-/** Marcas, anos e faixa de preço presentes no estoque visível — alimentam os filtros. */
+/** Marcas, anos e faixa de preço presentes no estoque visível - alimentam os filtros. */
 async function publicFacets(accountId: string) {
   const where = publicWhere(accountId);
   const [brands, years, aggregate] = await Promise.all([
@@ -432,7 +432,7 @@ export async function getPublicSite(slug: string) {
   };
 }
 
-/** Conta dona do slug — usada pela rota de leads (que não expõe dados da loja). */
+/** Conta dona do slug - usada pela rota de leads (que não expõe dados da loja). */
 export async function resolveAccountId(slug: string): Promise<string> {
   const store = await resolvePublished(slug);
   return store.account.id;

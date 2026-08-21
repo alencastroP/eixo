@@ -26,7 +26,7 @@ export function ProtectedLayout() {
   // as telas da central não têm alvo próprio no rail: o botão dela fica aceso
   const inAdmin = ADMIN_ROUTES.some((p) => pathname.startsWith(p));
   // Kanban não tem botão próprio: é um submódulo acessado pelo dropdown dentro
-  // da Caixa de entrada — mas o rail continua aceso nas duas rotas.
+  // da Caixa de entrada - mas o rail continua aceso nas duas rotas.
   const inTickets = pathname.startsWith('/tickets') || pathname.startsWith('/kanban');
 
   if (initializing) {

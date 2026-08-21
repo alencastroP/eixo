@@ -29,7 +29,7 @@ export function TrialSignupPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canSubmit || submitting) return;
-    // validação no cliente (feedback rápido) — o back-end revalida de forma autoritativa
+    // validação no cliente (feedback rápido) - o back-end revalida de forma autoritativa
     if (!isValidCpf(form.cpf)) {
       setError('CPF inválido. Verifique os dígitos.');
       return;
@@ -83,7 +83,7 @@ export function TrialSignupPage() {
             className={cpfTouched ? (cpfValid ? 'input-ok' : 'input-bad') : ''}
             required
           />
-          {cpfTouched && !cpfValid && <span className="field-hint bad">CPF inválido — confira os dígitos.</span>}
+          {cpfTouched && !cpfValid && <span className="field-hint bad">CPF inválido - confira os dígitos.</span>}
         </label>
 
         <label className="field">

@@ -6,7 +6,7 @@ import { env } from '../config/env';
 /**
  * Cabeçalhos de segurança (HSTS, X-Frame-Options, X-Content-Type-Options,
  * Referrer-Policy, etc.). Como estes serviços expõem uma API JSON consumida por
- * fetch, a CSP relevante para XSS pertence ao host do frontend — aqui mantemos
+ * fetch, a CSP relevante para XSS pertence ao host do frontend - aqui mantemos
  * uma CSP mínima e desligamos apenas o que quebraria o consumo cross-origin.
  *
  * `crossOriginResourcePolicy: cross-origin` é necessário para o front (:5173)
@@ -71,7 +71,7 @@ export const trialRateLimit = rateLimit({
 
 /**
  * Limite para o formulário da vitrine pública. A rota é aberta e escreve no
- * banco (lead + ticket), então precisa de teto próprio por IP — junto com o
+ * banco (lead + ticket), então precisa de teto próprio por IP - junto com o
  * honeypot do formulário, mantém spam de bot fora do funil de atendimento.
  */
 export const siteLeadRateLimit = rateLimit({
@@ -116,7 +116,7 @@ export const siteChatPollRateLimit = rateLimit({
   },
 });
 
-/** Limite para a recepção de webhooks (por plataforma/IP) — evita inundar a fila. */
+/** Limite para a recepção de webhooks (por plataforma/IP) - evita inundar a fila. */
 export const webhookRateLimit = rateLimit({
   windowMs: 60_000,
   limit: env.rateLimit.webhookPerMinute,

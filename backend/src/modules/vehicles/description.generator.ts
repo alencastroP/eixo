@@ -7,7 +7,7 @@ import type { VehicleType } from '@prisma/client';
  * + observações livres do vendedor. Implementação atual: composição por regras
  * (determinística, offline). Para trocar por IA real, substitua o corpo desta
  * função por uma chamada ao Claude (Anthropic SDK) montando o prompt com os
- * mesmos campos — a assinatura e o retorno permanecem iguais.
+ * mesmos campos - a assinatura e o retorno permanecem iguais.
  */
 
 export interface DescriptionInput {
@@ -53,7 +53,7 @@ export function generateVehicleDescription(input: DescriptionInput): string {
 
   // abertura
   parts.push(
-    `🚗 ${title} ${yearLabel} — um ${noun} ${condition(input)}.`,
+    `🚗 ${title} ${yearLabel} - um ${noun} ${condition(input)}.`,
   );
 
   // corpo com specs
@@ -66,7 +66,7 @@ export function generateVehicleDescription(input: DescriptionInput): string {
   // opcionais
   const opts = highlightOptionals(input.optionals);
   if (opts) {
-    parts.push(`Vem completo com ${opts} — conforto e tecnologia em cada detalhe.`);
+    parts.push(`Vem completo com ${opts} - conforto e tecnologia em cada detalhe.`);
   }
 
   // observações do vendedor, tecidas no texto

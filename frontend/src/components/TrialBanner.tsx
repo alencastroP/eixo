@@ -14,7 +14,7 @@ export function TrialBanner({ account }: { account?: AccountSummary | null }) {
       <span>
         {days > 0 ? (
           <>
-            Teste grátis — <strong>{days} {days === 1 ? 'dia restante' : 'dias restantes'}</strong>
+            Teste grátis - <strong>{days} {days === 1 ? 'dia restante' : 'dias restantes'}</strong>
           </>
         ) : (
           <>Seu teste termina <strong>hoje</strong></>
@@ -31,7 +31,7 @@ export function TrialBanner({ account }: { account?: AccountSummary | null }) {
 export function AccountBlocked({ user }: { user: PublicUser }) {
   const { logout } = useAuth();
   const messages: Record<string, string> = {
-    EXPIRED: 'Seu período de teste terminou. Assine um plano para reativar o acesso — seus dados foram preservados.',
+    EXPIRED: 'Seu período de teste terminou. Assine um plano para reativar o acesso - seus dados foram preservados.',
     PAST_DUE: 'Há uma pendência de pagamento na sua conta. Regularize para reativar o acesso.',
     SUSPENDED: 'Sua conta está suspensa. Fale com o suporte.',
     CANCELED: 'Sua conta foi cancelada. Fale com o suporte para reativá-la.',

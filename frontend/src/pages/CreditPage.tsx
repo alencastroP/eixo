@@ -122,7 +122,7 @@ export function CreditPage() {
           )}
 
           <div className="credit-grid">
-            {/* BLOCO 1 — Velocímetro */}
+            {/* BLOCO 1 - Velocímetro */}
             <section className="panel gauge-panel">
               <div className="panel-header">
                 <h2>Score de Crédito</h2>
@@ -137,7 +137,7 @@ export function CreditPage() {
               </div>
             </section>
 
-            {/* BLOCO 2 — Restrições */}
+            {/* BLOCO 2 - Restrições */}
             <section className="panel restrictions-panel">
               <div className="panel-header">
                 <h2>Saúde Financeira</h2>
@@ -184,7 +184,7 @@ export function CreditPage() {
               )}
             </section>
 
-            {/* BLOCO 3 — Estimativa de crédito */}
+            {/* BLOCO 3 - Estimativa de crédito */}
             <section className="panel credit-estimate-panel">
               <div className="panel-header">
                 <h2>Potencial de Compra</h2>

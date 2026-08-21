@@ -68,7 +68,7 @@ const updateMeSchema = z
     path: ['currentPassword'],
   });
 
-// Edição do próprio perfil ("Meus Dados") — troca de senha exige a senha atual.
+// Edição do próprio perfil ("Meus Dados") - troca de senha exige a senha atual.
 authRouter.patch(
   '/me',
   authenticate,

@@ -1,7 +1,7 @@
 /**
  * Identidade visual do Eixo.
  *
- * A marca é geometria pura — três barras arredondadas formando o "E", e as
+ * A marca é geometria pura - três barras arredondadas formando o "E", e as
  * letras I, X e O construídas com retângulo, dois paralelogramos e um anel.
  * Por isso ela mora aqui como SVG e não como imagem: fica nítida em qualquer
  * tamanho, acompanha o tema sem precisar de dois arquivos, não custa
@@ -10,12 +10,12 @@
  *
  * Todas as variantes são SEM FUNDO. As versões com fundo (ladrilho claro e
  * escuro) existem como arquivo em `public/brand/`, para os lugares que exigem
- * um retângulo opaco — favicon, ícone de app, imagem de compartilhamento.
+ * um retângulo opaco - favicon, ícone de app, imagem de compartilhamento.
  */
 
 type BrandVariant = 'orange' | 'white' | 'asphalt' | 'chrome' | 'duo';
 
-/** Grafite da marca. Um só valor para símbolo e palavra — se divergissem, a
+/** Grafite da marca. Um só valor para símbolo e palavra - se divergissem, a
  *  assinatura mostraria dois pretos ligeiramente diferentes lado a lado. */
 const INK = '#26262B';
 
@@ -23,12 +23,12 @@ const COLORS: Record<Exclude<BrandVariant, 'duo'>, string> = {
   orange: 'var(--accent)', // assinatura/ponto focal
   white: '#FFFFFF', // sobre superfícies escuras
   asphalt: INK, // sobre superfícies claras
-  chrome: '#C9CDD3', // detalhe premium — usar com moderação
+  chrome: '#C9CDD3', // detalhe premium - usar com moderação
 };
 
 // ─── Geometria da marca ──────────────────────────────────────────────────────
 // Grade de 100 × 106: barra 28 de altura, respiro 11, barra do meio a 70% da
-// largura. Mexer nestes números muda a marca — não são valores de layout.
+// largura. Mexer nestes números muda a marca - não são valores de layout.
 const BAR = 28;
 const GAP = 11;
 const LONG = 100;
@@ -61,7 +61,7 @@ function Bars({ variant }: { variant: BrandVariant }) {
 
 interface BrandMarkProps {
   variant?: BrandVariant;
-  /** Altura em px — a largura acompanha a proporção da marca (100 : 106). */
+  /** Altura em px - a largura acompanha a proporção da marca (100 : 106). */
   size?: number;
   /** Brilho sutil (usado nos pontos de destaque: rail e login). */
   glow?: boolean;
@@ -90,7 +90,7 @@ export function BrandMark({ variant = 'orange', size = 24, glow = false, classNa
 // ─── Assinatura completa (símbolo + "IXO") ───────────────────────────────────
 // O símbolo É o E da palavra: a assinatura não repete a letra, continua dela.
 const I_X = 140; // respiro entre o símbolo e a palavra
-const I_W = 27; // espessura da haste — a mesma das barras, para a palavra "pesar" igual
+const I_W = 27; // espessura da haste - a mesma das barras, para a palavra "pesar" igual
 const X_X = 191;
 const X_W = 84;
 const O_X = 299;
@@ -133,7 +133,7 @@ export function BrandLogo({
     >
       <Bars variant={markVariant} />
       <rect x={I_X} y="0" width={I_W} height={MARK_H} style={{ fill: word }} />
-      {/* X: dois paralelogramos cruzados — mesma espessura da haste do I */}
+      {/* X: dois paralelogramos cruzados - mesma espessura da haste do I */}
       <polygon
         points={`${X_X},0 ${X_X + I_W},0 ${X_X + X_W},${MARK_H} ${X_X + X_W - I_W},${MARK_H}`}
         style={{ fill: word }}

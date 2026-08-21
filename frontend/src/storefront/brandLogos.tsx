@@ -2,7 +2,7 @@
  * Emblemas das marcas para a faixa de seleção da vitrine.
  *
  * São interpretações geométricas simplificadas, desenhadas em SVG monocromático
- * (herdam currentColor) — nada de arquivo externo: a vitrine não faz requisição
+ * (herdam currentColor) - nada de arquivo externo: a vitrine não faz requisição
  * a terceiros e o traço acompanha o tema claro/escuro sem versão dupla.
  * Marca sem emblema conhecido cai no monograma tipográfico.
  *

@@ -8,7 +8,7 @@ import * as vehicles from './vehicles.service';
 /**
  * Módulo de Estoque. Leitura para autenticados; escrita restrita a ADMIN (lojista).
  * Toda operação é escopada por `req.account` (populado pelo guard de tenant em
- * app.ts) — o estoque de uma loja nunca é visível para outra.
+ * app.ts) - o estoque de uma loja nunca é visível para outra.
  */
 export const vehiclesRouter = Router();
 vehiclesRouter.use(authenticate);

@@ -30,7 +30,7 @@ const SECTION_LABELS: Record<keyof StorefrontConfig['sections'], string> = {
   contact: 'Contato',
 };
 
-/** Lê o arquivo escolhido como data URL — mesmo caminho usado nas fotos do estoque. */
+/** Lê o arquivo escolhido como data URL - mesmo caminho usado nas fotos do estoque. */
 function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -372,7 +372,7 @@ export function StorefrontConfigPage() {
 
             <h3 style={{ marginTop: 24 }}>Simulação de financiamento</h3>
             <p className="muted small">
-              Usada na parcela estimada dos cards e no simulador da vitrine. É referência comercial — a proposta real
+              Usada na parcela estimada dos cards e no simulador da vitrine. É referência comercial - a proposta real
               sai da análise do banco.
             </p>
             <div className="field-row">
@@ -586,7 +586,7 @@ export function StorefrontConfigPage() {
               </div>
             </div>
             <p className="muted small">
-              Despublicada, a vitrine responde como inexistente para qualquer visitante — o estoque continua intacto no
+              Despublicada, a vitrine responde como inexistente para qualquer visitante - o estoque continua intacto no
               CRM. Só veículos com status <strong>Disponível</strong> ou <strong>Reservado</strong> e marcados como
               "exibir na vitrine" aparecem no site.
             </p>

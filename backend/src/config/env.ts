@@ -59,7 +59,7 @@ export const env = {
     siteChatPollPerMinute: toInt(process.env.RATE_LIMIT_SITE_CHAT_POLL_PER_MIN, 60),
   },
 
-  // Janela de retenção (LGPD — expurgo). Ver scripts/purge.ts.
+  // Janela de retenção (LGPD - expurgo). Ver scripts/purge.ts.
   retention: {
     webhookEventDays: toInt(process.env.RETENTION_WEBHOOK_EVENT_DAYS, 90),
     creditQueryDays: toInt(process.env.RETENTION_CREDIT_QUERY_DAYS, 365),
@@ -75,24 +75,24 @@ export const env = {
   },
 
   /**
-   * Host público desta própria API — usado para montar a URL ABSOLUTA das
+   * Host público desta própria API - usado para montar a URL ABSOLUTA das
    * imagens enviadas (logo/hero da vitrine, fotos de veículo). Necessário
    * porque em produção o front (Cloudflare Workers) e a API (Render) vivem em
    * domínios diferentes: uma URL relativa como "/uploads/..." resolve contra
-   * a origem da página que a exibe, não contra quem guarda o arquivo — a
+   * a origem da página que a exibe, não contra quem guarda o arquivo - a
    * imagem carrega em dev (o proxy do Vite cobre o mesmo host) e quebra em
    * produção. Ver lib/storage.ts.
    */
   apiPublicUrl: (process.env.API_PUBLIC_URL ?? 'http://localhost:3001').replace(/\/+$/, ''),
 
   /**
-   * Host público do serviço de webhooks — usado só para MONTAR a URL que o
+   * Host público do serviço de webhooks - usado só para MONTAR a URL que o
    * lojista cola no painel da plataforma (`/webhooks/:platform/:webhookKey`).
    *
    * Os segredos de webhook não moram mais aqui: cada conta tem o seu, cifrado
    * em `integrations.inboundSecret`. As antigas OLX_WEBHOOK_TOKEN,
    * MERCADOLIVRE_WEBHOOK_SECRET e WEBMOTORS_WEBHOOK_TOKEN eram únicas para toda
-   * a instalação — qualquer lojista podia forjar lead no funil de outro.
+   * a instalação - qualquer lojista podia forjar lead no funil de outro.
    */
   webhookPublicUrl: process.env.WEBHOOK_PUBLIC_URL ?? 'http://localhost:3002',
 
@@ -117,7 +117,7 @@ export const aiEnabled = () => Boolean(env.ai.apiKey);
  *
  * Cada vitrine de loja mora em um subdomínio próprio (washington.eixo.com.br) e
  * consome esta mesma API, então CORS_ORIGIN aceita entradas com curinga de
- * subdomínio — `https://*.eixo.com.br`. O curinga cobre UM nível de rótulo e
+ * subdomínio - `https://*.eixo.com.br`. O curinga cobre UM nível de rótulo e
  * não vale para o domínio nu, que precisa ser listado à parte se for usado.
  */
 export function isAllowedOrigin(origin: string): boolean {

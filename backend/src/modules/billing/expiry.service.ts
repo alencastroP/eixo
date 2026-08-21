@@ -1,10 +1,10 @@
 /**
- * Expiração automática de trials (rode via cron — ver scripts/expire-trials.ts).
+ * Expiração automática de trials (rode via cron - ver scripts/expire-trials.ts).
  *
  * - Contas TRIAL vencidas (`trialEndsAt < agora`) → status EXPIRED (dados NÃO são
  *   apagados; apenas o acesso é bloqueado pelo guard/login).
  * - Aviso de pré-expiração: contas que vencem nos próximos N dias e ainda não
- *   foram avisadas recebem uma notificação (stub de e-mail — plugar SMTP depois).
+ *   foram avisadas recebem uma notificação (stub de e-mail - plugar SMTP depois).
  */
 import { AccountStatus, SubscriptionStatus } from '@prisma/client';
 import { logger } from '../../lib/logger';
@@ -33,7 +33,7 @@ export async function runTrialExpiry(): Promise<ExpiryReport> {
         data: { status: SubscriptionStatus.EXPIRED },
       }),
     ]);
-    logger.info('trial expirado — acesso bloqueado (dados preservados)', { accountId: acc.id });
+    logger.info('trial expirado - acesso bloqueado (dados preservados)', { accountId: acc.id });
   }
 
   // 2) aviso de pré-expiração (1–2 dias antes)

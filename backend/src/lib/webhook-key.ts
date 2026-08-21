@@ -6,7 +6,7 @@ import { randomBytes } from 'node:crypto';
  * São duas coisas distintas, de propósito:
  *
  *  - `webhookKey` ROTEIA. Vai na URL (`/webhooks/olx/wh_a1b2...`) e só responde
- *    "de qual loja é este lead". Não autentica nada, então não é segredo — o
+ *    "de qual loja é este lead". Não autentica nada, então não é segredo - o
  *    lojista pode colar essa URL no painel da plataforma sem receio.
  *
  *  - `inboundSecret` AUTENTICA. Vai no header (token) ou assina o corpo (HMAC),

@@ -1,8 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   EIXO · DESIGN SYSTEM — CAMADA DE FUNDAÇÃO
+   EIXO · DESIGN SYSTEM - CAMADA DE FUNDAÇÃO
    ───────────────────────────────────────────────────────────────────────────
    Carregada DEPOIS de styles.css: a paleta continua vindo de lá (os tokens de
-   cor já são os do sistema), e aqui entram as regras que faltavam —
+   cor já são os do sistema), e aqui entram as regras que faltavam -
    tipografia, ritmo, matéria (luz/textura), movimento e alvos de toque.
 
    Ordem de força da matéria, sempre nesta sequência:
@@ -17,7 +17,7 @@
   --font-sans: 'Archivo', 'Helvetica Neue', Helvetica, system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
-  /* escala de texto — aplicação concreta do sistema nas telas do produto */
+  /* escala de texto - aplicação concreta do sistema nas telas do produto */
   --fs-display: clamp(20px, 2.6vw, 27px); /* título da tela */
   --fs-panel: 14.5px; /* título de painel */
   --fs-form: 15px; /* corpo e formulário */
@@ -26,7 +26,7 @@
   --fs-label: 10px; /* rótulo mono em caixa alta */
   --ls-label: 0.22em;
 
-  /* espaço — base 4 */
+  /* espaço - base 4 */
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
@@ -50,7 +50,7 @@
   --tap: 44px;
 }
 
-/* matéria — dark (padrão) */
+/* matéria - dark (padrão) */
 :root,
 :root[data-theme='dark'] {
   --surface-top: linear-gradient(180deg, var(--surface-2), var(--surface));
@@ -63,7 +63,7 @@
   --shadow-lift: 0 14px 34px rgb(0 0 0 / 0.45);
 }
 
-/* matéria — light: a luz continua vindo de cima, mas branca sobre branco */
+/* matéria - light: a luz continua vindo de cima, mas branca sobre branco */
 :root[data-theme='light'] {
   --surface-top: linear-gradient(180deg, #ffffff, #fafbfc);
   --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.9);
@@ -90,7 +90,7 @@ h3 {
   letter-spacing: -0.015em;
 }
 
-/* Rótulo do sistema: mono, caixa alta, tracking largo — nunca negrito pesado */
+/* Rótulo do sistema: mono, caixa alta, tracking largo - nunca negrito pesado */
 .ds-label,
 .page-header-eyebrow,
 .fin-kpi-label,
@@ -325,7 +325,7 @@ h3 {
   }
 }
 
-/* entrada de bloco — cascata de 45ms, no máximo 6 passos */
+/* entrada de bloco - cascata de 45ms, no máximo 6 passos */
 @media (prefers-reduced-motion: no-preference) {
   .dash > .panel,
   .dash > .card,
@@ -417,7 +417,7 @@ h3 {
 
 /* ═══ 7 · COMPONENTES ═════════════════════════════════════════════════════ */
 
-/* ── Foco: sempre azul, 3px. Nunca laranja — laranja é ação. ── */
+/* ── Foco: sempre azul, 3px. Nunca laranja - laranja é ação. ── */
 :focus-visible {
   outline: 3px solid color-mix(in srgb, var(--info) 45%, transparent);
   outline-offset: 1px;
@@ -474,7 +474,7 @@ textarea:focus {
   width: 32px;
   height: 32px;
 }
-/* mora dentro do recuo de 34px do cartão de filtro — não pode crescer */
+/* mora dentro do recuo de 34px do cartão de filtro - não pode crescer */
 .report-filter-del {
   width: 26px;
   height: 26px;
@@ -531,7 +531,7 @@ textarea {
   padding: 6px 10px;
   font-size: var(--fs-sm);
 }
-/* Rótulo de campo costuma ser longo — mantém a forma do sistema (mono, caixa
+/* Rótulo de campo costuma ser longo - mantém a forma do sistema (mono, caixa
    alta) com tracking menor, senão quebra em duas linhas no painel estreito. */
 .field > span {
   font-family: var(--font-mono);
@@ -666,7 +666,7 @@ textarea {
 /* ── Shell ──────────────────────────────────────────────────────────────── */
 /* A faixa de trial é irmã da tela dentro de .app-content, que é flex. Em
    linha ela virava uma coluna estreita ao lado do conteúdo; o certo é
-   empilhar — faixa em cima, tela ocupando o resto da altura. */
+   empilhar - faixa em cima, tela ocupando o resto da altura. */
 .app-content {
   flex-direction: column;
 }
@@ -1026,7 +1026,7 @@ textarea {
 }
 
 /* ── Financeiro ─────────────────────────────────────────────────────────── */
-/* O KPI se identifica pela borda superior — a lateral competia com a tabela. */
+/* O KPI se identifica pela borda superior - a lateral competia com a tabela. */
 .fin-kpi::before {
   inset: 0 0 auto 0;
   width: auto;
@@ -1055,7 +1055,7 @@ textarea {
   flex-shrink: 0;
 }
 
-/* Filtro é pílula — mesma forma no desktop e no trilho rolável do celular. */
+/* Filtro é pílula - mesma forma no desktop e no trilho rolável do celular. */
 .fin-filters select {
   min-height: 38px;
   padding: 0 14px;
@@ -1115,7 +1115,7 @@ textarea {
 /* ═══ 10 · CABEÇALHO, PREENCHIMENTOS E LARGURA ════════════════════════════ */
 
 /* ── Cabeçalho de módulo: mesma luz em todos ─────────────────────────────
-   O cabeçalho clareia no topo e se dissolve até a cor de quem está atrás —
+   O cabeçalho clareia no topo e se dissolve até a cor de quem está atrás -
    como o gradiente sangra até a borda da tela, cada container declara o
    próprio recuo em --page-pad-*, e o cabeçalho o desconta em margem. */
 .dash {
@@ -1151,7 +1151,7 @@ textarea {
 .copilot-head {
   background-image: linear-gradient(180deg, var(--header-sheen), transparent);
 }
-/* A conversa tem corpo na cor da página, não na do painel — aqui o gradiente
+/* A conversa tem corpo na cor da página, não na do painel - aqui o gradiente
    sai da superfície e desce até o fundo, sem degrau na divisa. */
 .conv-header {
   background-color: transparent;
@@ -1160,7 +1160,7 @@ textarea {
 
 /* ── Preenchimento de ação: laranja com luz no topo ──────────────────────
    Todo controle que se preenche de laranja usa o mesmo corpo do botão
-   primário — gradiente, luz interna e brilho curto. */
+   primário - gradiente, luz interna e brilho curto. */
 .btn-primary,
 .segmented button.active,
 .view-chip.active,
@@ -1264,7 +1264,7 @@ textarea {
 .credit-search-wrap {
   max-width: none;
 }
-/* a linha do documento continua com medida de leitura — o painel é que cresce */
+/* a linha do documento continua com medida de leitura - o painel é que cresce */
 .credit-search-row {
   max-width: 560px;
   margin-inline: auto;

@@ -15,7 +15,7 @@ const searchSchema = z.object({
   limit: z.coerce.number().int().min(1).max(20).default(10),
 });
 
-/** Busca de leads por nome/telefone/e-mail — usada para vincular consultas de crédito. */
+/** Busca de leads por nome/telefone/e-mail - usada para vincular consultas de crédito. */
 leadsRouter.get(
   '/',
   ah(async (req, res) => {
@@ -44,7 +44,7 @@ leadsRouter.get(
 );
 
 /**
- * LGPD — direito de acesso e portabilidade (art. 18, II e V): exporta TODOS os
+ * LGPD - direito de acesso e portabilidade (art. 18, II e V): exporta TODOS os
  * dados pessoais mantidos sobre um titular, em formato estruturado e legível
  * por máquina (JSON). Inclui identificação, contatos, tickets, histórico de
  * mensagens e consultas de crédito vinculadas.
@@ -109,7 +109,7 @@ leadsRouter.get(
 );
 
 /**
- * LGPD — direito ao esquecimento (art. 18): anonimiza os dados pessoais do lead.
+ * LGPD - direito ao esquecimento (art. 18): anonimiza os dados pessoais do lead.
  * Mantém o ticket e as métricas (número, status, tempos), mas remove o vínculo
  * com a pessoa: identificação, contatos, conteúdo das mensagens recebidas e os
  * payloads brutos de webhook associados.
@@ -141,7 +141,7 @@ leadsRouter.post(
       if (ticketIds.length > 0) {
         await tx.ticketInteraction.updateMany({
           where: { ticketId: { in: ticketIds }, type: 'CUSTOMER_MESSAGE' },
-          data: { body: '[conteúdo removido a pedido do titular — LGPD]', metadata: { anonymized: true } },
+          data: { body: '[conteúdo removido a pedido do titular - LGPD]', metadata: { anonymized: true } },
         });
         await tx.webhookEvent.updateMany({
           where: { ticketId: { in: ticketIds } },

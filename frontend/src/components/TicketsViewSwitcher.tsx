@@ -24,7 +24,7 @@ interface Props {
 
 /**
  * Título "Caixa de entrada" que também é o seletor de submódulo do Atendimento.
- * O Kanban não tem entrada própria na navegação — só se chega a ele por aqui,
+ * O Kanban não tem entrada própria na navegação - só se chega a ele por aqui,
  * e a Caixa de entrada é sempre o ponto de partida (link do rail aponta só
  * para /tickets).
  */

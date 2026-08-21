@@ -27,7 +27,7 @@ export function ReportsPage() {
   const [activeId, setActiveId] = useState(() => reports[0].id);
   /** null = modal fechado; 'new' = criando; SavedReport = editando esse relatório. */
   const [formTarget, setFormTarget] = useState<'new' | SavedReport | null>(null);
-  /** Passo inicial do drill down (valor clicado) — null = modal fechado. */
+  /** Passo inicial do drill down (valor clicado) - null = modal fechado. */
   const [drillStep, setDrillStep] = useState<DrillStep | null>(null);
 
   const active = reports.find((r) => r.id === activeId) ?? reports[0];
@@ -56,7 +56,7 @@ export function ReportsPage() {
   const patchConfig = (patch: Partial<ReportConfig>) => updateActive(patch);
 
   const selectReport = (id: string) => setActiveId(id);
-  /** Cria (id novo) ou substitui (id existente) — o mesmo modal serve para os dois fluxos. */
+  /** Cria (id novo) ou substitui (id existente) - o mesmo modal serve para os dois fluxos. */
   const saveReport = (report: SavedReport) => {
     setReports((rs) => (rs.some((r) => r.id === report.id) ? rs.map((r) => (r.id === report.id ? report : r)) : [...rs, report]));
     setActiveId(report.id);

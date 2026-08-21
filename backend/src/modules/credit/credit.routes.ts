@@ -5,7 +5,7 @@ import { currentUser } from '../../lib/current-user';
 import { ah } from '../../lib/errors';
 import * as credit from './credit.service';
 
-/** Módulo de Análise de Crédito — disponível a qualquer usuário autenticado (vendedor/gerente). */
+/** Módulo de Análise de Crédito - disponível a qualquer usuário autenticado (vendedor/gerente). */
 export const creditRouter = Router();
 creditRouter.use(authenticate);
 

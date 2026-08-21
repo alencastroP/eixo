@@ -15,7 +15,7 @@ interface Props {
   onChanged?: (detail: VehicleDetail) => void;
 }
 
-/** Histórico de gastos do veículo — listagem + inclusão (afeta a margem). */
+/** Histórico de gastos do veículo - listagem + inclusão (afeta a margem). */
 export function VehicleCostsModal({ vehicleId, title, canEdit, onClose, onChanged }: Props) {
   const [detail, setDetail] = useState<VehicleDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,12 +82,12 @@ export function VehicleCostsModal({ vehicleId, title, canEdit, onClose, onChange
                 </div>
                 <div>
                   <span className="muted small">Custo de compra</span>
-                  <strong>{formatBRL(detail.costPrice) ?? '—'}</strong>
+                  <strong>{formatBRL(detail.costPrice) ?? '-'}</strong>
                 </div>
                 <div>
                   <span className="muted small">Margem estimada</span>
                   <strong className={detail.margin != null && detail.margin < 0 ? 'danger' : 'success'}>
-                    {formatBRL(detail.margin) ?? '—'}
+                    {formatBRL(detail.margin) ?? '-'}
                   </strong>
                 </div>
               </div>

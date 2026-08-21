@@ -1,10 +1,10 @@
 export function formatDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 export function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -16,7 +16,7 @@ export function formatDateTime(iso: string | null | undefined): string {
 
 /** "agora", "há 5 min", "há 3 h", "há 2 d" */
 export function timeAgo(iso: string | null | undefined): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
   if (seconds < 60) return 'agora';
   if (seconds < 3600) return `há ${Math.floor(seconds / 60)} min`;
@@ -44,9 +44,9 @@ export function formatPercent(ratio: number, digits = 0): string {
   return `${(ratio * 100).toFixed(digits)}%`;
 }
 
-/** Duração compacta para KPIs: "12min", "1h 5min", "45s". null → "—". */
+/** Duração compacta para KPIs: "12min", "1h 5min", "45s". null → "-". */
 export function formatDurationShort(totalSeconds: number | null): string {
-  if (totalSeconds === null) return '—';
+  if (totalSeconds === null) return '-';
   return formatDuration(totalSeconds);
 }
 
@@ -89,7 +89,7 @@ export function initials(name: string): string {
 
 const AVATAR_COLORS = ['#f59e0b', '#0ea5e9', '#8b5cf6', '#10b981', '#e11d48', '#f97316', '#2563eb', '#c026d3'];
 
-/** Cor estável derivada do nome — avatares coloridos estilo Intercom. */
+/** Cor estável derivada do nome - avatares coloridos estilo Intercom. */
 export function avatarColor(name: string): string {
   let hash = 0;
   for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) | 0;

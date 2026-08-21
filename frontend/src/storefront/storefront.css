@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   VITRINE PÚBLICA — folha de estilo independente do CRM.
+   VITRINE PÚBLICA - folha de estilo independente do CRM.
 
    Linguagem visual "editorial": papel (#f3f1ec) e tinta (#101013), cantos
    retos, Archivo para texto e JetBrains Mono para dados (ano, km, preço,
@@ -56,7 +56,7 @@
   overflow-x: clip;
 }
 
-/* Variante escura: o miolo também vira tinta. Cabeçalho/rodapé não mudam —
+/* Variante escura: o miolo também vira tinta. Cabeçalho/rodapé não mudam -
    já são escuros no desenho base. */
 .sf[data-sf-theme='dark'] {
   --sf-paper: #0e0e11;
@@ -677,7 +677,7 @@ textarea.sf-field { min-height: 96px; resize: vertical; font-family: inherit; }
    Padrão de messenger consagrado (Intercom & cia.): launcher redondo fixo que
    vira "X" ao abrir, painel flutuante com cantos arredondados, bolhas de
    conversa e composer sem molduras. É deliberadamente MAIS ARREDONDADO que o
-   resto da vitrine — um widget sobreposto, com linguagem própria, é o que o
+   resto da vitrine - um widget sobreposto, com linguagem própria, é o que o
    visitante já reconhece como "chat".
    ═══════════════════════════════════════════════════════════════════════════ */
 

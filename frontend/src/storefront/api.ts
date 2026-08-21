@@ -12,7 +12,7 @@ import type {
 
 /**
  * Cliente HTTP da vitrine. Deliberadamente separado de api/client.ts: aqui não
- * existe sessão, token nem refresh — o visitante é anônimo, e um 401 do CRM
+ * existe sessão, token nem refresh - o visitante é anônimo, e um 401 do CRM
  * jamais deve derrubar (ou tentar renovar) nada nesta página.
  */
 const BASE = import.meta.env.VITE_API_URL ?? '/api';
@@ -68,7 +68,7 @@ export const siteApi = {
   chat: (slug: string, input: ChatInput) => post<ChatReply>(`/${slug}/chat`, input),
 
   /**
-   * Novas mensagens da loja desde `after`. Sem `after` volta o histórico —
+   * Novas mensagens da loja desde `after`. Sem `after` volta o histórico -
    * é assim que a conversa reaparece depois de um reload da página.
    */
   chatMessages: (slug: string, token: string, after?: string) =>

@@ -5,7 +5,7 @@
  *
  * Diferente de `npm run seed`, que existe para desenvolvimento e grava senhas
  * fixas e públicas (Admin@123), este script gera uma senha forte aleatória e a
- * imprime UMA ÚNICA VEZ, no terminal de quem executou — ela não fica em disco,
+ * imprime UMA ÚNICA VEZ, no terminal de quem executou - ela não fica em disco,
  * nem no banco em texto claro, nem no histórico do repositório.
  *
  * Idempotente: rodar de novo com o mesmo e-mail apenas redefine a senha.

@@ -7,7 +7,7 @@ import { saveImageDataUrl } from '../../lib/storage';
 import * as storefront from './storefront.service';
 
 /**
- * Configuração da vitrine, dentro do CRM. Montada sob o guard de tenant —
+ * Configuração da vitrine, dentro do CRM. Montada sob o guard de tenant -
  * a conta vem de `req.account`, nunca do corpo da requisição.
  * Leitura para autenticados; escrita restrita a ADMIN (o lojista).
  */

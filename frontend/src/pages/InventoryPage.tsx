@@ -217,7 +217,7 @@ export function InventoryPage() {
                 <h3 className="veh-title">
                   {v.brand} {v.model}
                 </h3>
-                <span className="veh-price">{formatBRL(v.salePrice) ?? '—'}</span>
+                <span className="veh-price">{formatBRL(v.salePrice) ?? '-'}</span>
               </div>
               <div className="veh-version">{v.version ?? VEHICLE_TYPE_LABELS[v.type]}</div>
               <div className="veh-specs">

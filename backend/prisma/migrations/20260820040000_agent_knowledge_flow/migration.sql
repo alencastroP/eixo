@@ -1,13 +1,13 @@
 -- Agente ajustável por loja (persona + base de conhecimento) e motor de fluxo.
 --
 -- Três capacidades novas, todas por conta:
---   1. agent_profiles  — persona, regras comerciais e quais ferramentas o agente tem;
---   2. knowledge_docs  — base de conhecimento da loja (garantia, financiamento, troca);
---   3. flow_policies   — tempos de follow-up, janela de silêncio e encerramento.
+--   1. agent_profiles  - persona, regras comerciais e quais ferramentas o agente tem;
+--   2. knowledge_docs  - base de conhecimento da loja (garantia, financiamento, troca);
+--   3. flow_policies   - tempos de follow-up, janela de silêncio e encerramento.
 --
 -- Aditiva: nada é reescrito e nenhuma linha existente muda de significado. Os
 -- tickets nascem com nextActionAt NULL, ou seja, fora do motor de fluxo até que
--- a loja ligue a política — que também nasce desligada (ver DEFAULT false).
+-- a loja ligue a política - que também nasce desligada (ver DEFAULT false).
 
 -- ─── 1. Persona do agente ───────────────────────────────────────────────────
 CREATE TABLE "agent_profiles" (

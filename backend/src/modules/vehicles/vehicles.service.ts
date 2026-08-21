@@ -105,7 +105,7 @@ export interface ListVehiclesParams {
 
 /**
  * Todas as consultas do estoque são escopadas pela conta (tenant). O
- * `accountId` vem sempre de `req.account` (guard de tenant), nunca do cliente —
+ * `accountId` vem sempre de `req.account` (guard de tenant), nunca do cliente -
  * é o que impede uma loja de ler ou alterar o pátio de outra.
  */
 export async function listVehicles(accountId: string, params: ListVehiclesParams) {
@@ -221,7 +221,7 @@ function toData(input: VehicleInput): Omit<Prisma.VehicleUncheckedCreateInput, '
   };
 }
 
-/** Placa é única DENTRO da conta — duas lojas podem ter cadastrado o mesmo carro. */
+/** Placa é única DENTRO da conta - duas lojas podem ter cadastrado o mesmo carro. */
 async function assertPlateFree(accountId: string, plate: string | null | undefined, ignoreId?: string) {
   if (!plate) return;
   const existing = await prisma.vehicle.findFirst({
@@ -362,7 +362,7 @@ export async function deleteCost(accountId: string, vehicleId: string, costId: s
   return getVehicle(accountId, vehicleId);
 }
 
-// ─── Consulta de placa (mock — integrará com API de placas no futuro) ────────
+// ─── Consulta de placa (mock - integrará com API de placas no futuro) ────────
 
 const PLATE_MOCK: Array<Partial<VehicleInput> & { fipePrice: number }> = [
   { brand: 'Honda', model: 'Civic', version: 'EXL 2.0 CVT', yearFabrication: 2020, yearModel: 2020, color: 'Prata', fuel: 'Flex', fipePrice: 112900 },

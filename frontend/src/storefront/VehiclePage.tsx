@@ -84,7 +84,7 @@ export function VehiclePage() {
             {current ? (
               <img src={current.url} alt={title} />
             ) : (
-              <span className="sf-card-placeholder">foto em breve — peça pelo WhatsApp</span>
+              <span className="sf-card-placeholder">foto em breve - peça pelo WhatsApp</span>
             )}
             {vehicle.reserved && <span className="sf-tag sf-tag-accent">Reservado</span>}
             {photos.length > 1 && (

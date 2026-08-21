@@ -1,4 +1,4 @@
-/** Ícones da vitrine — SVG inline (nenhuma dependência externa, herdam currentColor). */
+/** Ícones da vitrine - SVG inline (nenhuma dependência externa, herdam currentColor). */
 import type { SVGProps } from 'react';
 
 type IconProps = SVGProps<SVGSVGElement> & { size?: number };
@@ -206,7 +206,7 @@ export const FacebookIcon = ({ size = 18, ...rest }: IconProps) => (
   </svg>
 );
 
-/** Ícone dos cards de diferencial — a chave vem da configuração da loja. */
+/** Ícone dos cards de diferencial - a chave vem da configuração da loja. */
 const HIGHLIGHT_ICONS: Record<string, (p: IconProps) => JSX.Element> = {
   shield: ShieldIcon,
   wallet: WalletIcon,

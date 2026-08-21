@@ -1,18 +1,18 @@
-# Blueprint do Render — dois serviços a partir da mesma imagem Docker
+# Blueprint do Render - dois serviços a partir da mesma imagem Docker
 # (backend/Dockerfile), cada um rodando um processo diferente do backend.
 #
 # Uso: no painel do Render, "New" → "Blueprint" → aponte para este repositório.
 # Depois de aplicar, preencha no dashboard as env vars marcadas com `sync: false`
 # (segredos externos: connection string do Neon, chave da Anthropic, tokens de
-# webhook) — elas não ficam versionadas aqui.
+# webhook) - elas não ficam versionadas aqui.
 #
 # Compartilhamento de segredos entre os serviços: o eixo-crm-api é a fonte
 # (gera/recebe os valores) e o eixo-crm-webhooks os puxa via `fromService`. Env var
 # groups NÃO servem aqui porque o spec do Render proíbe `sync: false` e
-# `generateValue` dentro de grupos — só aceitam valores literais.
+# `generateValue` dentro de grupos - só aceitam valores literais.
 
 services:
-  # ─── API principal (autenticada) — FONTE dos segredos compartilhados ─────
+  # ─── API principal (autenticada) - FONTE dos segredos compartilhados ─────
   - type: web
     name: eixo-crm-api
     runtime: docker
@@ -21,7 +21,7 @@ services:
     plan: free
     healthCheckPath: /health
     # roda as migrations pendentes antes de subir o processo. `migrate deploy`
-    # usa lock consultivo no Postgres — seguro mesmo se os dois serviços
+    # usa lock consultivo no Postgres - seguro mesmo se os dois serviços
     # reiniciarem ao mesmo tempo.
     # ATENÇÃO: sem aspas nem `&&` aqui. O Render quebra o dockerCommand em
     # tokens sem interpretar shell, então `sh -c "a && b"` faz o sh receber
@@ -40,7 +40,7 @@ services:
       - key: DIRECT_URL
         sync: false
       # Gerados uma vez pelo Render, aqui. O eixo-crm-webhooks puxa os MESMOS
-      # valores via fromService — CREDENTIALS_SECRET precisa bater entre os
+      # valores via fromService - CREDENTIALS_SECRET precisa bater entre os
       # dois (cifra credenciais de integração no banco); JWT/pepper são
       # exigidos no boot dos dois processos (config/env.ts os lê sempre).
       - key: JWT_ACCESS_SECRET
@@ -49,13 +49,13 @@ services:
         generateValue: true
       - key: TRIAL_CPF_PEPPER
         generateValue: true
-      # URLs públicas do frontend — libera CORS. Não é segredo, por isso vai
+      # URLs públicas do frontend - libera CORS. Não é segredo, por isso vai
       # literal. Ao publicar as vitrines em subdomínio próprio, acrescente o
       # curinga do domínio (ex.: ",https://*.eixo.com.br"): cada loja é um host
       # diferente chamando esta mesma API.
       - key: CORS_ORIGIN
         value: https://eixo.pedrovalencastro.workers.dev
-      # Host público desta própria API — usado para montar a URL absoluta das
+      # Host público desta própria API - usado para montar a URL absoluta das
       # imagens enviadas (logo/hero da vitrine, fotos de veículo). Front e API
       # vivem em domínios diferentes (Cloudflare Workers vs Render); sem isso
       # as imagens são salvas com URL relativa, que resolve contra o domínio
@@ -80,7 +80,7 @@ services:
       - key: JWT_REFRESH_TTL_DAYS
         value: "7"
       # Sem esta chave, o Co-Piloto de IA fica indisponível (atendimento
-      # segue 100% humano) — não é bloqueante para o deploy.
+      # segue 100% humano) - não é bloqueante para o deploy.
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: ANTHROPIC_MODEL
@@ -119,7 +119,7 @@ services:
       - key: NODE_ENV
         value: production
       # o Render roteia tráfego pela var PORT (senão assume 10000); o app só
-      # abre a porta lida em WEBHOOK_PORT — as duas precisam apontar pro
+      # abre a porta lida em WEBHOOK_PORT - as duas precisam apontar pro
       # mesmo valor para o roteamento bater com onde o processo escuta.
       - key: PORT
         value: "3002"
@@ -167,7 +167,7 @@ services:
       # no banco (integrations.inboundSecret). Um segredo único no ambiente
       # significava que qualquer lojista podia forjar lead no funil de outro.
       #
-      # Host público deste serviço — usado só para montar a URL que o lojista
+      # Host público deste serviço - usado só para montar a URL que o lojista
       # cola no painel da plataforma. Deve bater com a URL real do serviço.
       - key: WEBHOOK_PUBLIC_URL
         value: https://eixo-crm-webhooks.onrender.com

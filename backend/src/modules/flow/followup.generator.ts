@@ -29,7 +29,7 @@ function getClient(): Anthropic | null {
 const TEMPLATES = [
   'Oi! Passando para saber se ficou alguma dúvida sobre o que conversamos. Estou por aqui. 🙂',
   'Olá! Se quiser, posso te mostrar outras opções parecidas que temos disponíveis. É só me dizer.',
-  'Oi! Vou deixar seu atendimento em pausa por aqui, mas é só me chamar quando quiser retomar — fica tudo salvo.',
+  'Oi! Vou deixar seu atendimento em pausa por aqui, mas é só me chamar quando quiser retomar - fica tudo salvo.',
 ];
 
 function templateFor(attempt: number): string {
@@ -55,7 +55,7 @@ async function recentTranscript(ticketId: string, limit = 8): Promise<string> {
 }
 
 /**
- * Gera a mensagem. Devolve null se não houver o que enviar — nesse caso o
+ * Gera a mensagem. Devolve null se não houver o que enviar - nesse caso o
  * worker não manda nada, em vez de enviar um texto genérico ruim.
  */
 export async function generateFollowUp(

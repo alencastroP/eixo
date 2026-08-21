@@ -82,7 +82,7 @@ export function DrillModal({
             <div>
               <h2>Detalhamento · {current.value}</h2>
               <span className="drill-modal-sub">
-                {module.label} — agrupado por <strong>{effDimField?.label}</strong>
+                {module.label} - agrupado por <strong>{effDimField?.label}</strong>
               </span>
             </div>
           </div>

@@ -84,7 +84,7 @@ export function CashFlowTab() {
             </span>
           </div>
           <span className={`fin-kpi-value ${summary && summary.balance >= 0 ? 'pos' : 'neg'}`}>
-            {summary ? formatBRL(summary.balance) : '—'}
+            {summary ? formatBRL(summary.balance) : '-'}
           </span>
           <span className="fin-kpi-sub">entradas − saídas efetivadas</span>
         </div>
@@ -95,7 +95,7 @@ export function CashFlowTab() {
               <ArrowDownIcon size={16} />
             </span>
           </div>
-          <span className="fin-kpi-value info">{summary ? formatBRL(summary.receivableMonth) : '—'}</span>
+          <span className="fin-kpi-value info">{summary ? formatBRL(summary.receivableMonth) : '-'}</span>
           <span className="fin-kpi-sub">faturamento previsto</span>
         </div>
         <div className="fin-kpi kpi-out">
@@ -105,7 +105,7 @@ export function CashFlowTab() {
               <ArrowUpIcon size={16} />
             </span>
           </div>
-          <span className="fin-kpi-value warn">{summary ? formatBRL(summary.payableMonth) : '—'}</span>
+          <span className="fin-kpi-value warn">{summary ? formatBRL(summary.payableMonth) : '-'}</span>
           <span className="fin-kpi-sub">
             {summary && summary.overdueCount > 0 ? (
               <span className="fin-kpi-alert">
@@ -174,7 +174,7 @@ export function CashFlowTab() {
                   {e.category}
                 </td>
                 <td className="muted" data-label="Veículo">
-                  {e.vehicle ? `${e.vehicle.brand} ${e.vehicle.model}` : '—'}
+                  {e.vehicle ? `${e.vehicle.brand} ${e.vehicle.model}` : '-'}
                 </td>
                 <td data-label="Vencimento" className="ds-num">
                   {formatDate(e.dueDate)}

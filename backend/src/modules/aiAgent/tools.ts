@@ -18,7 +18,7 @@ const toJson = (value: unknown) => value as Prisma.InputJsonValue;
 // usá-la: o modelo não pode chamar o que não recebeu.
 //
 // Atenção ao cache de prompt: `tools` renderiza na posição 0, antes do system.
-// Mudar o conjunto invalida o cache inteiro — por isso ele é derivado apenas do
+// Mudar o conjunto invalida o cache inteiro - por isso ele é derivado apenas do
 // perfil da loja (estável), nunca do turno ou do cliente.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -56,7 +56,7 @@ const DETAIL_TOOL: Anthropic.Tool = {
 const SCHEDULE_TOOL: Anthropic.Tool = {
   name: 'agendar_visita',
   description:
-    'Registra a intenção do cliente de visitar a loja ou fazer test-drive e avisa a equipe. NÃO confirma a agenda — quem confirma é um vendedor. Use quando o cliente indicar dia ou período.',
+    'Registra a intenção do cliente de visitar a loja ou fazer test-drive e avisa a equipe. NÃO confirma a agenda - quem confirma é um vendedor. Use quando o cliente indicar dia ou período.',
   input_schema: {
     type: 'object',
     properties: {
@@ -70,7 +70,7 @@ const SCHEDULE_TOOL: Anthropic.Tool = {
 const PROFILE_TOOL: Anthropic.Tool = {
   name: 'registrar_perfil_cliente',
   description:
-    'Guarda o que você descobriu sobre o cliente (orçamento, entrada, forma de pagamento, carro na troca, prazo, preferências). Chame assim que a informação aparecer na conversa — é o que evita reperguntar depois. Envie apenas os campos que descobriu.',
+    'Guarda o que você descobriu sobre o cliente (orçamento, entrada, forma de pagamento, carro na troca, prazo, preferências). Chame assim que a informação aparecer na conversa - é o que evita reperguntar depois. Envie apenas os campos que descobriu.',
   input_schema: {
     type: 'object',
     properties: {
@@ -100,7 +100,7 @@ const KNOWLEDGE_TOOL: Anthropic.Tool = {
 const CREDIT_TOOL: Anthropic.Tool = {
   name: 'consultar_credito_cliente',
   description:
-    'Use quando o cliente fornecer voluntariamente um CPF ou CNPJ válido para simulação de crédito. Retorna score, faixa de risco, limite estimado e entrada sugerida. É uma estimativa — nunca uma aprovação.',
+    'Use quando o cliente fornecer voluntariamente um CPF ou CNPJ válido para simulação de crédito. Retorna score, faixa de risco, limite estimado e entrada sugerida. É uma estimativa - nunca uma aprovação.',
   input_schema: {
     type: 'object',
     properties: {
@@ -130,7 +130,7 @@ const HANDOFF_TOOL: Anthropic.Tool = {
 };
 
 /**
- * Conjunto de ferramentas desta loja. A ordem é fixa e determinística — o cache
+ * Conjunto de ferramentas desta loja. A ordem é fixa e determinística - o cache
  * de prompt casa por bytes, então reordenar aqui custaria o prefixo inteiro.
  */
 export function buildAgentTools(profile: AgentProfileResolved, useKnowledgeRetrieval: boolean): Anthropic.Tool[] {
@@ -146,7 +146,7 @@ export function buildAgentTools(profile: AgentProfileResolved, useKnowledgeRetri
 export interface AgentToolContext {
   ticketId: string;
   leadId: string;
-  /** Conta dona do atendimento. Nunca vem do modelo — sempre do ticket. */
+  /** Conta dona do atendimento. Nunca vem do modelo - sempre do ticket. */
   accountId: string;
 }
 
@@ -251,7 +251,7 @@ async function runProfileTool(input: Record<string, unknown>, ctx: AgentToolCont
     if (typeof value === 'string' && value.trim()) patch[key] = value.trim();
   }
   if (Object.keys(patch).length === 0) {
-    return { content: 'Nenhum campo informado — nada foi salvo.' };
+    return { content: 'Nenhum campo informado - nada foi salvo.' };
   }
 
   await mergeLeadProfile(ctx.leadId, patch);
@@ -290,7 +290,7 @@ async function runScheduleTool(input: Record<string, unknown>, ctx: AgentToolCon
   logger.info('IA: visita solicitada', { ticketId: ctx.ticketId });
   return {
     content:
-      'Interesse de visita registrado e equipe avisada. Confirme ao cliente que um vendedor vai retornar para fechar o horário — não confirme a agenda como se já estivesse marcada.',
+      'Interesse de visita registrado e equipe avisada. Confirme ao cliente que um vendedor vai retornar para fechar o horário - não confirme a agenda como se já estivesse marcada.',
   };
 }
 

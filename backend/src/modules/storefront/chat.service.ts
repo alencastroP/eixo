@@ -18,7 +18,7 @@ import { getPublicVehicle, resolveAccountId } from './storefront.service';
  * `ingestNormalizedLead` (mesma porta dos leads de OLX/ML) e o bot é ligado
  * naquele ticket. Cada mensagem seguinte é gravada como CUSTOMER_MESSAGE e
  * processada por `handleInboundMessage`, exatamente como uma mensagem vinda de
- * plataforma — então o histórico, o transbordo para humano e a auditoria são os
+ * plataforma - então o histórico, o transbordo para humano e a auditoria são os
  * mesmos do atendimento normal. O atendente vê tudo na Caixa de Entrada e pode
  * assumir a qualquer momento.
  *
@@ -29,7 +29,7 @@ import { getPublicVehicle, resolveAccountId } from './storefront.service';
  * ENTREGA DAS RESPOSTAS. A vitrine não é uma plataforma externa: não existe
  * adapter de outbound para onde despachar a resposta do atendente (ver
  * integrations/outbound.ts), então o canal de volta é o próprio widget puxando
- * as novas interações — `fetchChatMessages`. Sem isso, tudo que o atendente
+ * as novas interações - `fetchChatMessages`. Sem isso, tudo que o atendente
  * escrevesse pela Caixa de Entrada depois do transbordo morreria no banco: o
  * envio só devolvia o que a IA acabara de responder, e a IA está desligada
  * justamente quando um humano assume.
@@ -91,12 +91,12 @@ export interface ChatResult {
   /**
    * Marca d'água da conversa: id da última interação existente no momento da
    * resposta. O visitante devolve isto no próximo envio/consulta e recebe só o
-   * que veio depois — é o que impede a mesma resposta de aparecer duas vezes.
+   * que veio depois - é o que impede a mesma resposta de aparecer duas vezes.
    */
   cursor: string | null;
   /** Respostas novas (IA ou atendente) desde o cursor informado. */
   messages: ChatMessage[];
-  /** false = agente indisponível (sem ANTHROPIC_API_KEY) — o lead foi registrado mesmo assim. */
+  /** false = agente indisponível (sem ANTHROPIC_API_KEY) - o lead foi registrado mesmo assim. */
   aiEnabled: boolean;
   /** true = a conversa saiu do bot e está com a equipe (transbordo ou atendente assumiu). */
   handedOff: boolean;
@@ -113,7 +113,7 @@ export interface ChatTranscript {
 /** Últimas mensagens devolvidas quando o widget recarrega sem cursor. */
 const HISTORY_LIMIT = 50;
 
-/** Nota interna e eventos de sistema nunca saem daqui — o cliente veria. */
+/** Nota interna e eventos de sistema nunca saem daqui - o cliente veria. */
 const VISIBLE_TO_CUSTOMER = [InteractionType.CUSTOMER_MESSAGE, InteractionType.AGENT_REPLY];
 
 type InteractionRow = {
@@ -148,7 +148,7 @@ function toChatMessage(row: InteractionRow): ChatMessage {
   };
 }
 
-/** Id da interação mais recente do ticket — a marca d'água devolvida ao widget. */
+/** Id da interação mais recente do ticket - a marca d'água devolvida ao widget. */
 async function currentCursor(ticketId: string): Promise<string | null> {
   const row = await prisma.ticketInteraction.findFirst({
     where: { ticketId },
@@ -161,7 +161,7 @@ async function currentCursor(ticketId: string): Promise<string | null> {
 /**
  * Interações posteriores ao cursor. O desempate por `id` existe porque duas
  * interações podem nascer no mesmo milissegundo (resposta + mudança de status na
- * mesma transação) — comparar só `createdAt` perderia ou repetiria uma delas.
+ * mesma transação) - comparar só `createdAt` perderia ou repetiria uma delas.
  */
 async function messagesAfter(ticketId: string, afterId: string, types: InteractionType[]): Promise<ChatMessage[]> {
   const cursor = await prisma.ticketInteraction.findFirst({
@@ -169,7 +169,7 @@ async function messagesAfter(ticketId: string, afterId: string, types: Interacti
     select: { id: true, createdAt: true },
   });
   // Cursor que não pertence a este ticket: não dá para saber o que é "novo" sem
-  // reenviar a conversa inteira e duplicar tudo na tela. Melhor nada — o cursor
+  // reenviar a conversa inteira e duplicar tudo na tela. Melhor nada - o cursor
   // devolvido junto ressincroniza o widget.
   if (!cursor) return [];
 
@@ -216,8 +216,8 @@ async function resolveConversation(accountId: string, token: string) {
 /**
  * Registra a mensagem do visitante com a MESMA contabilidade de um lead de
  * plataforma (ver ingest.service): o relógio de follow-up zera e a conversa
- * volta para a fila humana. Sem reabrir, uma conversa em espera — ou já
- * encerrada, com o token ainda válido — engoliria a mensagem sem que ninguém a
+ * volta para a fila humana. Sem reabrir, uma conversa em espera - ou já
+ * encerrada, com o token ainda válido - engoliria a mensagem sem que ninguém a
  * visse na Caixa de Entrada.
  */
 async function recordCustomerMessage(
@@ -262,11 +262,11 @@ async function recordCustomerMessage(
 /**
  * Canal de volta do widget: o que a loja respondeu desde o cursor.
  *
- * Sem `after` devolve o histórico visível — é como a conversa sobrevive a um
+ * Sem `after` devolve o histórico visível - é como a conversa sobrevive a um
  * reload da página, já que o token fica no sessionStorage mas as bolhas não.
  *
  * O cursor é lido ANTES das mensagens de propósito. Se uma resposta nascer entre
- * as duas consultas, ela vem na leva atual e ainda virá na próxima — o widget
+ * as duas consultas, ela vem na leva atual e ainda virá na próxima - o widget
  * descarta id repetido. Na ordem inversa a mesma corrida perderia a resposta
  * para sempre, que é exatamente o defeito que este canal existe para não ter.
  */

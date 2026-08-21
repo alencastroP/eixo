@@ -67,7 +67,7 @@ async function validateOlxCredentials(credentials: PlatformCredentials): Promise
 /**
  * Envio mockado de resposta de volta ao cliente na OLX (fluxo OUTBOUND).
  * Na integração real, faria POST na API de mensagens da OLX usando as credenciais.
- * Nunca loga o corpo da mensagem (pode conter PII) — apenas metadados.
+ * Nunca loga o corpo da mensagem (pode conter PII) - apenas metadados.
  */
 async function sendOlxReply(input: OutboundReplyInput): Promise<OutboundResult> {
   await new Promise((r) => setTimeout(r, 150));

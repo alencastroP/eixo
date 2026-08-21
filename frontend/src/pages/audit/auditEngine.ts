@@ -1,5 +1,5 @@
 /**
- * Motor da Trilha de Auditoria ("Caixa-Preta") — dados simulados no cliente.
+ * Motor da Trilha de Auditoria ("Caixa-Preta") - dados simulados no cliente.
  *
  * Cada entrada guarda o estado COMPLETO do registro em `before` e `after`
  * (um deles nulo em criação/exclusão) e a lista de campos que sofreram mutação
@@ -29,7 +29,7 @@ export interface FieldChange {
 
 export interface AuditEntry {
   id: string;
-  at: string; // ISO — sempre dentro dos últimos 30 dias
+  at: string; // ISO - sempre dentro dos últimos 30 dias
   user: AuditUser;
   moduleKey: string;
   moduleLabel: string;
@@ -89,10 +89,10 @@ const dateFmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-dig
 const numFmt = new Intl.NumberFormat('pt-BR');
 
 export function formatValue(value: JsonValue | undefined, format: ValueFormat): string {
-  if (value === null || value === undefined) return '—';
+  if (value === null || value === undefined) return '-';
   switch (format) {
     case 'currency':
-      return formatBRL(Number(value)) ?? '—';
+      return formatBRL(Number(value)) ?? '-';
     case 'number':
       return numFmt.format(Number(value));
     case 'km':
@@ -380,7 +380,7 @@ export function jsonKeys(entry: AuditEntry): string[] {
   return Object.keys(src);
 }
 
-/** Conjunto de campos que mudaram — para destacar no diff de JSON. */
+/** Conjunto de campos que mudaram - para destacar no diff de JSON. */
 export function changedFields(entry: AuditEntry): Set<string> {
   return new Set(entry.changes.map((c) => c.field));
 }

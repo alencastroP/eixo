@@ -17,7 +17,7 @@ export const forbidden = (message = 'Sem permissão para esta ação', code?: st
 export const notFound = (message = 'Recurso não encontrado', code?: string) => new AppError(404, message, code);
 export const conflict = (message = 'Conflito', code?: string) => new AppError(409, message, code);
 
-/** Express 4 não propaga rejeições de handlers async — este wrapper garante o next(err). */
+/** Express 4 não propaga rejeições de handlers async - este wrapper garante o next(err). */
 export function ah(fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>): RequestHandler {
   return (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);

@@ -1,5 +1,5 @@
 /**
- * Limpa TODOS os dados (mantém o schema) — uso exclusivo em desenvolvimento.
+ * Limpa TODOS os dados (mantém o schema) - uso exclusivo em desenvolvimento.
  * Rode `npm run seed` em seguida para repopular a demonstração.
  */
 import { prisma } from '../src/lib/prisma';

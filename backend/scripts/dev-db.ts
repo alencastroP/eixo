@@ -1,5 +1,5 @@
 /**
- * PostgreSQL embutido para desenvolvimento — alternativa quando não há Docker
+ * PostgreSQL embutido para desenvolvimento - alternativa quando não há Docker
  * nem Postgres instalado. Baixa/usa binários reais do Postgres (pacote
  * embedded-postgres) com dados persistidos em backend/.pgdata.
  *
@@ -21,7 +21,7 @@ async function main() {
     password: 'postgres',
     port: PORT,
     persistent: true,
-    // No Windows o initdb usaria WIN1252 por padrão — forçamos UTF-8 (emoji etc.)
+    // No Windows o initdb usaria WIN1252 por padrão - forçamos UTF-8 (emoji etc.)
     initdbFlags: ['--encoding=UTF8'],
   });
 
@@ -35,7 +35,7 @@ async function main() {
     await pg.createDatabase(DB_NAME);
     console.log(`[dev-db] banco "${DB_NAME}" criado`);
   } catch {
-    // banco já existe — ok
+    // banco já existe - ok
   }
 
   console.log(`[dev-db] PostgreSQL pronto em postgresql://postgres:postgres@localhost:${PORT}/${DB_NAME}`);
