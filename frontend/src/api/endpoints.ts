@@ -58,6 +58,9 @@ export const authApi = {
   me: () => api<PublicUser>('/auth/me'),
   updateMe: (input: { name?: string; email?: string; currentPassword?: string; newPassword?: string }) =>
     api<PublicUser>('/auth/me', { method: 'PATCH', body: input }),
+  forgotPassword: (email: string) => api<void>('/auth/forgot-password', { method: 'POST', body: { email } }),
+  resetPassword: (token: string, password: string) =>
+    api<void>('/auth/reset-password', { method: 'POST', body: { token, password } }),
 };
 
 export interface TrialSignupInput {

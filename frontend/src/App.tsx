@@ -19,7 +19,9 @@ import { IntegrationsPage } from './pages/IntegrationsPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { KanbanPage } from './pages/KanbanPage';
 import { AuditPage } from './pages/AuditPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LoginPage } from './pages/LoginPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { PlatformPage } from './pages/PlatformPage';
 import { RequirePlatformAdmin } from './components/RequirePermission';
 import { TrialSignupPage } from './pages/TrialSignupPage';
@@ -92,6 +94,8 @@ export default function App() {
         />
       )}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/trial" element={<TrialSignupPage />} />
       <Route
         path="/legal"

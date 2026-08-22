@@ -4,6 +4,9 @@ import jwt from 'jsonwebtoken';
 import type { User } from '@prisma/client';
 import { env } from '../../config/env';
 import { badRequest, conflict, forbidden, unauthorized } from '../../lib/errors';
+import { sendEmail } from '../../lib/email';
+import { passwordResetEmail } from '../../lib/email-templates';
+import { logger } from '../../lib/logger';
 import { prisma } from '../../lib/prisma';
 import { accessMessage, isBlocked } from '../billing/account.service';
 
@@ -86,6 +89,57 @@ export async function logout(refreshToken: string) {
     where: { tokenHash: sha256(refreshToken), revokedAt: null },
     data: { revokedAt: new Date() },
   });
+}
+
+const PASSWORD_RESET_TTL_MINUTES = 30;
+
+/**
+ * Pede o link de recuperação de senha. NUNCA revela se o e-mail existe (mesmo
+ * princípio anti-enumeração do login): quem chama sempre recebe sucesso: a
+ * diferença fica só em enviar ou não o e-mail.
+ */
+export async function requestPasswordReset(email: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+  if (!user || !user.active) {
+    logger.info('recuperação de senha pedida para e-mail inexistente/inativo', { email });
+    return;
+  }
+
+  // Invalida qualquer link anterior ainda não usado - só o mais recente vale.
+  await prisma.passwordResetToken.updateMany({
+    where: { userId: user.id, usedAt: null },
+    data: { usedAt: new Date() },
+  });
+
+  const token = randomBytes(32).toString('hex');
+  await prisma.passwordResetToken.create({
+    data: {
+      tokenHash: sha256(token),
+      userId: user.id,
+      expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MINUTES * 60_000),
+    },
+  });
+
+  await sendEmail(user.email, passwordResetEmail({ name: user.name, token }));
+}
+
+/** Troca a senha a partir do token recebido por e-mail. Uso único, vida curta. */
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  const stored = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash: sha256(token) },
+    include: { user: true },
+  });
+  if (!stored || stored.usedAt || stored.expiresAt < new Date() || !stored.user.active) {
+    throw badRequest('Link de recuperação inválido ou expirado', 'RESET_TOKEN_INVALID');
+  }
+
+  await prisma.$transaction([
+    prisma.passwordResetToken.update({ where: { id: stored.id }, data: { usedAt: new Date() } }),
+    prisma.user.update({ where: { id: stored.userId }, data: { passwordHash: hashPassword(newPassword) } }),
+    // Senha comprometida o bastante para justificar o reset também justifica
+    // derrubar qualquer sessão já aberta - login de novo em todo dispositivo.
+    prisma.refreshToken.updateMany({ where: { userId: stored.userId, revokedAt: null }, data: { revokedAt: new Date() } }),
+  ]);
 }
 
 export function hashPassword(password: string): string {

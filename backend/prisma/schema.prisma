@@ -213,13 +213,14 @@ model User {
   profileId String?
   profile   AccessProfile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
 
-  assignedTickets  Ticket[]            @relation("TicketAssignee")
-  interactions     TicketInteraction[]
-  refreshTokens    RefreshToken[]
-  auditLogs        AuditLog[]
-  creditQueries    CreditQuery[]
-  channels         UserChannel[]
-  termsAcceptances TermsAcceptance[]
+  assignedTickets     Ticket[]             @relation("TicketAssignee")
+  interactions        TicketInteraction[]
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  auditLogs           AuditLog[]
+  creditQueries       CreditQuery[]
+  channels            UserChannel[]
+  termsAcceptances    TermsAcceptance[]
 
   /// Sessões de suporte que este usuário PEDIU (só existe para usuários da
   /// conta-plataforma) e a sessão da qual ELE PRÓPRIO é o usuário temporário
@@ -331,6 +332,22 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+/// Token de recuperação de senha ("esqueci minha senha"). Mesmo padrão do
+/// RefreshToken: só o hash é persistido, o valor bruto vai apenas no link do
+/// e-mail e nunca toca o banco. Uso único (usedAt) e vida curta (expiresAt).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 
 /// Interessado/cliente em potencial. Contém PII - tratar conforme LGPD:

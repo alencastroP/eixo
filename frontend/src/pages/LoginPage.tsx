@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { BrandLogo } from '../components/BrandMark';
@@ -13,10 +13,12 @@ const HERO_FEATURES = [
 export function LoginPage() {
   const { user, initializing, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const passwordReset = Boolean((location.state as { passwordReset?: boolean } | null)?.passwordReset);
 
   if (!initializing && user) return <Navigate to="/tickets" replace />;
 
@@ -83,6 +85,10 @@ export function LoginPage() {
             <span>Senha</span>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </label>
+          <Link to="/forgot-password" className="forgot-password-link">
+            Esqueci minha senha
+          </Link>
+          {passwordReset && !error && <p className="form-success">Senha redefinida. Faça login com a nova senha.</p>}
           {error && <p className="form-error">{error}</p>}
           <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
             {submitting ? 'Entrando…' : 'Entrar'}

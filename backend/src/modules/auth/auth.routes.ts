@@ -18,6 +18,13 @@ const loginSchema = z.object({
 
 const refreshSchema = z.object({ refreshToken: z.string().min(1) });
 
+const forgotPasswordSchema = z.object({ email: z.string().email('E-mail inválido') });
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(8, 'A nova senha precisa de ao menos 8 caracteres'),
+});
+
 authRouter.post(
   '/login',
   authRateLimit,
@@ -33,6 +40,27 @@ authRouter.post(
   ah(async (req, res) => {
     const { refreshToken } = refreshSchema.parse(req.body);
     res.json(await authService.refresh(refreshToken));
+  }),
+);
+
+// Sempre 204, exista ou não o e-mail - ver comentário anti-enumeração no service.
+authRouter.post(
+  '/forgot-password',
+  authRateLimit,
+  ah(async (req, res) => {
+    const { email } = forgotPasswordSchema.parse(req.body);
+    await authService.requestPasswordReset(email);
+    res.status(204).end();
+  }),
+);
+
+authRouter.post(
+  '/reset-password',
+  authRateLimit,
+  ah(async (req, res) => {
+    const { token, password } = resetPasswordSchema.parse(req.body);
+    await authService.resetPassword(token, password);
+    res.status(204).end();
   }),
 );
 

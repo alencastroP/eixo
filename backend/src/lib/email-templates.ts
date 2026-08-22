@@ -166,6 +166,21 @@ export function billingAccessSuspendedEmail(params: { accountName: string }): Em
   );
 }
 
+// ─── Autenticação ────────────────────────────────────────────────────────────
+
+export function passwordResetEmail(params: { name: string; token: string }): EmailContent {
+  return build(
+    'Recuperação de senha',
+    'Redefinir sua senha',
+    [
+      `Olá, ${escapeHtml(params.name)}! Recebemos um pedido para redefinir a senha da sua conta no Eixo.`,
+      `Se foi você, clique no botão abaixo para escolher uma nova senha. O link vale por ${b('30 minutos')}.`,
+      `Se não foi você, ignore este e-mail - sua senha continua a mesma.`,
+    ],
+    { label: 'Redefinir senha', path: `/reset-password?token=${params.token}` },
+  );
+}
+
 // ─── Utilitários ───────────────────────────────────────────────────────────────
 
 function escapeHtml(value: string): string {
