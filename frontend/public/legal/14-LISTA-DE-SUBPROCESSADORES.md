@@ -1,7 +1,7 @@
 # Lista de Subprocessadores - Eixo
 
-**Documento público** · **Versão 1.0** · Vigente a partir de `[DATA DE VIGÊNCIA]`
-**Última atualização:** `[DATA]`
+**Documento público** · **Versão 1.0** · Vigente a partir de 22 de agosto de 2026
+**Última atualização:** 22 de agosto de 2026
 **Anexo ao Acordo de Tratamento de Dados (DPA), cláusula 6**
 
 ---
@@ -201,16 +201,16 @@ Antes de contratar, verificamos:
 
 | Versão | Data | Alteração |
 |---|---|---|
-| 1.0 | `[DATA]` | Versão inicial |
+| 1.0 | 22 de agosto de 2026 | Versão inicial |
 
 ---
 
 ## 8. Dúvidas e objeções
 
-**Encarregado (DPO):** `[NOME]` · `[E-MAIL DO ENCARREGADO]`
+**Encarregado (DPO):** Pedro Vitor Alencastro de Oliveira · pedrovalencastro@outlook.com
 
 Objeções fundamentadas à inclusão de subprocessador devem ser enviadas a este canal em até 15 dias da comunicação, conforme a cláusula 6.4 do Acordo de Tratamento de Dados.
 
 ---
 
-_`[RAZÃO SOCIAL]` · CNPJ `[CNPJ]` · Versão 1.0 · Anexo ao DPA_
+_Pedro Vitor Alencastro de Oliveira · CPF 711.892.774-09 · Versão 1.0 · Anexo ao DPA_

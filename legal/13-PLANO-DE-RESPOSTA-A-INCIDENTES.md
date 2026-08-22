@@ -1,6 +1,6 @@
 # Plano de Resposta a Incidentes de Segurança
 
-**Documento interno** · **Versão 1.0** · `[DATA]`
+**Documento interno** · **Versão 1.0** · 22 de agosto de 2026
 **Fundamento:** art. 48 da Lei nº 13.709/2018; cláusula 8 do DPA
 **Revisão:** anual, e após todo incidente de severidade alta ou crítica
 
@@ -47,10 +47,10 @@ Registrar sim; comunicar não. **Na dúvida, escale.** O custo de escalar sem ne
 
 | Papel | Quem | Responsabilidade |
 |---|---|---|
-| **Coordenador do incidente** | `[NOME]` | Decide, coordena, autoriza comunicações. Única voz de decisão |
-| **Responsável técnico** | `[NOME]` | Contém, investiga, corrige, preserva evidências |
-| **Encarregado (DPO)** | `[NOME]` | Avalia risco aos titulares; conduz comunicação à ANPD e aos titulares |
-| **Comunicação com clientes** | `[NOME]` | Notifica clientes afetados; mantém a página de status |
+| **Coordenador do incidente** | Pedro Vitor Alencastro de Oliveira | Decide, coordena, autoriza comunicações. Única voz de decisão |
+| **Responsável técnico** | Pedro Vitor Alencastro de Oliveira | Contém, investiga, corrige, preserva evidências |
+| **Encarregado (DPO)** | Pedro Vitor Alencastro de Oliveira | Avalia risco aos titulares; conduz comunicação à ANPD e aos titulares |
+| **Comunicação com clientes** | Pedro Vitor Alencastro de Oliveira | Notifica clientes afetados; mantém a página de status |
 
 **Numa equipe pequena, a mesma pessoa acumula papéis** - isso é aceitável, desde que os papéis estejam nomeados e as etapas sejam cumpridas. O que não é aceitável é ninguém saber quem decide.
 
@@ -58,12 +58,12 @@ Registrar sim; comunicar não. **Na dúvida, escale.** O custo de escalar sem ne
 
 | Contato | Dado |
 |---|---|
-| Coordenador | `[TELEFONE]` · `[E-MAIL]` |
-| Responsável técnico | `[TELEFONE]` · `[E-MAIL]` |
-| Encarregado | `[TELEFONE]` · `[E-MAIL]` |
+| Coordenador | (84) 99903-3248 · pedrovalencastro@outlook.com |
+| Responsável técnico | (84) 99903-3248 · pedrovalencastro@outlook.com |
+| Encarregado | (84) 99903-3248 · pedrovalencastro@outlook.com |
 | Advogado | `[NOME]` · `[TELEFONE]` |
 | Provedor de hospedagem | `[CANAL DE SUPORTE]` |
-| Canal de segurança (externo) | `[E-MAIL DE SEGURANÇA]` |
+| Canal de segurança (externo) | pedrovalencastro@outlook.com |
 
 > Manter esta tabela **também fora do sistema** - impressa ou em dispositivo pessoal. Incidente que derruba o acesso à infraestrutura pode derrubar o acesso à lista de contatos.
 
@@ -236,9 +236,9 @@ Manter para cada incidente, inclusive os não comunicáveis - o art. 37 e o prin
 >
 > Manteremos você informado. Novidades relevantes serão comunicadas por este mesmo canal e em `[URL DA PÁGINA DE STATUS]`.
 >
-> Contato direto: `[E-MAIL]` · `[TELEFONE]`
+> Contato direto: pedrovalencastro@outlook.com · (84) 99903-3248
 >
-> `[NOME]` · `[CARGO]`
+> Pedro Vitor Alencastro de Oliveira · Responsável pela Eixo
 
 ### 7.2. Ao titular - dados sob controle do Eixo
 
@@ -260,11 +260,11 @@ Manter para cada incidente, inclusive os não comunicáveis - o art. 37 e o prin
 >
 > **O que já fizemos:** `[medidas]`
 >
-> Lamentamos o ocorrido. Se tiver dúvidas, escreva para `[E-MAIL DO ENCARREGADO]`.
+> Lamentamos o ocorrido. Se tiver dúvidas, escreva para pedrovalencastro@outlook.com.
 >
 > Você também pode contatar a Autoridade Nacional de Proteção de Dados (ANPD).
 >
-> `[NOME DO ENCARREGADO]` · Encarregado pelo Tratamento de Dados Pessoais
+> Pedro Vitor Alencastro de Oliveira · Encarregado pelo Tratamento de Dados Pessoais
 
 ### 7.3. Página de status
 
@@ -319,8 +319,8 @@ Comunicado incidente por um subprocessador:
 
 Este plano é revisado **anualmente** e **após todo incidente S1 ou S2**. A revisão verifica: contatos atualizados, prazos ainda adequados, itens da seção 8 cumpridos, e lições incorporadas.
 
-**Última revisão:** `[DATA]` · **Próxima:** `[DATA]`
+**Última revisão:** 22 de agosto de 2026 · **Próxima:** 22 de agosto de 2027
 
 ---
 
-_Documento interno · `[RAZÃO SOCIAL]` · Versão 1.0_
+_Documento interno · Pedro Vitor Alencastro de Oliveira · Versão 1.0_

@@ -1,6 +1,6 @@
 # Designação do Encarregado e Canal de Atendimento ao Titular
 
-**Versão 1.0** · `[DATA]`
+**Versão 1.0** · 22 de agosto de 2026
 
 Reúne (a) o **ato formal de designação** do Encarregado, exigido pelo art. 41 da LGPD, (b) suas **atribuições**, e (c) o **procedimento** de atendimento a requisições de titulares.
 
@@ -10,47 +10,39 @@ Reúne (a) o **ato formal de designação** do Encarregado, exigido pelo art. 41
 
 ## TERMO DE DESIGNAÇÃO DE ENCARREGADO PELO TRATAMENTO DE DADOS PESSOAIS
 
-A **`[RAZÃO SOCIAL]`**, inscrita no CNPJ sob o nº `[CNPJ]`, com sede em `[ENDEREÇO COMPLETO]`, no exercício das atribuições que lhe confere o **art. 41 da Lei nº 13.709/2018**,
+Eu, **Pedro Vitor Alencastro de Oliveira**, pessoa física, CPF nº 711.892.774-09, com endereço em Rua Três Barras, 2966, Potengi, Natal/RN, CEP 59110-450, na qualidade de responsável autônomo pela plataforma Eixo, no exercício das atribuições que me confere o **art. 41 da Lei nº 13.709/2018**,
 
-**RESOLVE:**
+**RESOLVO:**
 
-**Art. 1º** Fica designado(a) **`[NOME COMPLETO]`**, `[CARGO/QUALIFICAÇÃO]`, como **Encarregado pelo Tratamento de Dados Pessoais** da `[RAZÃO SOCIAL]`.
+**Art. 1º** Assumir pessoalmente as funções de **Encarregado pelo Tratamento de Dados Pessoais (DPO)** da plataforma Eixo, por não haver, no atual estágio da atividade, outra pessoa a quem atribuir a função.
 
-**Art. 2º** O Encarregado atuará como canal de comunicação entre a organização, os titulares de dados e a Autoridade Nacional de Proteção de Dados (ANPD).
+**Art. 2º** O Encarregado atuará como canal de comunicação entre a Eixo, os titulares de dados e a Autoridade Nacional de Proteção de Dados (ANPD).
 
-**Art. 3º** A identidade e as informações de contato do Encarregado serão divulgadas publicamente, de forma clara e objetiva, na Política de Privacidade e no sítio eletrônico da organização.
+**Art. 3º** A identidade e as informações de contato do Encarregado serão divulgadas publicamente, de forma clara e objetiva, na Política de Privacidade e no sítio eletrônico da Eixo.
 
-**Art. 4º** O Encarregado terá acesso às informações necessárias ao exercício de suas atribuições e reportará diretamente à administração da organização.
+**Art. 4º** O Encarregado terá acesso a todas as informações necessárias ao exercício de suas atribuições, por se confundir, nesta fase, com o próprio responsável pela atividade.
 
-**Art. 5º** Este termo entra em vigor na data de sua assinatura, com validade por prazo indeterminado, até revogação expressa.
+**Art. 5º** Este termo entra em vigor na data de sua assinatura, com validade por prazo indeterminado, até revogação expressa ou até a designação de pessoa distinta, o que ocorrerá quando a estrutura da Eixo assim justificar.
 
-`[CIDADE]`, `[DATA]`.
+Natal/RN, 22 de agosto de 2026.
 
 <br>
 
 ______________________________________
-**`[NOME DO REPRESENTANTE LEGAL]`**
-`[CARGO]` · `[RAZÃO SOCIAL]`
-
-<br>
-
-**Ciência e aceitação do Encarregado:**
-
-______________________________________
-**`[NOME DO ENCARREGADO]`**
-CPF `[CPF]`
+**Pedro Vitor Alencastro de Oliveira**
+CPF 711.892.774-09 · Responsável pela Eixo e Encarregado pelo Tratamento de Dados Pessoais
 
 ---
 
 ## Nota sobre a escolha
 
-**O Encarregado pode ser o próprio sócio ou um funcionário.** A LGPD não exige formação jurídica, dedicação exclusiva nem certificação. Para uma empresa do porte atual, é normal e legítimo que seja o próprio fundador.
+**O Encarregado é o próprio responsável pela atividade.** A LGPD não exige formação jurídica, dedicação exclusiva nem certificação. Para uma atividade autônoma no estágio atual, é normal e legítimo que seja o próprio fundador.
 
 Três cuidados na escolha:
 
-1. **Precisa ser uma pessoa identificada e alcançável.** Publicar apenas "encarregado@empresa.com.br" sem nome atende ao mínimo, mas identificar a pessoa é a prática recomendada e transmite mais seriedade em auditoria.
+1. **Precisa ser uma pessoa identificada e alcançável.** Publicar apenas "encarregado@..." sem nome atende ao mínimo, mas identificar a pessoa é a prática recomendada e transmite mais seriedade em auditoria.
 2. **Precisa ter acesso e autonomia.** Encarregado que não consegue informação interna nem interromper um tratamento irregular é decorativo.
-3. **Evite conflito de interesse.** Quem decide sobre finalidades de tratamento avaliando a si mesmo enfraquece a função. Numa empresa pequena isso é inevitável - registre a limitação e revise a designação quando a estrutura crescer.
+3. **Evite conflito de interesse.** Quem decide sobre finalidades de tratamento avaliando a si mesmo enfraquece a função. Numa operação de uma única pessoa isso é inevitável - registre a limitação e revise a designação quando a estrutura crescer (por exemplo, ao contratar o primeiro funcionário ou sócio).
 
 ---
 
@@ -95,10 +87,10 @@ O Encarregado é responsável por:
 
 | | |
 |---|---|
-| **Encarregado** | `[NOME]` |
-| **E-mail** | `[E-MAIL DO ENCARREGADO]` |
+| **Encarregado** | Pedro Vitor Alencastro de Oliveira |
+| **E-mail** | pedrovalencastro@outlook.com |
 | **Formulário** | `[URL]` |
-| **Endereço postal** | `[ENDEREÇO COMPLETO]` |
+| **Endereço postal** | Rua Três Barras, 2966, Potengi, Natal/RN, CEP 59110-450 |
 | **Prazo de resposta** | **15 dias corridos** |
 
 O canal deve estar publicado na Política de Privacidade, no rodapé do site e no rodapé da plataforma.
@@ -170,7 +162,7 @@ Manter registro de todas as requisições, com: data de entrada, tipo, titular, 
 >
 > Se precisarmos confirmar sua identidade, entraremos em contato por este mesmo canal.
 >
-> `[NOME DO ENCARREGADO]` · Encarregado pelo Tratamento de Dados Pessoais
+> Pedro Vitor Alencastro de Oliveira · Encarregado pelo Tratamento de Dados Pessoais
 
 ### 5.2. Encaminhamento ao cliente controlador
 
@@ -182,7 +174,7 @@ Manter registro de todas as requisições, com: data de entrada, tipo, titular, 
 >
 > Contato: `[E-MAIL DA REVENDA]`.
 >
-> `[NOME DO ENCARREGADO]` · Encarregado pelo Tratamento de Dados Pessoais
+> Pedro Vitor Alencastro de Oliveira · Encarregado pelo Tratamento de Dados Pessoais
 
 ### 5.3. Recusa fundamentada
 
@@ -198,8 +190,8 @@ Manter registro de todas as requisições, com: data de entrada, tipo, titular, 
 >
 > Se discordar, você pode nos responder com informações adicionais ou apresentar reclamação à Autoridade Nacional de Proteção de Dados (ANPD).
 >
-> `[NOME DO ENCARREGADO]` · Encarregado pelo Tratamento de Dados Pessoais
+> Pedro Vitor Alencastro de Oliveira · Encarregado pelo Tratamento de Dados Pessoais
 
 ---
 
-_`[RAZÃO SOCIAL]` · CNPJ `[CNPJ]` · Versão 1.0_
+_Pedro Vitor Alencastro de Oliveira · CPF 711.892.774-09 · Versão 1.0_

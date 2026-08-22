@@ -1,8 +1,8 @@
 # Política de Privacidade - Eixo
 
-**Versão 1.0** · Vigente a partir de `[DATA DE VIGÊNCIA]`
+**Versão 1.0** · Vigente a partir de 22 de agosto de 2026
 
-Esta Política explica como a `[RAZÃO SOCIAL]`, CNPJ `[CNPJ]` ("Eixo", "nós"), trata dados pessoais na plataforma Eixo, em conformidade com a **Lei nº 13.709/2018 (LGPD)**.
+Esta Política explica como Pedro Vitor Alencastro de Oliveira, CPF nº 711.892.774-09, pessoa física prestadora da plataforma Eixo ("Eixo", "nós"), trata dados pessoais na plataforma Eixo, em conformidade com a **Lei nº 13.709/2018 (LGPD)**.
 
 Escrevemos este documento para ser lido. Onde houver termo técnico, ele é explicado na primeira vez em que aparece.
 
@@ -168,7 +168,7 @@ Como titular, você pode a qualquer momento (art. 18 da LGPD):
 | **Oposição** | Opor-se a tratamento baseado em legítimo interesse |
 | **Revisão de decisão automatizada** | Solicitar revisão humana de decisão tomada apenas por sistema |
 
-**Como exercer:** escreva para `[E-MAIL DO ENCARREGADO]`. Respondemos em até **15 (quinze) dias**. Podemos solicitar confirmação de identidade antes de atender - é uma proteção contra pedidos fraudulentos em nome de terceiros.
+**Como exercer:** escreva para pedrovalencastro@outlook.com. Respondemos em até **15 (quinze) dias**. Podemos solicitar confirmação de identidade antes de atender - é uma proteção contra pedidos fraudulentos em nome de terceiros.
 
 Pedidos que envolvam dados sob controle de uma revenda são **encaminhados a ela**, e informamos você sobre o encaminhamento.
 
@@ -200,9 +200,9 @@ O uso de cookies e tecnologias semelhantes está descrito na **Política de Cook
 
 ## 12. Encarregado (DPO)
 
-**Encarregado pelo Tratamento de Dados Pessoais:** `[NOME DO ENCARREGADO]`
-**E-mail:** `[E-MAIL DO ENCARREGADO]`
-**Endereço:** `[ENDEREÇO COMPLETO]`
+**Encarregado pelo Tratamento de Dados Pessoais:** Pedro Vitor Alencastro de Oliveira
+**E-mail:** pedrovalencastro@outlook.com
+**Endereço:** Rua Três Barras, 2966, Potengi, Natal/RN, CEP 59110-450
 
 Este é o canal para dúvidas, exercício de direitos e comunicações da ANPD.
 
@@ -216,4 +216,4 @@ Toda versão é identificada por número e data de vigência, e as versões ante
 
 ---
 
-_`[RAZÃO SOCIAL]` · CNPJ `[CNPJ]` · `[SITE]` · Versão 1.0_
+_Pedro Vitor Alencastro de Oliveira · CPF 711.892.774-09 · eixocrm.com · Versão 1.0_

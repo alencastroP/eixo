@@ -1,13 +1,13 @@
 # Termos de Uso e Contrato de Licença de Uso de Software - Eixo
 
-**Versão 1.0** · Vigente a partir de `[DATA DE VIGÊNCIA]`
+**Versão 1.0** · Vigente a partir de 22 de agosto de 2026
 **Documento de adesão.** Ao criar uma conta, contratar um plano ou utilizar a plataforma, o Cliente adere integralmente a estas condições.
 
 ---
 
 ## 1. Partes e definições
 
-**CONTRATADA:** `[RAZÃO SOCIAL]`, inscrita no CNPJ sob o nº `[CNPJ]`, com sede em `[ENDEREÇO COMPLETO]`, doravante **"Eixo"**.
+**CONTRATADA:** Pedro Vitor Alencastro de Oliveira, pessoa física, CPF nº 711.892.774-09, com endereço em Rua Três Barras, 2966, Potengi, Natal/RN, CEP 59110-450, atuando como prestador autônomo de serviços de tecnologia, doravante **"Eixo"**.
 
 **CONTRATANTE:** a pessoa jurídica ou o empresário individual que realiza o cadastro na plataforma, doravante **"Cliente"**.
 
@@ -33,7 +33,7 @@ Para os fins deste contrato:
 
 **2.3.** A Plataforma é fornecida em ambiente compartilhado e padronizado. Personalizações, desenvolvimentos específicos e integrações não previstas no Plano dependem de proposta comercial em separado.
 
-**2.4.** Este contrato é celebrado entre pessoas jurídicas no exercício de atividade empresarial. As partes reconhecem a natureza empresarial da relação, sem prejuízo da aplicação do Código de Defesa do Consumidor quando cabível por força de lei.
+**2.4.** Este contrato é celebrado, de um lado, pelo Eixo como pessoa física prestadora autônoma de serviços de tecnologia e, de outro, pelo Cliente pessoa jurídica ou empresário individual no exercício de atividade empresarial. As partes reconhecem a natureza empresarial da relação quanto ao Cliente, sem prejuízo da aplicação do Código de Defesa do Consumidor quando cabível por força de lei.
 
 ---
 
@@ -77,7 +77,7 @@ Para os fins deste contrato:
 
 **5.5.** Ao contratar Plano com pagamento recorrente em cartão, o Cliente **autoriza expressamente** a cobrança automática do valor do Plano a cada renovação, até que solicite o cancelamento.
 
-**5.6.** A **nota fiscal de serviço** é emitida a cada cobrança confirmada e disponibilizada eletronicamente.
+**5.6.** Por se tratar de prestação de serviço por pessoa física, sem inscrição de CNPJ, cada cobrança confirmada gera um **recibo de prestação de serviço**, disponibilizado eletronicamente, em vez de nota fiscal eletrônica de serviço.
 
 **5.7.** Tributos incidentes sobre o serviço estão incluídos no preço anunciado, salvo indicação em contrário. Alterações na legislação tributária que onerem o serviço podem ser repassadas, mediante comunicação prévia de 30 (trinta) dias.
 
@@ -316,13 +316,13 @@ Para os fins deste contrato:
 
 **22.2. Independência das cláusulas.** A invalidade de qualquer cláusula não afeta as demais.
 
-**22.3. Comunicações.** As comunicações são válidas quando enviadas ao e-mail cadastrado do Cliente ou, para o Eixo, a `[E-MAIL DE CONTATO]`. Cabe ao Cliente manter seu endereço eletrônico atualizado.
+**22.3. Comunicações.** As comunicações são válidas quando enviadas ao e-mail cadastrado do Cliente ou, para o Eixo, a pedrovalencastro@outlook.com. Cabe ao Cliente manter seu endereço eletrônico atualizado.
 
 **22.4. Tolerância.** A tolerância quanto ao descumprimento de qualquer obrigação não implica novação nem renúncia de direito.
 
 **22.5. Registro do aceite.** O aceite eletrônico destes Termos é registrado com identificação do Usuário, versão do documento, data, hora, endereço IP e agente de usuário, constituindo prova da manifestação de vontade nos termos do art. 10, §2º, da Medida Provisória nº 2.200-2/2001 e do art. 225 do Código Civil.
 
-**22.6. Foro.** Fica eleito o foro da comarca de **`[COMARCA/UF]`**, com renúncia a qualquer outro, para dirimir controvérsias oriundas deste contrato.
+**22.6. Foro.** Fica eleito o foro da comarca de **Natal/RN**, com renúncia a qualquer outro, para dirimir controvérsias oriundas deste contrato.
 
 ---
 
@@ -338,4 +338,4 @@ Para os fins deste contrato:
 
 ---
 
-_`[RAZÃO SOCIAL]` · CNPJ `[CNPJ]` · `[SITE]`_
+_Pedro Vitor Alencastro de Oliveira · CPF 711.892.774-09 · eixocrm.com_

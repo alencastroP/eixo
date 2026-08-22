@@ -59,45 +59,33 @@ Detalhamento em [12-ROPA](12-ROPA-REGISTRO-DE-OPERACOES-DE-TRATAMENTO.md), Parte
 
 ---
 
-## Campos a preencher
+## Campos preenchidos
 
-Ocorrências levantadas nos 14 arquivos. Preencha na ordem - os primeiros aparecem em quase todos.
+A Eixo é operada, neste estágio, por **pessoa física, sem CNPJ** - não por sociedade empresária. Os 14 documentos foram ajustados de acordo: onde antes se pedia razão social/CNPJ/representante legal do prestador, consta agora a identificação da pessoa física responsável. Isso vale apenas para a identidade da **Eixo** como CONTRATADA/Operadora/Encarregada - os campos que identificam o **Cliente** (revenda) continuam aceitando CPF ou CNPJ, conforme o caso dele.
 
-### Identificação da empresa
+### Identificação do prestador (pessoa física)
 
-| Campo | Onde obter | Ocorrências |
-|---|---|---|
-| `[RAZÃO SOCIAL]` | Cartão CNPJ | 22 |
-| `[CNPJ]` | Cartão CNPJ | 16 |
-| `[ENDEREÇO COMPLETO]` | Cartão CNPJ | 5 |
-| `[SITE]` | Domínio institucional | 2 |
-| `[COMARCA/UF]` | Comarca da sede - foro de eleição | 1 |
-| `[NOME DO REPRESENTANTE LEGAL]` · `[CARGO]` | Contrato social | 2 |
+| Campo | Valor |
+|---|---|
+| Nome completo | Pedro Vitor Alencastro de Oliveira |
+| CPF | 711.892.774-09 |
+| Endereço | Rua Três Barras, 2966, Potengi, Natal/RN, CEP 59110-450 |
+| Site | eixocrm.com |
+| Comarca/UF (foro de eleição) | Natal/RN |
+
+**Consequência na cláusula 5.6 dos Termos de Uso:** sem CNPJ, a cobrança não gera nota fiscal eletrônica de serviço - gera **recibo de prestação de serviço**. A cláusula foi reescrita nesse sentido. Vale a pena confirmar com um contador a forma correta de recolher tributos (carnê-leão, retenção pelo tomador PJ, etc.) e se/quando compensa abrir MEI.
 
 ### Canais de contato
 
-| Campo | Sugestão |
-|---|---|
-| `[E-MAIL DE CONTATO]` | `contato@` |
-| `[E-MAIL DO ENCARREGADO]` | `privacidade@` - 7 ocorrências |
-| `[E-MAIL DE SUPORTE]` | `suporte@` |
-| `[E-MAIL DE SEGURANÇA]` | `seguranca@` - divulgação responsável |
-| `[E-MAIL DE ABUSO]` | `abuso@` - denúncias de uso indevido |
-| `[NÚMERO]` · `[TELEFONE]` | WhatsApp comercial |
+Por ora, um único e-mail pessoal cobre todos os canais (contato, privacidade/encarregado, suporte, segurança, abuso): `pedrovalencastro@outlook.com`. WhatsApp/telefone: `(84) 99903-3248`. Convém separar por subdomínio (`contato@`, `privacidade@` etc.) quando o volume justificar.
 
-### Encarregado
+### Encarregado (DPO)
 
-| Campo | |
-|---|---|
-| `[NOME DO ENCARREGADO]` · `[CPF]` | Pode ser o próprio sócio - ver doc. 11 |
-| `[CARGO/QUALIFICAÇÃO]` | |
+Pedro Vitor Alencastro de Oliveira acumula, nesta fase, a função de Encarregado - ver o ato de autodesignação no doc. 11.
 
 ### Datas e vigências
 
-| Campo | |
-|---|---|
-| `[DATA DE VIGÊNCIA]` | A mesma nos 8 documentos públicos |
-| `[DATA]` | Data de emissão / última atualização |
+Todos os documentos entraram em vigor em **22 de agosto de 2026**.
 
 ### Decisões operacionais a tomar
 
@@ -141,7 +129,7 @@ Sugestão de estrutura, compatível com o versionamento do doc. 07:
 
 ## Ordem de execução sugerida
 
-**1. Preencher** identificação, contatos e encarregado - resolve a maior parte das ocorrências.
+**1. ~~Preencher~~ identificação, contatos e encarregado** - feito, como pessoa física (ver seção acima).
 
 **2. Decidir** os itens operacionais da tabela acima. Backup, RPO e RTO exigem verificar o que a infraestrutura atual realmente entrega antes de prometer.
 
@@ -176,4 +164,4 @@ sha256sum legal/*.md
 
 ---
 
-_Minutas em versão 1.0 · `[DATA]` · Pendente de revisão jurídica_
+_Minutas em versão 1.0 · 22 de agosto de 2026 · Pendente de revisão jurídica_

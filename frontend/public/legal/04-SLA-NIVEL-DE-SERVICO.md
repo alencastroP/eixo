@@ -1,7 +1,7 @@
 # Acordo de Nível de Serviço (SLA) - Eixo
 
 **Anexo aos Termos de Uso e Contrato de Licença de Uso de Software**
-**Versão 1.0** · Vigente a partir de `[DATA DE VIGÊNCIA]`
+**Versão 1.0** · Vigente a partir de 22 de agosto de 2026
 
 Este documento define o compromisso de disponibilidade da plataforma Eixo, os canais e prazos de suporte, e as compensações aplicáveis em caso de descumprimento.
 
@@ -82,8 +82,8 @@ Não são computados como indisponibilidade os períodos decorrentes de:
 
 | Canal | Endereço | Disponibilidade |
 |---|---|---|
-| E-mail | `[E-MAIL DE SUPORTE]` | 24 horas para abertura |
-| WhatsApp | `[NÚMERO]` | Dias úteis, `[HH:MM]` às `[HH:MM]` |
+| E-mail | pedrovalencastro@outlook.com | 24 horas para abertura |
+| WhatsApp | (84) 99903-3248 | Dias úteis, `[HH:MM]` às `[HH:MM]` |
 | Central de ajuda | `[URL]` | Permanente |
 
 **Horário de atendimento:** dias úteis, de segunda a sexta, das `[HH:MM]` às `[HH:MM]`, horário de Brasília, exceto feriados nacionais.
@@ -178,4 +178,4 @@ Prazos contados **em horário de atendimento**, exceto S1, contado em horas corr
 
 ---
 
-_`[RAZÃO SOCIAL]` · CNPJ `[CNPJ]` · Versão 1.0 · Anexo aos Termos de Uso_
+_Pedro Vitor Alencastro de Oliveira · CPF 711.892.774-09 · Versão 1.0 · Anexo aos Termos de Uso_

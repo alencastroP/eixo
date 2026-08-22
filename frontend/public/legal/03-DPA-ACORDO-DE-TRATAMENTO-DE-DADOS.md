@@ -1,9 +1,9 @@
 # Acordo de Tratamento de Dados Pessoais (DPA) - Eixo
 
 **Anexo aos Termos de Uso e Contrato de Licença de Uso de Software**
-**Versão 1.0** · Vigente a partir de `[DATA DE VIGÊNCIA]`
+**Versão 1.0** · Vigente a partir de 22 de agosto de 2026
 
-Este Acordo integra o contrato celebrado entre **`[RAZÃO SOCIAL]`**, CNPJ `[CNPJ]` ("**Eixo**" ou "**Operador**"), e o **Cliente** identificado no cadastro da conta ("**Controlador**"), e regula o tratamento de dados pessoais realizado pelo Eixo por conta e ordem do Cliente, nos termos da **Lei nº 13.709/2018 (LGPD)**.
+Este Acordo integra o contrato celebrado entre **Pedro Vitor Alencastro de Oliveira**, pessoa física, CPF nº 711.892.774-09 ("**Eixo**" ou "**Operador**"), e o **Cliente** identificado no cadastro da conta ("**Controlador**"), e regula o tratamento de dados pessoais realizado pelo Eixo por conta e ordem do Cliente, nos termos da **Lei nº 13.709/2018 (LGPD)**.
 
 Em caso de conflito entre este Acordo e os Termos de Uso **quanto à matéria de proteção de dados**, prevalece este Acordo.
 
@@ -275,4 +275,4 @@ O tratamento de dados sensíveis **não está previsto** neste Acordo. A inserç
 
 ---
 
-_`[RAZÃO SOCIAL]` · CNPJ `[CNPJ]` · Versão 1.0 · Anexo aos Termos de Uso_
+_Pedro Vitor Alencastro de Oliveira · CPF 711.892.774-09 · Versão 1.0 · Anexo aos Termos de Uso_

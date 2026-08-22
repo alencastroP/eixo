@@ -1,6 +1,6 @@
 # Controle de Versões e Registro de Aceite - Eixo
 
-**Documento interno de governança** · **Versão 1.0** · `[DATA]`
+**Documento interno de governança** · **Versão 1.0** · 22 de agosto de 2026
 
 Um termo aceito sem prova de aceite vale pouco em disputa. Este documento define **como os documentos jurídicos do Eixo são versionados, publicados, aceitos e provados**, e especifica o registro técnico que sustenta essa prova.
 
@@ -202,4 +202,4 @@ sha256sum legal/*.md
 
 ---
 
-_Documento interno · `[RAZÃO SOCIAL]` · Versão 1.0_
+_Documento interno · Pedro Vitor Alencastro de Oliveira · Versão 1.0_

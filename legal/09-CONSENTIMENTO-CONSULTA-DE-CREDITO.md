@@ -1,6 +1,6 @@
 # Termo de Consentimento para Consulta de Crédito
 
-**Versão 1.0** · Vigente a partir de `[DATA DE VIGÊNCIA]`
+**Versão 1.0** · Vigente a partir de 22 de agosto de 2026
 
 Este documento contém: (a) o **termo a ser apresentado ao titular** antes de qualquer consulta; (b) as **regras de uso** vinculantes para a revenda; (c) a **especificação do registro** do consentimento; e (d) uma **nota de implantação** sobre o estágio atual do módulo.
 
@@ -180,4 +180,4 @@ Vinculados ao lead:
 
 ---
 
-_`[RAZÃO SOCIAL]` · CNPJ `[CNPJ]` · Versão 1.0_
+_Pedro Vitor Alencastro de Oliveira · CPF 711.892.774-09 · Versão 1.0_

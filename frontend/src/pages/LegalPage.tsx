@@ -39,8 +39,8 @@ function LegalChrome({ children }: { children: React.ReactNode }) {
 const DRAFT_NOTICE = (
   <div className="legal-doc-notice">
     <strong>Minuta em revisão.</strong> Este documento ainda não passou por revisão jurídica e pode conter campos
-    entre colchetes (ex.: <code>[CNPJ]</code>) a preencher quando a empresa for formalizada. Vale como indicação de
-    intenção, não como termo em vigor.
+    entre colchetes (ex.: <code>[URL DA LISTA]</code>) a preencher conforme decisões operacionais pendentes. Vale
+    como indicação de intenção, não como termo em vigor.
   </div>
 );
 

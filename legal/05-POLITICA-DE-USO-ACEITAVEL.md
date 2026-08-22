@@ -1,7 +1,7 @@
 # Política de Uso Aceitável - Eixo
 
 **Anexo aos Termos de Uso e Contrato de Licença de Uso de Software**
-**Versão 1.0** · Vigente a partir de `[DATA DE VIGÊNCIA]`
+**Versão 1.0** · Vigente a partir de 22 de agosto de 2026
 
 Esta Política define o que **não** pode ser feito com a plataforma Eixo. Ela existe por três razões práticas: proteger os consumidores que interagem com nossos clientes, proteger a estabilidade e a reputação da plataforma para todos os clientes, e proteger o próprio Cliente de perder acesso a canais de terceiros - como o WhatsApp - por uso indevido.
 
@@ -113,7 +113,7 @@ Esta é a área de maior risco jurídico da plataforma. As regras abaixo são de
 - **Contornar limites de plano** mediante criação de múltiplas contas, ou obter novo período de teste gratuito por meio de dados cadastrais alterados.
 - Interferir no uso da plataforma por outros clientes.
 
-**Divulgação responsável.** Identificada uma falha de segurança, comunique imediatamente a `[E-MAIL DE SEGURANÇA]` e não a explore nem a divulgue publicamente. Pesquisas de segurança conduzidas de boa-fé, comunicadas por esse canal e sem acesso a dados de terceiros, não serão objeto de medida contra o pesquisador.
+**Divulgação responsável.** Identificada uma falha de segurança, comunique imediatamente a pedrovalencastro@outlook.com e não a explore nem a divulgue publicamente. Pesquisas de segurança conduzidas de boa-fé, comunicadas por esse canal e sem acesso a dados de terceiros, não serão objeto de medida contra o pesquisador.
 
 ---
 
@@ -153,7 +153,7 @@ Esta é a área de maior risco jurídico da plataforma. As regras abaixo são de
 
 ## 9. Denúncias
 
-Suspeita de uso indevido da plataforma pode ser comunicada a `[E-MAIL DE ABUSO]`. Denúncias são apuradas com confidencialidade quanto à identidade do denunciante, quando solicitado.
+Suspeita de uso indevido da plataforma pode ser comunicada a pedrovalencastro@outlook.com. Denúncias são apuradas com confidencialidade quanto à identidade do denunciante, quando solicitado.
 
 ---
 
@@ -165,4 +165,4 @@ Aplicam-se subsidiariamente os Termos de Uso.
 
 ---
 
-_`[RAZÃO SOCIAL]` · CNPJ `[CNPJ]` · Versão 1.0 · Anexo aos Termos de Uso_
+_Pedro Vitor Alencastro de Oliveira · CPF 711.892.774-09 · Versão 1.0 · Anexo aos Termos de Uso_

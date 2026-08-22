@@ -9,6 +9,7 @@
 :root[data-theme='dark'] {
   /* fundos - transição tonal de asfalto */
   --bg: #14171a;
+  --bg-header: #14171a; 
   --surface: #1c2024;
   --surface-2: #22272c;
   --border: #262b30;
@@ -1878,7 +1879,7 @@ select option {
   justify-content: center;
   padding: 56px clamp(40px, 6vw, 88px);
   color: #fff;
-  background: linear-gradient(152deg, #ff8a4c 0%, var(--accent) 38%, #cf471b 100%);
+  background: linear-gradient(152deg, #ec6218 0%, var(--accent) 38%, #e24f1d 100%);
 }
 .auth-hero-glow {
   position: absolute;
@@ -1955,7 +1956,7 @@ select option {
 }
 .auth-card {
   width: 100%;
-  max-width: 384px;
+  max-width: 440px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -1998,7 +1999,7 @@ select option {
     border: none;
     box-shadow: none;
     background: transparent;
-    padding: 28px 4px;
+    padding: 28px 24px;
   }
 }
 
@@ -7815,45 +7816,135 @@ input.input-bad {
 }
 
 .landing-page {
+  /* A landing é sempre a "cockpit noturno" da marca, independente do tema
+     salvo no navegador por quem já usa o produto - quem visita aqui pode
+     nunca ter logado, então a preferência de tema do app não deve vazar
+     pra cá (senão o cabeçalho, fixo escuro, fica ilegível em tema claro). */
+  --bg: #14171a;
+  --bg-header: #14171a;
+  --surface: #1c2024;
+  --surface-2: #22272c;
+  --border: #262b30;
+  --border-strong: #323840;
+  --hover: #262b30;
+  --text: #f5f6f7;
+  --text-2: #a3aab2;
+  --text-3: #6b7178;
+  --accent: #ff6b35;
+  --accent-hover: #ff7d4d;
+  --accent-contrast: #14171a;
+  --info: #0b84ff;
+  --info-hover: #2e97ff;
+  --success: #2ecc71;
+  --warning: #ffb020;
+  --danger: #e5484d;
+  --chrome: #c9cdd3;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 8px 28px rgb(0 0 0 / 0.45);
+  --glow-accent: 0 0 0 1px rgb(255 107 53 / 0.35), 0 6px 20px rgb(255 107 53 / 0.28);
+  --surface-top: linear-gradient(180deg, var(--surface-2), var(--surface));
+  --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --shadow-lift: 0 14px 34px rgb(0 0 0 / 0.45);
+  color-scheme: dark;
+
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+}
+.landing-page #topo,
+.landing-page #produto,
+.landing-page #vitrine,
+.landing-page #precos,
+.landing-page #contato {
+  scroll-margin-top: 84px;
 }
 
 .landing-header {
   position: sticky;
   top: 0;
   z-index: 20;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 24px;
   padding: 16px clamp(20px, 5vw, 64px);
-  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  background: color-mix(in srgb, var(--bg-header) 90%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
 }
 .landing-brand {
   display: flex;
   align-items: center;
+  justify-self: start;
   line-height: 0;
+  transition: opacity 0.15s ease;
+}
+.landing-brand:hover {
+  opacity: 0.82;
 }
 .landing-nav {
   display: flex;
+  justify-self: center;
   gap: 28px;
   font-size: 13.5px;
   font-weight: 600;
 }
 .landing-nav a {
-  color: var(--text-2);
+  color: var(--text);
+  position: relative;
+  padding-bottom: 2px;
+  transition: color 0.15s ease;
+}
+.landing-nav a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: -3px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: right 0.2s ease;
 }
 .landing-nav a:hover {
   color: var(--text);
 }
+.landing-nav a:hover::after {
+  right: 0;
+}
 .landing-header-actions {
   display: flex;
   align-items: center;
+  justify-self: end;
   gap: 10px;
+}
+.landing-page .btn {
+  transition: background 0.14s, border-color 0.14s, box-shadow 0.14s, opacity 0.14s, transform 0.16s ease;
+}
+.landing-page .btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.landing-page .btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+/* Neutralize the global blue link color / underline-on-hover for every
+   anchor on this page - buttons and nav links here manage their own color. */
+.landing-page a,
+.landing-page a:hover,
+.landing-page a:focus-visible {
+  text-decoration: none;
+}
+.landing-page .btn,
+.landing-page .btn:hover:not(:disabled) {
+  color: inherit;
+}
+.landing-page .btn-primary,
+.landing-page .btn-primary:hover:not(:disabled) {
+  color: var(--accent-contrast);
+}
+.landing-page .btn-ghost,
+.landing-page .btn-ghost:hover:not(:disabled) {
+  color: var(--text);
 }
 
 .landing-hero {
@@ -7868,14 +7959,21 @@ input.input-bad {
   background: radial-gradient(55% 50% at 50% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 65%);
   pointer-events: none;
 }
-.landing-hero-inner {
+.landing-hero-grid {
   position: relative;
   z-index: 1;
-  max-width: 680px;
+  max-width: 1180px;
   margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 560px) minmax(0, 520px);
+  align-items: center;
+  gap: clamp(32px, 5vw, 64px);
+}
+.landing-hero-inner {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
+  text-align: left;
 }
 .landing-eyebrow {
   display: inline-flex;
@@ -7890,11 +7988,19 @@ input.input-bad {
   margin-bottom: 20px;
 }
 .landing-hero h1 {
-  font-size: clamp(30px, 5vw, 48px);
+  font-size: clamp(30px, 4vw, 44px);
   font-weight: 800;
   letter-spacing: -0.02em;
-  line-height: 1.12;
+  line-height: 1.14;
   margin: 0 0 18px;
+}
+.landing-text-accent {
+  background: linear-gradient(100deg, var(--accent), #ffb27a 65%, var(--accent));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: landing-shine 6s ease-in-out infinite;
 }
 .landing-hero p {
   font-size: 16px;
@@ -7906,13 +8012,440 @@ input.input-bad {
 .landing-hero-actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 12px;
 }
 .landing-hero-hint {
-  margin: 16px 0 0 !important;
-  font-size: 12.5px !important;
-  color: var(--text-3) !important;
+  display: none;
+}
+.landing-trust-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 24px 0 0;
+  padding: 0;
+}
+.landing-trust-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.landing-trust-list li::before {
+  content: '✓';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--success) 20%, transparent);
+  color: var(--success);
+  font-size: 10px;
+  font-weight: 800;
+}
+.landing-trust-list-center {
+  justify-content: center;
+  margin: -20px auto 40px;
+}
+
+@keyframes landing-shine {
+  0%, 100% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+}
+
+/* ─── Reveal-on-scroll ───────────────────────────────────────────────────── */
+.landing-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.landing-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ─── Mock UI: shared "browser window" chrome ───────────────────────────── */
+.landing-mock {
+  position: relative;
+  background: var(--surface);
+  background-image: var(--surface-top);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-lift);
+  overflow: hidden;
+}
+.landing-mock-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.landing-mock-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+.landing-mock-url {
+  margin-left: 10px;
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 600;
+}
+.landing-mock-body {
+  padding: 16px;
+}
+.landing-mock-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+}
+.landing-mock-caption {
+  display: block;
+  text-align: center;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-2);
+  border-top: 1px solid var(--border);
+}
+
+/* ─── Hero visual: kanban mock ──────────────────────────────────────────── */
+.landing-hero-visual {
+  position: relative;
+}
+.landing-hero-visual .landing-mock {
+  transform: rotate(-1deg);
+  transition: transform 0.4s ease;
+}
+.landing-hero-visual:hover .landing-mock {
+  transform: rotate(0deg);
+}
+.landing-mock-kanban {
+  display: flex;
+  gap: 10px;
+  overflow: hidden;
+}
+.landing-mock-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+.landing-mock-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-2);
+  margin-bottom: 2px;
+}
+.landing-mock-count {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 1px 7px;
+  font-size: 10px;
+  color: var(--text-3);
+}
+.landing-mock-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 8px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.landing-mock-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+}
+.landing-mock-card.active {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.landing-mock-card.done {
+  opacity: 0.7;
+}
+.landing-mock-card-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.landing-mock-card-info strong {
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.landing-mock-card-info span {
+  font-size: 10.5px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.landing-mock-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--text-3);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.landing-float {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lift);
+  font-size: 12px;
+  font-weight: 700;
+  animation: landing-float 5s ease-in-out infinite;
+}
+.landing-float-1 {
+  top: -14px;
+  right: 24px;
+  animation-delay: 0s;
+}
+.landing-float-2 {
+  bottom: -14px;
+  left: 12px;
+  color: var(--success);
+  animation-delay: 1.4s;
+}
+@keyframes landing-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+/* ─── Showcase mocks: inbox / storefront / relatórios ───────────────────── */
+.landing-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+.landing-showcase-grid .landing-mock {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.landing-showcase-grid .landing-mock:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift), 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.landing-mock-inbox {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 10px;
+  flex: 1;
+}
+.landing-mock-inbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.landing-mock-thread {
+  min-width: 0;
+}
+.landing-mock-thread {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px;
+  border-radius: 8px;
+}
+.landing-mock-thread.unread {
+  background: var(--bg);
+}
+.landing-mock-thread-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.landing-mock-thread-info strong {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.landing-mock-thread-info span {
+  font-size: 10px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.landing-mock-thread-time {
+  margin-left: auto;
+  font-size: 9.5px;
+  color: var(--text-3);
+}
+.landing-mock-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+.landing-mock-bubble {
+  max-width: 88%;
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+.landing-mock-bubble.lead {
+  align-self: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 3px;
+}
+.landing-mock-bubble.ai {
+  align-self: flex-end;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  color: var(--text);
+  border-bottom-right-radius: 3px;
+}
+
+.landing-mock-store {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  position: relative;
+}
+.landing-mock-store-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px;
+}
+.landing-mock-store-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+}
+.landing-mock-store-photo {
+  height: 52px;
+  border-radius: 7px;
+  margin-bottom: 6px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 30%, var(--surface)), var(--surface-2, var(--surface)) 70%);
+}
+.landing-mock-store-card strong {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.landing-mock-store-price {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--accent);
+}
+.landing-mock-store-km {
+  font-size: 10px;
+  color: var(--text-3);
+}
+.landing-mock-store-chat {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.landing-mock-report {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+.landing-mock-report-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.landing-mock-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 9px;
+}
+.landing-mock-kpi strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+.landing-mock-kpi span {
+  font-size: 9.5px;
+  color: var(--text-3);
+  font-weight: 600;
+}
+.landing-mock-report-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 90px;
+  padding: 0 4px;
+}
+.landing-mock-report-chart span {
+  flex: 1;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 40%, transparent));
+  transition: transform 0.2s ease;
+}
+.landing-mock-report-chart span:hover {
+  transform: scaleY(1.04);
 }
 
 .landing-section {
@@ -7950,7 +8483,7 @@ input.input-bad {
 
 .landing-features-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 18px;
 }
 .landing-feature-card {
@@ -7960,6 +8493,23 @@ input.input-bad {
   border-radius: var(--r-card);
   padding: 22px 20px;
   box-shadow: var(--edge-light);
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+.landing-feature-card:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  box-shadow: var(--shadow-lift);
+}
+.landing-feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  font-size: 18px;
+  margin-bottom: 14px;
 }
 .landing-feature-card h3 {
   font-size: 15px;
@@ -7987,10 +8537,19 @@ input.input-bad {
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   padding: 24px 20px;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.landing-price-card:hover {
+  transform: translateY(-4px);
 }
 .landing-price-card.highlight {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent), var(--shadow-lift);
+  animation: landing-price-glow 3.2s ease-in-out infinite;
+}
+@keyframes landing-price-glow {
+  0%, 100% { box-shadow: 0 0 0 1px var(--accent), var(--shadow-lift); }
+  50% { box-shadow: 0 0 0 1px var(--accent), 0 0 26px color-mix(in srgb, var(--accent) 35%, transparent), var(--shadow-lift); }
 }
 .landing-price-badge {
   position: absolute;
@@ -8039,6 +8598,15 @@ input.input-bad {
 }
 .landing-price-was s {
   color: var(--text-3);
+}
+.landing-price-was-old {
+  font-size: 12.5px;
+  color: var(--text-3);
+  margin: 0 0 2px;
+}
+.landing-price-was-old s {
+  color: var(--text-3);
+  text-decoration-thickness: 1.5px;
 }
 .landing-price-was-muted {
   font-style: italic;
@@ -8107,7 +8675,7 @@ input.input-bad {
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr 1fr;
   gap: 32px;
-  max-width: 1180px;
+  max-width: 100%;
   margin: 0 auto;
 }
 .landing-footer-brand p {
@@ -8150,6 +8718,23 @@ input.input-bad {
 }
 
 @media (max-width: 980px) {
+  .landing-hero-grid {
+    grid-template-columns: 1fr;
+  }
+  .landing-hero-inner {
+    align-items: center;
+    text-align: center;
+  }
+  .landing-hero-actions {
+    justify-content: center;
+  }
+  .landing-trust-list {
+    justify-content: center;
+  }
+  .landing-hero-visual {
+    max-width: 520px;
+    margin: 12px auto 0;
+  }
   .landing-features-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -8161,8 +8746,26 @@ input.input-bad {
   }
 }
 @media (max-width: 640px) {
+  .landing-header {
+    grid-template-columns: auto auto;
+  }
   .landing-nav {
     display: none;
+  }
+  .landing-mock-kanban {
+    flex-direction: column;
+  }
+  .landing-float {
+    display: none;
+  }
+  .landing-mock-inbox {
+    grid-template-columns: 1fr;
+  }
+  .landing-mock-inbox-list {
+    display: none;
+  }
+  .landing-mock-store {
+    grid-template-columns: 1fr 1fr;
   }
   .landing-features-grid,
   .landing-pricing-grid {

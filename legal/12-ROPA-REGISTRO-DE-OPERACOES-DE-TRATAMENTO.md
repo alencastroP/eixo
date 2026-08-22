@@ -1,6 +1,6 @@
 # Registro das Operações de Tratamento de Dados Pessoais (ROPA)
 
-**Documento interno** · **Versão 1.0** · `[DATA]`
+**Documento interno** · **Versão 1.0** · 22 de agosto de 2026
 **Fundamento:** art. 37 da Lei nº 13.709/2018
 **Responsável pela manutenção:** Encarregado (DPO)
 **Revisão:** trimestral, e sempre que houver novo tratamento
@@ -300,4 +300,4 @@ Ordenadas por risco.
 
 ---
 
-_Documento interno · `[RAZÃO SOCIAL]` · Versão 1.0 · Revisão trimestral pelo Encarregado_
+_Documento interno · Pedro Vitor Alencastro de Oliveira · Versão 1.0 · Revisão trimestral pelo Encarregado_

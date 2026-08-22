@@ -1,6 +1,6 @@
 # Modelo de Política de Privacidade para a Vitrine - uso pelo lojista
 
-**Versão 1.0** · `[DATA]`
+**Versão 1.0** · 22 de agosto de 2026
 
 Este é um **modelo** que o Eixo disponibiliza aos clientes para publicação na vitrine pública.
 
@@ -224,4 +224,4 @@ Podemos atualizar esta Política. A data no topo indica a última revisão. Muda
 
 ---
 
-_Modelo fornecido por `[RAZÃO SOCIAL DO EIXO]` aos clientes da plataforma Eixo · Versão 1.0_
+_Modelo fornecido por Pedro Vitor Alencastro de Oliveira, responsável pela plataforma Eixo, aos clientes da plataforma · Versão 1.0_

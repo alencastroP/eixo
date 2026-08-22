@@ -1,6 +1,6 @@
 # Política de Cookies e Tecnologias de Armazenamento - Eixo
 
-**Versão 1.0** · Vigente a partir de `[DATA DE VIGÊNCIA]`
+**Versão 1.0** · Vigente a partir de 22 de agosto de 2026
 
 Esta Política explica quais tecnologias de armazenamento no seu navegador são usadas pela plataforma Eixo e pelas vitrines publicadas por meio dela, e como você pode controlá-las. Complementa a **Política de Privacidade**.
 
@@ -124,6 +124,6 @@ Esta Política é atualizada sempre que houver mudança nas tecnologias utilizad
 
 ---
 
-**Dúvidas:** `[E-MAIL DO ENCARREGADO]`
+**Dúvidas:** pedrovalencastro@outlook.com
 
-_`[RAZÃO SOCIAL]` · CNPJ `[CNPJ]` · Versão 1.0_
+_Pedro Vitor Alencastro de Oliveira · CPF 711.892.774-09 · Versão 1.0_

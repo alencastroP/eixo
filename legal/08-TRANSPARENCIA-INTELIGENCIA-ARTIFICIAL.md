@@ -1,6 +1,6 @@
 # Aviso de Transparência - Atendimento por Inteligência Artificial
 
-**Versão 1.0** · Vigente a partir de `[DATA DE VIGÊNCIA]`
+**Versão 1.0** · Vigente a partir de 22 de agosto de 2026
 
 Este documento reúne (a) o **aviso público** dirigido às pessoas que conversam com o agente automatizado do Eixo, (b) as **regras operacionais** que o Cliente deve observar ao configurá-lo, e (c) os **textos de interface** a serem exibidos nos canais.
 
@@ -46,7 +46,7 @@ As respostas são geradas automaticamente e **podem conter erros ou informaçõe
 - **Para quê:** atender você, dar continuidade à negociação e organizar o atendimento da revenda.
 - **Com quem é compartilhado:** o conteúdo da conversa é transmitido ao provedor do modelo de linguagem indicado na Lista de Subprocessadores, **exclusivamente para gerar a resposta**.
 - **Não é usado para treinar modelos de inteligência artificial.**
-- **Seus direitos:** acesso, correção, eliminação, oposição e revisão humana. Para exercê-los, procure a revenda. O contato do encarregado do Eixo é `[E-MAIL DO ENCARREGADO]`.
+- **Seus direitos:** acesso, correção, eliminação, oposição e revisão humana. Para exercê-los, procure a revenda. O contato do encarregado do Eixo é pedrovalencastro@outlook.com.
 
 ## 7. Não informe dados desnecessários
 
@@ -142,4 +142,4 @@ Publicar um aviso que promete comportamento que o sistema não tem é pior do qu
 
 ---
 
-_`[RAZÃO SOCIAL]` · CNPJ `[CNPJ]` · Versão 1.0_
+_Pedro Vitor Alencastro de Oliveira · CPF 711.892.774-09 · Versão 1.0_
