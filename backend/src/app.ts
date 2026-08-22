@@ -41,8 +41,9 @@ export function createApiApp() {
   // subdomínio (ver isAllowedOrigin). Requisições sem Origin (curl, health
   // check do Render) seguem liberadas - CORS só governa chamadas de navegador.
   app.use(cors({ origin: (origin, cb) => cb(null, !origin || isAllowedOrigin(origin)) }));
-  // limite generoso: uploads de fotos do estoque chegam como data URL base64 no JSON
-  app.use(express.json({ limit: '30mb' }));
+  // limite generoso: fotos E VÍDEOS da galeria do estoque chegam como data URL
+  // base64 no JSON (vídeo vai até 60MB binário, ~80MB já em base64)
+  app.use(express.json({ limit: '90mb' }));
   app.use(requestLog);
   app.use(globalRateLimit);
 

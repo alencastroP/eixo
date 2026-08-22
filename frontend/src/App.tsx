@@ -36,6 +36,7 @@ const StorefrontLayout = lazy(() =>
 );
 const StorefrontHome = lazy(() => import('./storefront/HomePage').then((m) => ({ default: m.HomePage })));
 const StorefrontVehicle = lazy(() => import('./storefront/VehiclePage').then((m) => ({ default: m.VehiclePage })));
+const StorefrontAbout = lazy(() => import('./storefront/AboutPage').then((m) => ({ default: m.AboutPage })));
 
 // Landing pública (eixocrm.com) - separada do resto porque ninguém logado a baixa.
 const LandingPage = lazy(() => import('./pages/LandingPage').then((m) => ({ default: m.LandingPage })));
@@ -61,6 +62,7 @@ export default function App() {
       >
         <Route index element={<StorefrontHome />} />
         <Route path="veiculo/:id" element={<StorefrontVehicle />} />
+        <Route path="quem-somos" element={<StorefrontAbout />} />
       </Route>
 
       {hostSlug && (
@@ -74,6 +76,7 @@ export default function App() {
         >
           <Route index element={<StorefrontHome />} />
           <Route path="veiculo/:id" element={<StorefrontVehicle />} />
+          <Route path="quem-somos" element={<StorefrontAbout />} />
         </Route>
       )}
 

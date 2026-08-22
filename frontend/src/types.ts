@@ -416,6 +416,7 @@ export type VehicleStatus = 'PREPARING' | 'AVAILABLE' | 'RESERVED' | 'SOLD' | 'C
 export interface VehiclePhoto {
   id: string;
   url: string;
+  type: 'PHOTO' | 'VIDEO';
   position: number;
   isCover: boolean;
 }
@@ -500,7 +501,55 @@ export const VEHICLE_STATUS_LABELS: Record<VehicleStatus, string> = {
   CONSIGNED: 'Consignado',
 };
 
-export const VEHICLE_STATUS_ORDER: VehicleStatus[] = ['PREPARING', 'AVAILABLE', 'RESERVED', 'SOLD', 'CONSIGNED'];
+/** O que cada status significa na operação - texto do painel de status. */
+export const VEHICLE_STATUS_HINTS: Record<VehicleStatus, string> = {
+  PREPARING: 'Chegou ao pátio e está em revisão, estética ou documentação.',
+  AVAILABLE: 'Pronto para venda e liberado para a vitrine.',
+  RESERVED: 'Com proposta ou sinal do cliente - segue na vitrine, marcado como reservado.',
+  SOLD: 'Venda concluída - sai da vitrine e do estoque ativo.',
+  CONSIGNED: 'De terceiro, à venda pela loja - não entra na vitrine.',
+};
+
+export interface VehicleStatusGroup {
+  id: string;
+  label: string;
+  hint: string;
+  statuses: VehicleStatus[];
+}
+
+/**
+ * Os cinco status vistos como três etapas, agrupados pelo que têm em comum na
+ * operação - a vitrine publica só Disponível e Reservado (PUBLIC_STATUSES no
+ * storefront). O agrupamento é a fonte única: dita a ordem dos chips, o
+ * espaçamento entre eles e as seções do painel de status.
+ */
+export const VEHICLE_STATUS_GROUPS: VehicleStatusGroup[] = [
+  {
+    id: 'yard',
+    label: 'No pátio',
+    hint: 'Em estoque, ainda fora da vitrine.',
+    statuses: ['PREPARING', 'CONSIGNED'],
+  },
+  {
+    id: 'showcase',
+    label: 'Na vitrine',
+    hint: 'Publicados no site para o cliente final.',
+    statuses: ['AVAILABLE', 'RESERVED'],
+  },
+  {
+    id: 'closed',
+    label: 'Encerrado',
+    hint: 'Fora do estoque ativo.',
+    statuses: ['SOLD'],
+  },
+];
+
+/** Ordem canônica dos status: a leitura do ciclo, derivada dos grupos. */
+export const VEHICLE_STATUS_ORDER: VehicleStatus[] = VEHICLE_STATUS_GROUPS.flatMap((g) => g.statuses);
+
+/** Status que a vitrine publica - usado para resumir o estoque no cabeçalho. */
+export const VEHICLE_SHOWCASE_STATUSES: VehicleStatus[] =
+  VEHICLE_STATUS_GROUPS.find((g) => g.id === 'showcase')?.statuses ?? [];
 
 export const FUEL_OPTIONS = ['Flex', 'Gasolina', 'Etanol', 'Diesel', 'Elétrico', 'Híbrido', 'GNV'];
 
@@ -536,7 +585,16 @@ export interface CreditReport {
     installmentEstimate: number;
   };
   queriedAt: string;
+  /** 'mock' = simulado; qualquer outro valor é o slug do bureau real. */
   source: string;
+  /** false quando o nome veio do nosso cadastro, não do bureau. */
+  nameConfirmed?: boolean;
+  /** Renda (PF) ou faturamento (PJ) presumido pelo bureau. */
+  incomeEstimate?: number;
+  /** Protocolo do bureau - prova da consulta perante o titular (LGPD art. 20). */
+  protocol?: string;
+  /** true quando o bureau reaproveitou consulta recente e não tarifou de novo. */
+  requeried?: boolean;
 }
 
 export interface CreditQuery {
@@ -554,6 +612,8 @@ export interface LeadSearchResult {
   phone: string | null;
   email: string | null;
   platform: string;
+  /** CPF/CNPJ já no cadastro (dígitos) - prefixa a consulta de crédito. */
+  document: string | null;
 }
 
 // ─── Administrativo & Fiscal ─────────────────────────────────────────────────

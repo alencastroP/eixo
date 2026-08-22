@@ -4,14 +4,14 @@ import { formatBRL } from '../utils/format';
 import { BrandLogo, hasBrandMark } from './brandLogos';
 import { LeadForm, SectionHead, VehicleCard, installmentOf, whatsappLink } from './components';
 import { EMPTY_FILTERS, Inventory, type InventoryFilters } from './Inventory';
-import { CarIcon, HighlightIcon, SparkIcon, WhatsAppIcon } from './icons';
+import { CarIcon, HighlightIcon, WhatsAppIcon } from './icons';
 import { useSite } from './StorefrontLayout';
 
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
 export function HomePage() {
-  const { site, slug, openChat } = useSite();
-  const { brand, hero, highlights, about, contact, financing, sections } = site.store;
+  const { site, slug } = useSite();
+  const { brand, hero, highlights, contact, financing, sections } = site.store;
   const { facets, featured } = site;
   const location = useLocation();
 
@@ -239,68 +239,6 @@ export function HomePage() {
         </section>
       )}
 
-      {/* ── Institucional ───────────────────────────────────────────────── */}
-      {sections.about && (
-        <section className="sf-info sf-section" id="quem-somos">
-          <div className="sf-wrap">
-            <div className="sf-info-cell">
-              <span className="sf-eyebrow">Onde estamos</span>
-              <p>
-                {contact.address || '-'}
-                {(contact.city || contact.state) && (
-                  <>
-                    <br />
-                    {[contact.city, contact.state].filter(Boolean).join(' - ')}
-                  </>
-                )}
-              </p>
-              {contact.mapUrl && (
-                <a className="sf-info-link" href={contact.mapUrl} target="_blank" rel="noopener noreferrer">
-                  Como chegar →
-                </a>
-              )}
-            </div>
-            <div className="sf-info-cell">
-              <span className="sf-eyebrow">Atendimento</span>
-              <p>{contact.hours || '-'}</p>
-            </div>
-            <div className="sf-info-cell">
-              <span className="sf-eyebrow">Contato</span>
-              <p>{contact.phone || contact.email || '-'}</p>
-              <button className="sf-info-link" onClick={() => openChat()}>
-                Falar com o atendente virtual →
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {about.text && (
-        <section className="sf-stock">
-          <div className="sf-split">
-            <div>
-              <span className="sf-eyebrow">A loja</span>
-              <h2 className="sf-h2" style={{ margin: '12px 0 18px' }}>
-                {about.title}
-              </h2>
-              <p className="sf-lead">{about.text}</p>
-            </div>
-            <div className="sf-panel">
-              <h3 className="sf-h3" style={{ marginBottom: 6 }}>
-                Fale com a gente
-              </h3>
-              <p className="sf-note" style={{ marginBottom: 18 }}>
-                Respondemos em horário comercial. Prefere agora? Use o atendente virtual.
-              </p>
-              <LeadForm slug={slug} origin="contact" submitLabel="Enviar mensagem" messagePlaceholder="Como podemos ajudar?" />
-              <button className="sf-btn sf-btn-outline sf-btn-block" style={{ marginTop: 12 }} onClick={() => openChat()}>
-                <SparkIcon size={15} />
-                Atendimento imediato
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
     </>
   );
 }
@@ -369,30 +307,32 @@ function Simulator() {
           onChange={(e) => setPrice(Number(e.target.value))}
         />
       </label>
-      <label>
-        <span className="sf-sim-label">
-          Entrada: {formatBRL(down)} ({downPercent}%)
-        </span>
-        <input
-          className="sf-range"
-          type="range"
-          min={0}
-          max={80}
-          step={5}
-          value={downPercent}
-          onChange={(e) => setDownPercent(Number(e.target.value))}
-        />
-      </label>
-      <label>
-        <span className="sf-sim-label">Parcelas</span>
-        <select value={months} onChange={(e) => setMonths(Number(e.target.value))}>
-          {[12, 24, 36, 48, 60].map((m) => (
-            <option key={m} value={m}>
-              {m}x
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="sf-sim-row">
+        <label>
+          <span className="sf-sim-label">
+            Entrada: {formatBRL(down)} ({downPercent}%)
+          </span>
+          <input
+            className="sf-range"
+            type="range"
+            min={0}
+            max={80}
+            step={5}
+            value={downPercent}
+            onChange={(e) => setDownPercent(Number(e.target.value))}
+          />
+        </label>
+        <label>
+          <span className="sf-sim-label">Parcelas</span>
+          <select value={months} onChange={(e) => setMonths(Number(e.target.value))}>
+            {[12, 24, 36, 48, 60].map((m) => (
+              <option key={m} value={m}>
+                {m}x
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       <div className="sf-sim-out">
         <span>Parcela estimada</span>
@@ -401,16 +341,19 @@ function Simulator() {
           {months}x · financiando {formatBRL(price - down)} · {financing.monthlyRate.toFixed(2)}% a.m.
         </span>
       </div>
-      <p className="sf-note">
-        Simulação aproximada. O valor final depende da análise de crédito e das condições do banco.
-      </p>
-      <LeadForm
-        slug={slug}
-        origin="financing"
-        submitLabel="Quero uma proposta real"
-        messageLabel="Observações"
-        defaultMessage={`Quero financiar cerca de ${formatBRL(price - down)} em ${months}x. (${brand.name})`}
-      />
+
+      <div className="sf-sim-cta">
+        <p className="sf-note">
+          Simulação aproximada. O valor final depende da análise de crédito e das condições do banco.
+        </p>
+        <LeadForm
+          slug={slug}
+          origin="financing"
+          submitLabel="Quero uma proposta real"
+          messageLabel="Observações"
+          defaultMessage={`Quero financiar cerca de ${formatBRL(price - down)} em ${months}x. (${brand.name})`}
+        />
+      </div>
     </div>
   );
 }

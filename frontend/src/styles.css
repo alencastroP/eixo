@@ -2403,23 +2403,6 @@ select option {
 
 /* ═══ ESTOQUE / GARAGEM DIGITAL ═══════════════════════════════════════════ */
 
-/* status chips reaproveitados: cores semânticas de veículo */
-.veh-dot-PREPARING {
-  background: var(--warning);
-}
-.veh-dot-AVAILABLE {
-  background: var(--info);
-}
-.veh-dot-RESERVED {
-  background: var(--accent);
-}
-.veh-dot-SOLD {
-  background: var(--success);
-}
-.veh-dot-CONSIGNED {
-  background: var(--chrome);
-}
-
 /* badge de status do veículo */
 .veh-status {
   padding: 3px 10px;
@@ -2445,43 +2428,322 @@ select option {
   color: #f5f6f7;
 }
 
-/* chips de status com contagem (filtro rápido por status) */
-.stats-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
+/* ═══ MÓDULO DE FILTROS DO ESTOQUE ════════════════════════════════════════
+   Região comum: status, busca e refinos dentro de uma moldura só - antes eram
+   três faixas soltas na página, e nada dizia que agiam sobre a mesma grade.
+   Dentro dela, a proximidade separa as etapas e a cor liga o chip ao selo do
+   card: quem filtra "Disponível" vê o mesmo azul no chip e na foto. */
+.inv-filters {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 18px;
+  overflow: hidden;
 }
-.stat-chip {
+
+/* faixa 1 - status. Fundo rebaixado: o trilho é o chão, o chip é a figura. */
+.inv-status-rail {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 18px; /* 18px ENTRE grupos */
+  padding: 9px 12px;
+  background: var(--well);
+  border-bottom: 1px solid var(--border);
+}
+.st-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px; /* 4px DENTRO do grupo - é o vão que agrupa, não a linha */
+}
+.st-rail-sep {
+  width: 1px;
+  align-self: stretch;
+  min-height: 20px;
+  background: var(--border);
+}
+
+/* cor semântica do status: uma variável serve chip, linha e barra */
+.st-PREPARING {
+  --st: var(--warning);
+}
+.st-AVAILABLE {
+  --st: var(--info);
+}
+.st-RESERVED {
+  --st: var(--accent);
+}
+.st-SOLD {
+  --st: var(--success);
+}
+.st-CONSIGNED {
+  --st: var(--chrome);
+}
+
+.st-chip {
+  --st: var(--text-3);
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 999px;
-  padding: 6px 13px 6px 11px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--r-pill);
+  padding: 6px 11px 6px 9px;
   font-size: 12px;
   font-weight: 600;
   color: var(--text-2);
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
-  transition: border-color 0.14s, background 0.14s, color 0.14s;
+  transition: background var(--dur-tap) ease, border-color var(--dur-tap) ease, color var(--dur-tap) ease;
 }
-.stat-chip:hover {
+.st-chip .st-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--st);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--st) 18%, transparent);
+}
+.st-count {
+  font-weight: 700;
+  color: var(--text);
+}
+.st-chip:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.st-chip.active {
+  border-color: color-mix(in srgb, var(--st) 50%, transparent);
+  background: color-mix(in srgb, var(--st) 14%, transparent);
+  color: var(--text);
+}
+.st-chip.active .st-count {
+  color: var(--st);
+}
+/* "Todos" é o total, não um status: fica neutro mesmo ativo */
+.st-all {
+  font-weight: 700;
+  padding-left: 11px;
+}
+.st-all.active {
   border-color: var(--border-strong);
+  background: var(--surface);
   color: var(--text);
 }
-.stat-chip strong {
+.st-all.active .st-count {
+  color: var(--text);
+}
+
+.st-more {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--r-panel);
+  padding: 6px 11px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-2);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur-tap) ease, border-color var(--dur-tap) ease;
+}
+.st-more:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.st-more:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* faixa 2 - a toolbar perde a moldura própria: ela já está dentro de uma */
+.inv-toolbar.flush {
+  background: none;
+  background-image: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin-bottom: 0;
+  padding: 9px 12px;
+}
+
+/* no telefone o trilho rola no lugar de empilhar: o cabeçalho não cresce */
+@media (max-width: 760px) {
+  .inv-status-rail {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .inv-status-rail::-webkit-scrollbar {
+    display: none;
+  }
+  .st-group {
+    flex-wrap: nowrap;
+  }
+  .st-more {
+    position: sticky;
+    right: 0;
+    margin-left: 0;
+    flex-shrink: 0;
+    box-shadow: -12px 0 12px -6px var(--well);
+  }
+}
+
+/* ═══ PAINEL DE STATUS DO ESTOQUE (modal) ═════════════════════════════════
+   O chip responde "quantos". Aqui cabe o resto: o que o status significa,
+   quanto pesa no estoque e a que etapa pertence - cada etapa na sua moldura. */
+.stk-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.stk-bar {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.stk-bar-seg {
+  flex-basis: 0;
+  min-width: 4px;
+  background: var(--st);
+}
+.stk-all {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-panel);
+  background: var(--surface-2);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur-tap) ease, background var(--dur-tap) ease;
+}
+.stk-all:hover {
+  border-color: var(--border-strong);
+}
+.stk-all.active {
+  border-color: var(--border-strong);
+  background: var(--hover);
+}
+.stk-all-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.stk-all-text strong {
+  font-size: 13px;
   font-weight: 800;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
 }
-.stat-chip.active {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--text);
+.stk-all-count {
+  font-size: 17px;
+  font-weight: 800;
+  flex-shrink: 0;
 }
-.stat-chip.active strong {
-  color: var(--accent);
+.stk-group {
+  border: 1px solid var(--border);
+  border-radius: var(--r-panel);
+  overflow: hidden;
+}
+.stk-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 12px;
+  background: var(--well);
+  border-bottom: 1px solid var(--border);
+}
+.stk-group-hint {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.stk-group-count {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+.stk-rows {
+  display: flex;
+  flex-direction: column;
+}
+.stk-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-tap) ease, border-color var(--dur-tap) ease;
+}
+.stk-row + .stk-row {
+  border-top: 1px solid var(--border);
+}
+.stk-row:hover {
+  background: var(--hover);
+}
+.stk-row.active {
+  background: color-mix(in srgb, var(--st) 12%, transparent);
+  border-left-color: var(--st);
+}
+.stk-row .st-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--st);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--st) 18%, transparent);
+}
+.stk-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.stk-row-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+.stk-row-hint {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text-3);
+}
+.stk-row-num {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+.stk-row-num strong {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.stk-row-share {
+  font-size: 10.5px;
+  color: var(--text-3);
 }
 
 /* barra de busca + filtros do estoque */
@@ -2933,11 +3195,21 @@ select option {
   cursor: grab;
   background: var(--surface-2);
 }
-.thumb img {
+.thumb img,
+.thumb video {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  pointer-events: none;
+}
+.video-badge {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: rgb(0 0 0 / 0.18);
   pointer-events: none;
 }
 .thumb.cover {
@@ -3221,6 +3493,276 @@ select option {
   text-align: center;
   margin-top: 12px;
   margin-bottom: 0;
+}
+
+/* ── Formulário em etapas ──────────────────────────────────────────────────
+   O painel de busca é centrado; o formulário, não: um formulário com três
+   etapas obrigatórias precisa de uma margem esquerda comum para o olho descer
+   por ela. Só o cabeçalho e o botão continuam centrados. */
+.credit-form {
+  text-align: left;
+}
+.credit-form-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.credit-form .credit-search-badge {
+  margin: 0;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+}
+.credit-form .credit-search-title {
+  margin-bottom: 2px;
+}
+.credit-form .credit-search-hint {
+  margin: 0;
+  max-width: 46ch;
+}
+.credit-form .credit-search-label {
+  text-align: left;
+}
+.credit-form-head > div {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+/* Saldo da franquia: o custo aparece antes do clique, não depois do erro. */
+.credit-quota {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.credit-quota.warn {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+  border-color: color-mix(in srgb, var(--warning) 34%, transparent);
+}
+.credit-quota.bad {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 34%, transparent);
+}
+
+.credit-step {
+  padding: 14px 0 0;
+  border-top: 1px solid var(--border);
+  margin-top: 14px;
+}
+.credit-step:first-of-type {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+.credit-step-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+/* O número vira check quando a etapa fecha - o estado do formulário fica
+   legível de relance, sem precisar reler os campos. */
+.credit-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  transition: background 0.16s, color 0.16s, border-color 0.16s;
+}
+.credit-step-num.done {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+}
+.credit-step-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.credit-step-title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.credit-step-hint {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.lead-search-status {
+  display: block;
+  padding: 2px 2px 4px;
+}
+.lead-result.active,
+.lead-result:hover {
+  border-color: var(--accent);
+}
+.lead-result-picked {
+  cursor: default;
+  border-color: var(--border);
+}
+.lead-result-picked:hover {
+  border-color: var(--border);
+}
+.lead-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.lead-result-doc {
+  font-size: 11.5px;
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+
+.credit-form .credit-doc-input {
+  font-size: 21px;
+}
+.credit-doc-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 6px 0 0;
+  color: var(--text-3);
+  min-height: 16px;
+}
+.credit-doc-hint.bad {
+  color: var(--danger);
+}
+.credit-doc-hint.ok {
+  color: var(--success);
+}
+
+/* Documento já consultado: oferece o relatório arquivado em vez de cobrar
+   outra consulta pelo mesmo dado. */
+.credit-dup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: var(--info);
+  background: color-mix(in srgb, var(--info) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--info) 34%, transparent);
+}
+.credit-dup > svg {
+  flex-shrink: 0;
+}
+.credit-dup > span {
+  flex: 1;
+}
+.credit-dup .btn {
+  flex-shrink: 0;
+}
+
+.consent-check {
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 500;
+  line-height: 1.45;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.consent-check input {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.consent-check.has-error,
+.link-search.has-error input {
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--border));
+}
+.consent-label {
+  margin: 14px 0 8px;
+}
+
+/* Canal em botões segmentados: são quatro opções fixas e a escolha fica
+   visível sem abrir nada - um select escondia o que foi registrado. */
+.consent-channels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.consent-channel {
+  position: relative;
+  flex: 1 1 auto;
+  text-align: center;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: color 0.14s, background 0.14s, border-color 0.14s;
+}
+.consent-channel:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.consent-channel input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.consent-channel.on {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.consent-channel:focus-within {
+  box-shadow: var(--ring);
+}
+
+.credit-form .credit-submit {
+  width: 100%;
+  margin-top: 20px;
+  height: 42px;
+}
+.credit-legal-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 12px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-3);
+}
+.credit-legal-note > svg {
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .recent-queries {

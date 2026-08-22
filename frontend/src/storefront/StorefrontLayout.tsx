@@ -22,13 +22,17 @@ export interface SiteContext {
 
 export const useSite = () => useOutletContext<SiteContext>();
 
-const NAV = [
+/** `hash` rola até a seção na home; `to` leva a uma página própria da vitrine. */
+const NAV: { label: string; hash?: string; to?: string }[] = [
   { hash: 'estoque', label: 'Estoque' },
   { hash: 'vender', label: 'Venda seu veículo' },
   { hash: 'financiamento', label: 'Financiamento' },
-  { hash: 'quem-somos', label: 'Quem somos' },
+  { to: 'quem-somos', label: 'Quem somos' },
   { hash: 'contato', label: 'Contato' },
 ];
+
+const navHref = (home: string, item: { hash?: string; to?: string }) =>
+  item.to ? `${home}/${item.to}` : `${home}#${item.hash}`;
 
 /** Archivo + JetBrains Mono só quando a vitrine está na tela (o CRM não usa). */
 function useStorefrontFonts() {
@@ -122,10 +126,11 @@ export function StorefrontLayout() {
     );
   }
 
-  const { brand, contact } = site.store;
+  const { brand, contact, sections } = site.store;
   const home = `/loja/${slug}`;
   const phoneDigits = contact.phone.replace(/\D/g, '');
   const cityLine = [contact.city, contact.state].filter(Boolean).join(' - ');
+  const nav = NAV.filter((item) => item.to !== 'quem-somos' || sections.about);
 
   const Logo = () => (
     <>
@@ -134,10 +139,12 @@ export function StorefrontLayout() {
       ) : (
         <span className="sf-logo-mark">{monogram(brand.name)}</span>
       )}
-      <span className="sf-logo-text">
-        <span className="sf-logo-name">{firstWord(brand.name)}</span>
-        <span className="sf-logo-sub">{restWords(brand.name) || brand.tagline}</span>
-      </span>
+      {brand.showName && (
+        <span className="sf-logo-text">
+          <span className="sf-logo-name">{firstWord(brand.name)}</span>
+          <span className="sf-logo-sub">{restWords(brand.name) || brand.tagline}</span>
+        </span>
+      )}
     </>
   );
 
@@ -145,7 +152,13 @@ export function StorefrontLayout() {
     <div
       className="sf"
       data-sf-theme={theme}
-      style={{ '--sf-accent': brand.primary, '--sf-on-accent': onAccent(brand.primary) } as React.CSSProperties}
+      style={
+        {
+          '--sf-accent': brand.primary,
+          '--sf-on-accent': onAccent(brand.primary),
+          '--sf-accent-ink': accentOnPaper(brand.primary),
+        } as React.CSSProperties
+      }
     >
       {(contact.hours || cityLine) && (
         <div className="sf-topbar">
@@ -163,8 +176,8 @@ export function StorefrontLayout() {
           </Link>
 
           <nav className="sf-nav">
-            {NAV.map((item) => (
-              <Link key={item.hash} to={`${home}#${item.hash}`}>
+            {nav.map((item) => (
+              <Link key={item.label} to={navHref(home, item)}>
                 {item.label}
               </Link>
             ))}
@@ -188,8 +201,8 @@ export function StorefrontLayout() {
       </header>
 
       <div className={`sf-mobile-nav ${menuOpen ? 'is-open' : ''}`}>
-        {NAV.map((item) => (
-          <Link key={item.hash} to={`${home}#${item.hash}`} onClick={() => setMenuOpen(false)}>
+        {nav.map((item) => (
+          <Link key={item.label} to={navHref(home, item)} onClick={() => setMenuOpen(false)}>
             {item.label}
           </Link>
         ))}
@@ -234,8 +247,8 @@ export function StorefrontLayout() {
           <div>
             <h4>Mapa do site</h4>
             <div className="sf-footer-links">
-              {NAV.map((item) => (
-                <Link key={item.hash} to={`${home}#${item.hash}`}>
+              {nav.map((item) => (
+                <Link key={item.label} to={navHref(home, item)}>
                   {item.label}
                 </Link>
               ))}
@@ -298,4 +311,21 @@ function onAccent(hex: string): string {
   };
   const luminance = 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
   return luminance > 0.45 ? '#101013' : '#ffffff';
+}
+
+/**
+ * Cor da marca pronta para uso como texto/ícone sobre o papel (fundo claro
+ * da vitrine, não o cabeçalho/rodapé em tinta). Uma loja pode escolher uma cor
+ * de marca clara (branco, pastel) - perfeita sobre um botão de destaque, mas
+ * invisível se usada como cor de um ícone sobre o papel quase branco. Acima de
+ * um limiar de luminância, escurece a cor misturando com a tinta.
+ */
+function accentOnPaper(hex: string): string {
+  const value = hex.replace('#', '');
+  if (value.length !== 6) return hex;
+  const channel = (start: number) => parseInt(value.slice(start, start + 2), 16);
+  const luminance = 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
+  if (luminance < 200) return hex;
+  const darken = (start: number) => Math.round(channel(start) * 0.55).toString(16).padStart(2, '0');
+  return `#${darken(0)}${darken(2)}${darken(4)}`;
 }

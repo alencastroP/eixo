@@ -1,7 +1,7 @@
-import { Prisma, VehicleSaleStatus, VehicleType } from '@prisma/client';
+import { Prisma, VehicleMediaType, VehicleSaleStatus, VehicleType } from '@prisma/client';
 import { badRequest, notFound } from '../../lib/errors';
 import { prisma } from '../../lib/prisma';
-import { deleteByPublicUrl, saveImageDataUrl } from '../../lib/storage';
+import { deleteByPublicUrl, saveVehicleMedia } from '../../lib/storage';
 import { assertCanAddVehicle } from '../billing/limits.service';
 import { generateVehicleDescription } from './description.generator';
 
@@ -21,9 +21,11 @@ const detailInclude = {
 type VehicleListRow = Prisma.VehicleGetPayload<{ include: typeof listInclude }>;
 type VehicleDetailRow = Prisma.VehicleGetPayload<{ include: typeof detailInclude }>;
 
-function coverUrl(photos: { url: string; isCover: boolean; position: number }[]): string | null {
-  if (photos.length === 0) return null;
-  return (photos.find((p) => p.isCover) ?? photos[0]).url;
+/** Capa do card: só entre as fotos - um vídeo nunca vira miniatura de capa. */
+function coverUrl(photos: { url: string; isCover: boolean; position: number; type: VehicleMediaType }[]): string | null {
+  const stills = photos.filter((p) => p.type === 'PHOTO');
+  if (stills.length === 0) return null;
+  return (stills.find((p) => p.isCover) ?? stills[0]).url;
 }
 
 export function serializeVehicleCard(v: VehicleListRow) {
@@ -78,7 +80,7 @@ export function serializeVehicleDetail(v: VehicleDetailRow) {
     // margem: venda − custo de compra − gastos acumulados
     margin: salePrice != null ? salePrice - (costPrice ?? 0) - totalCosts : null,
     totalCosts,
-    photos: v.photos.map((p) => ({ id: p.id, url: p.url, position: p.position, isCover: p.isCover })),
+    photos: v.photos.map((p) => ({ id: p.id, url: p.url, type: p.type, position: p.position, isCover: p.isCover })),
     costs: v.costs.map((c) => ({
       id: c.id,
       category: c.category,
@@ -277,12 +279,16 @@ export async function addPhotos(accountId: string, vehicleId: string, images: st
   if (!v) throw notFound('Veículo não encontrado');
 
   let position = v.photos.length;
-  const hadCover = v.photos.some((p) => p.isCover);
+  // um vídeo nunca vira capa: só a primeira FOTO da galeria assume o posto,
+  // mesmo que um vídeo tenha sido enviado antes dela neste mesmo lote
+  let hasCover = v.photos.some((p) => p.isCover);
   for (let i = 0; i < images.length; i++) {
-    const url = await saveImageDataUrl(`vehicles/${vehicleId}`, images[i]);
+    const { url, kind } = await saveVehicleMedia(vehicleId, images[i]);
+    const isCover = kind === 'PHOTO' && !hasCover;
     await prisma.vehiclePhoto.create({
-      data: { vehicleId, url, position, isCover: !hadCover && position === 0 },
+      data: { vehicleId, url, type: kind, position, isCover },
     });
+    if (isCover) hasCover = true;
     position++;
   }
   return getVehicle(accountId, vehicleId);
@@ -292,10 +298,11 @@ export async function addPhotos(accountId: string, vehicleId: string, images: st
 export async function reorderPhotos(accountId: string, vehicleId: string, order: string[], coverId?: string) {
   const photos = await prisma.vehiclePhoto.findMany({
     where: { vehicleId, vehicle: { accountId } },
-    select: { id: true },
+    select: { id: true, type: true },
   });
-  const known = new Set(photos.map((p) => p.id));
+  const known = new Map(photos.map((p) => [p.id, p.type]));
   if (order.some((id) => !known.has(id))) throw badRequest('Lista de ordenação inválida');
+  if (coverId && known.get(coverId) !== VehicleMediaType.PHOTO) throw badRequest('Só uma foto pode ser a capa');
 
   await prisma.$transaction([
     ...order.map((id, index) =>

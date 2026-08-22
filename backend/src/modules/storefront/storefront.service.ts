@@ -26,6 +26,7 @@ export interface StorefrontBrand {
   logoUrl: string | null;
   primary: string; // cor de destaque da loja (hex)
   theme: 'dark' | 'light';
+  showName: boolean; // false = só o logo, sem nome/tagline ao lado (cabeçalho e rodapé)
 }
 
 export interface StorefrontHero {
@@ -85,7 +86,7 @@ export interface StorefrontConfig {
 }
 
 export const DEFAULT_CONFIG: StorefrontConfig = {
-  brand: { name: '', tagline: 'Seminovos selecionados', logoUrl: null, primary: '#ff6b35', theme: 'dark' },
+  brand: { name: '', tagline: 'Seminovos selecionados', logoUrl: null, primary: '#ff6b35', theme: 'dark', showName: true },
   hero: {
     title: 'Seu próximo carro está aqui.',
     subtitle: 'Estoque revisado, procedência verificada e negociação sem enrolação.',
@@ -285,6 +286,8 @@ type PublicRow = Prisma.VehicleGetPayload<{ include: typeof publicInclude }>;
  * é o que o visitante anônimo pode ver.
  */
 function serializePublicCard(v: PublicRow) {
+  // capa é sempre uma foto - um vídeo nunca vira miniatura de card
+  const stills = v.photos.filter((p) => p.type === 'PHOTO');
   return {
     id: v.id,
     type: v.type,
@@ -299,7 +302,7 @@ function serializePublicCard(v: PublicRow) {
     price: dec(v.salePrice),
     reserved: v.status === VehicleSaleStatus.RESERVED,
     featured: v.featured,
-    coverUrl: v.photos.find((p) => p.isCover)?.url ?? v.photos[0]?.url ?? null,
+    coverUrl: stills.find((p) => p.isCover)?.url ?? stills[0]?.url ?? null,
     photoCount: v.photos.length,
   };
 }
@@ -309,7 +312,7 @@ function serializePublicDetail(v: PublicRow) {
     ...serializePublicCard(v),
     optionals: (v.optionals as string[]) ?? [],
     description: v.description,
-    photos: v.photos.map((p) => ({ id: p.id, url: p.url })),
+    photos: v.photos.map((p) => ({ id: p.id, url: p.url, type: p.type })),
   };
 }
 

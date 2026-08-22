@@ -43,6 +43,16 @@ const EXT_MIME: Record<string, string> = Object.fromEntries(
 const DATA_URL_RE = /^data:(image\/[a-zA-Z+]+);base64,([A-Za-z0-9+/=]+)$/;
 const MAX_BYTES = 8 * 1024 * 1024;
 
+/** Vídeos na galeria do veículo (além das fotos) - mesmo transporte (data URL), tipos e limite à parte. */
+const VIDEO_MIME_EXT: Record<string, string> = {
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
+  'video/quicktime': 'mov',
+};
+const MEDIA_MIME_EXT: Record<string, string> = { ...MIME_EXT, ...VIDEO_MIME_EXT };
+const MEDIA_DATA_URL_RE = /^data:(image\/[a-zA-Z+]+|video\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/;
+const MAX_VIDEO_BYTES = 60 * 1024 * 1024;
+
 /** true = há bucket configurado; false = grava em disco (desenvolvimento). */
 export const usingR2 = (): boolean => Boolean(env.r2.accessKeyId && env.r2.secretAccessKey && env.r2.bucket);
 
@@ -89,15 +99,14 @@ function decodeDataUrl(dataUrl: string): { buffer: Buffer; ext: string; mime: st
 }
 
 /**
- * Grava a imagem e devolve a URL pública ABSOLUTA.
+ * Grava o binário e devolve a URL pública ABSOLUTA.
  *
- * Sempre absoluta, nos dois backends: quem EXIBE a imagem (o front, em outro
- * domínio) não é quem a guarda, então uma URL relativa resolveria contra o
+ * Sempre absoluta, nos dois backends: quem EXIBE o arquivo (o front, em outro
+ * domínio) não é quem o guarda, então uma URL relativa resolveria contra o
  * domínio errado e a imagem quebraria - exatamente o defeito corrigido antes
  * de migrar para o bucket.
  */
-export async function saveImageDataUrl(subdir: string, dataUrl: string): Promise<string> {
-  const { buffer, ext, mime } = decodeDataUrl(dataUrl);
+async function writeMedia(subdir: string, buffer: Buffer, ext: string, mime: string): Promise<string> {
   const safeSub = safeSubdir(subdir);
   const filename = `${randomUUID()}.${ext}`;
   const key = `${safeSub}/${filename}`;
@@ -121,6 +130,39 @@ export async function saveImageDataUrl(subdir: string, dataUrl: string): Promise
     }),
   );
   return `${env.r2.publicUrl}/${key}`;
+}
+
+/** Grava a imagem (logo/hero da vitrine etc.) - só os mimes de `MIME_EXT`. */
+export async function saveImageDataUrl(subdir: string, dataUrl: string): Promise<string> {
+  const { buffer, ext, mime } = decodeDataUrl(dataUrl);
+  return writeMedia(subdir, buffer, ext, mime);
+}
+
+/** Decodifica e valida uma foto OU vídeo da galeria do veículo. */
+function decodeMediaDataUrl(dataUrl: string): { buffer: Buffer; ext: string; mime: string; kind: 'PHOTO' | 'VIDEO' } {
+  const match = MEDIA_DATA_URL_RE.exec(dataUrl.trim());
+  if (!match) throw badRequest('Formato inválido (esperado data URL de imagem ou vídeo em base64)');
+  const [, mime, base64] = match;
+  const ext = MEDIA_MIME_EXT[mime];
+  if (!ext) throw badRequest(`Tipo de arquivo não suportado: ${mime}`);
+
+  const kind: 'PHOTO' | 'VIDEO' = mime.startsWith('video/') ? 'VIDEO' : 'PHOTO';
+  const buffer = Buffer.from(base64, 'base64');
+  const limit = kind === 'VIDEO' ? MAX_VIDEO_BYTES : MAX_BYTES;
+  if (buffer.byteLength > limit) {
+    throw badRequest(kind === 'VIDEO' ? 'Vídeo maior que 60MB' : 'Imagem maior que 8MB');
+  }
+  return { buffer, ext, mime, kind };
+}
+
+/** Grava uma foto ou vídeo da galeria do veículo; devolve a URL e o tipo detectado pelo mime. */
+export async function saveVehicleMedia(
+  vehicleId: string,
+  dataUrl: string,
+): Promise<{ url: string; kind: 'PHOTO' | 'VIDEO' }> {
+  const { buffer, ext, mime, kind } = decodeMediaDataUrl(dataUrl);
+  const url = await writeMedia(`vehicles/${vehicleId}`, buffer, ext, mime);
+  return { url, kind };
 }
 
 /**

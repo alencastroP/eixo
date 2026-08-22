@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import {
   Area,
   AreaChart,
@@ -19,6 +19,8 @@ import { useTheme } from '../../theme/ThemeContext';
 import {
   CATEGORICAL_DARK,
   CATEGORICAL_LIGHT,
+  SERIES_END_DARK,
+  SERIES_END_LIGHT,
   SERIES_PRIMARY,
   formatAxis,
   formatMetric,
@@ -42,6 +44,8 @@ function useChrome() {
   const dark = theme === 'dark';
   return {
     palette: dark ? CATEGORICAL_DARK : CATEGORICAL_LIGHT,
+    seriesFrom: SERIES_PRIMARY,
+    seriesTo: dark ? SERIES_END_DARK : SERIES_END_LIGHT,
     text: dark ? '#a3aab2' : '#565d64',
     grid: dark ? '#262b30' : '#e2e5e8',
     axis: dark ? '#0b84ff' : '#0b6fd6',
@@ -52,8 +56,28 @@ function useChrome() {
   };
 }
 
+/** Mistura dois hex (t = 0 devolve `a`, t = 1 devolve `b`). */
+function mixHex(a: string, b: string, t: number) {
+  const parse = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [r1, g1, b1] = parse(a);
+  const [r2, g2, b2] = parse(b);
+  const ch = (x: number, y: number) =>
+    Math.round(x + (y - x) * t)
+      .toString(16)
+      .padStart(2, '0');
+  return `#${ch(r1, r2)}${ch(g1, g2)}${ch(b1, b2)}`;
+}
+
 export function ReportChart({ chartType, data, metricFormat, metricName, canDrill, onDrill }: Props) {
   const c = useChrome();
+
+  /* Ids únicos por instância: a visão principal e o modal de drill down convivem no
+     mesmo documento, e um `url(#id)` repetido faria um herdar o degradê do outro. */
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const barGrad = `rep-bar-${uid}`;
+  const lineGrad = `rep-line-${uid}`;
+  const areaGrad = `rep-area-${uid}`;
+  const sliceGrad = `rep-slice-${uid}`;
 
   const tooltip = useMemo(
     () =>
@@ -93,6 +117,14 @@ export function ReportChart({ chartType, data, metricFormat, metricName, canDril
       <div className="report-chart-scroll" style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ top: 4, right: 64, bottom: 4, left: 8 }} barCategoryGap="22%">
+            <defs>
+              {/* Mesmo degradê da barra de participação em "Dados analíticos":
+                  laranja ignição → âmbar, percorrido ao longo da própria barra. */}
+              <linearGradient id={barGrad} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor={c.seriesFrom} />
+                <stop offset="100%" stopColor={c.seriesTo} />
+              </linearGradient>
+            </defs>
             <CartesianGrid horizontal={false} stroke={c.grid} strokeDasharray="3 3" />
             <XAxis
               type="number"
@@ -121,7 +153,7 @@ export function ReportChart({ chartType, data, metricFormat, metricName, canDril
               animationDuration={650}
             >
               {data.map((d) => (
-                <Cell key={d.key} fill={SERIES_PRIMARY} />
+                <Cell key={d.key} fill={`url(#${barGrad})`} />
               ))}
               <LabelList
                 dataKey="value"
@@ -148,9 +180,16 @@ export function ReportChart({ chartType, data, metricFormat, metricName, canDril
             onClick={(state: any) => drill(state?.activeLabel)}
           >
             <defs>
-              <linearGradient id="reportArea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={SERIES_PRIMARY} stopOpacity={0.35} />
-                <stop offset="100%" stopColor={SERIES_PRIMARY} stopOpacity={0.02} />
+              {/* A linha percorre o mesmo laranja → âmbar da barra de participação. */}
+              <linearGradient id={lineGrad} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor={c.seriesFrom} />
+                <stop offset="100%" stopColor={c.seriesTo} />
+              </linearGradient>
+              {/* O preenchimento repete o par, desta vez desmaiando na vertical. */}
+              <linearGradient id={areaGrad} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={c.seriesFrom} stopOpacity={0.34} />
+                <stop offset="60%" stopColor={c.seriesTo} stopOpacity={0.13} />
+                <stop offset="100%" stopColor={c.seriesTo} stopOpacity={0.02} />
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} stroke={c.grid} strokeDasharray="3 3" />
@@ -171,12 +210,12 @@ export function ReportChart({ chartType, data, metricFormat, metricName, canDril
             <Area
               type="monotone"
               dataKey="value"
-              stroke={SERIES_PRIMARY}
+              stroke={`url(#${lineGrad})`}
               strokeWidth={2.5}
-              fill="url(#reportArea)"
+              fill={`url(#${areaGrad})`}
               cursor={cursor}
-              activeDot={{ r: 6, strokeWidth: 2 }}
-              dot={{ r: 3, fill: SERIES_PRIMARY, strokeWidth: 0 }}
+              activeDot={{ r: 6, strokeWidth: 2, fill: c.seriesFrom }}
+              dot={{ r: 3, fill: c.seriesFrom, strokeWidth: 0 }}
               isAnimationActive
               animationDuration={650}
             />
@@ -192,6 +231,16 @@ export function ReportChart({ chartType, data, metricFormat, metricName, canDril
     <div className="report-chart-scroll" style={{ height: 380 }}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
+          <defs>
+            {/* Cada fatia mantém sua cor categórica, mas ganha o mesmo volume em
+                degradê dos demais indicadores: clareia no topo, fecha na base. */}
+            {c.palette.map((color, i) => (
+              <linearGradient key={color} id={`${sliceGrad}-${i}`} x1="0" y1="0" x2="0.85" y2="1">
+                <stop offset="0%" stopColor={mixHex(color, '#ffffff', 0.24)} />
+                <stop offset="100%" stopColor={mixHex(color, '#000000', 0.14)} />
+              </linearGradient>
+            ))}
+          </defs>
           <Pie
             data={data}
             dataKey="value"
@@ -209,7 +258,7 @@ export function ReportChart({ chartType, data, metricFormat, metricName, canDril
             labelLine={false}
           >
             {data.map((d, i) => (
-              <Cell key={d.key} fill={c.palette[i % c.palette.length]} />
+              <Cell key={d.key} fill={`url(#${sliceGrad}-${i % c.palette.length})`} />
             ))}
           </Pie>
           <Tooltip content={tooltip} />
@@ -217,6 +266,14 @@ export function ReportChart({ chartType, data, metricFormat, metricName, canDril
             verticalAlign="bottom"
             iconType="circle"
             iconSize={9}
+            /* Payload explícito: a fatia agora é pintada por `url(#...)`, que a
+               bolinha de 9px não resolveria - aqui ela fica na cor chapada. */
+            payload={data.map((d, i) => ({
+              value: d.label,
+              type: 'circle' as const,
+              id: d.key,
+              color: c.palette[i % c.palette.length],
+            }))}
             formatter={(value: string) => {
               const row = data.find((d) => d.label === value);
               const pct = row && total ? ` · ${Math.round((row.value / total) * 100)}%` : '';

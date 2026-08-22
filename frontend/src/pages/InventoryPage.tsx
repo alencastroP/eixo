@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { vehiclesApi, type VehicleListParams } from '../api/endpoints';
 import { useAuth } from '../auth/AuthContext';
 import { VehicleStatusBadge } from '../components/badges';
-import { CameraIcon, CarIcon, GlobeIcon, PlusIcon, SearchIcon, StarIcon, XIcon } from '../components/icons';
+import { CameraIcon, CarIcon, GlobeIcon, PlusIcon, SearchIcon, SlidersIcon, StarIcon, XIcon } from '../components/icons';
 import { PageHeader } from '../components/PageHeader';
 import { VehicleCostsModal } from '../components/VehicleCostsModal';
+import { VehicleStatusModal } from '../components/VehicleStatusModal';
 import {
+  VEHICLE_SHOWCASE_STATUSES,
+  VEHICLE_STATUS_GROUPS,
   VEHICLE_STATUS_LABELS,
-  VEHICLE_STATUS_ORDER,
   VEHICLE_TYPE_LABELS,
   type VehicleCard,
   type VehicleFacets,
@@ -34,6 +36,7 @@ export function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [costsFor, setCostsFor] = useState<VehicleCard | null>(null);
+  const [statusPanel, setStatusPanel] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setSearch(searchInput.trim()), 350);
@@ -86,13 +89,21 @@ export function InventoryPage() {
   const hasFilters =
     Object.values(filters).some(Boolean) || search.length > 0;
 
+  // subtítulo do cabeçalho: o tamanho do estoque e quanto dele está publicado
+  const showcaseCount = facets
+    ? VEHICLE_SHOWCASE_STATUSES.reduce((acc, s) => acc + (facets.byStatus[s] ?? 0), 0)
+    : 0;
+  const inventorySummary = facets
+    ? `${facets.total} veículos no inventário · ${showcaseCount} na vitrine`
+    : 'Carregando inventário…';
+
   return (
     <div className="dash inv-page">
       <PageHeader
         icon={<CarIcon size={19} />}
         eyebrow="Estoque"
         title="Garagem Digital"
-        subtitle={facets ? `${facets.total} veículos no inventário` : 'Carregando inventário…'}
+        subtitle={inventorySummary}
         actions={
           canManage && (
             <button className="btn btn-primary" onClick={() => navigate('/inventory/new')}>
@@ -102,86 +113,112 @@ export function InventoryPage() {
         }
       />
 
-      {/* status chips com contagem */}
-      {facets && (
-        <div className="stats-row">
-          {VEHICLE_STATUS_ORDER.map((s) => (
-            <button
-              key={s}
-              className={`stat-chip ${filters.status === s ? 'active' : ''}`}
-              onClick={() => setFilter('status', filters.status === s ? '' : s)}
-            >
-              <span className={`dot veh-dot-${s}`} />
-              {VEHICLE_STATUS_LABELS[s]}
-              <strong>{facets.byStatus[s] ?? 0}</strong>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* busca e filtros rápidos */}
-      <div className="inv-toolbar">
-        <div className="inv-search">
-          <SearchIcon size={15} />
-          <input
-            placeholder="Buscar por marca, modelo, versão ou placa…"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-        </div>
-
-        <div className="inv-toolbar-divider" />
-
-        <div className="inv-toolbar-filters">
-          <select
-            className="inv-filter-select"
-            value={filters.brand}
-            onChange={(e) => setFilter('brand', e.target.value)}
+      {/* Um módulo só para tudo que filtra a grade: status na primeira faixa,
+          busca e refinos na segunda. Região comum - o que age sobre a listagem
+          mora dentro da mesma moldura, e não em linhas soltas na página. */}
+      <div className="inv-filters">
+        <div className="inv-status-rail" role="group" aria-label="Filtrar por status">
+          <button
+            type="button"
+            className={`st-chip st-all ${filters.status === '' ? 'active' : ''}`}
+            aria-pressed={filters.status === ''}
+            onClick={() => setFilter('status', '')}
           >
-            <option value="">Marca</option>
-            {facets?.brands.map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
-            ))}
-          </select>
-          <input
-            className="inv-filter-model"
-            placeholder="Modelo"
-            value={filters.model}
-            onChange={(e) => setFilter('model', e.target.value)}
-          />
-          <select
-            className="inv-filter-select narrow"
-            value={filters.year}
-            onChange={(e) => setFilter('year', e.target.value)}
-          >
-            <option value="">Ano</option>
-            {facets?.years.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-          <select
-            className="inv-filter-select narrow"
-            value={filters.type}
-            onChange={(e) => setFilter('type', e.target.value)}
-          >
-            <option value="">Tipo</option>
-            {TYPES.map((t) => (
-              <option key={t} value={t}>
-                {VEHICLE_TYPE_LABELS[t]}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {hasFilters && (
-          <button className="btn btn-ghost btn-sm inv-clear-btn" onClick={clearFilters}>
-            <XIcon size={13} /> Limpar
+            Todos
+            <strong className="st-count">{facets ? facets.total : '—'}</strong>
           </button>
-        )}
+
+          <span className="st-rail-sep" aria-hidden="true" />
+
+          {/* proximidade faz o agrupamento: o vão entre grupos é maior que o
+              vão entre chips do mesmo grupo, então a etapa se lê sozinha */}
+          {VEHICLE_STATUS_GROUPS.map((g) => (
+            <div key={g.id} className="st-group" title={`${g.label} - ${g.hint}`}>
+              {g.statuses.map((st) => (
+                <button
+                  type="button"
+                  key={st}
+                  className={`st-chip st-${st} ${filters.status === st ? 'active' : ''}`}
+                  aria-pressed={filters.status === st}
+                  onClick={() => setFilter('status', filters.status === st ? '' : st)}
+                >
+                  <span className="st-dot" />
+                  {VEHICLE_STATUS_LABELS[st]}
+                  <strong className="st-count">{facets ? facets.byStatus[st] ?? 0 : '—'}</strong>
+                </button>
+              ))}
+            </div>
+          ))}
+
+          <button type="button" className="st-more" onClick={() => setStatusPanel(true)} disabled={!facets}>
+            <SlidersIcon size={13} /> Detalhes
+          </button>
+        </div>
+
+        {/* busca e filtros rápidos */}
+        <div className="inv-toolbar flush">
+          <div className="inv-search">
+            <SearchIcon size={15} />
+            <input
+              placeholder="Buscar por marca, modelo, versão ou placa…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+          </div>
+
+          <div className="inv-toolbar-divider" />
+
+          <div className="inv-toolbar-filters">
+            <select
+              className="inv-filter-select"
+              value={filters.brand}
+              onChange={(e) => setFilter('brand', e.target.value)}
+            >
+              <option value="">Marca</option>
+              {facets?.brands.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+            <input
+              className="inv-filter-model"
+              placeholder="Modelo"
+              value={filters.model}
+              onChange={(e) => setFilter('model', e.target.value)}
+            />
+            <select
+              className="inv-filter-select narrow"
+              value={filters.year}
+              onChange={(e) => setFilter('year', e.target.value)}
+            >
+              <option value="">Ano</option>
+              {facets?.years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+            <select
+              className="inv-filter-select narrow"
+              value={filters.type}
+              onChange={(e) => setFilter('type', e.target.value)}
+            >
+              <option value="">Tipo</option>
+              {TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {VEHICLE_TYPE_LABELS[t]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {hasFilters && (
+            <button className="btn btn-ghost btn-sm inv-clear-btn" onClick={clearFilters}>
+              <XIcon size={13} /> Limpar
+            </button>
+          )}
+        </div>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -268,6 +305,16 @@ export function InventoryPage() {
       </div>
 
       {total > items.length && <p className="muted small">Exibindo {items.length} de {total} veículos.</p>}
+
+      {statusPanel && facets && (
+        <VehicleStatusModal
+          byStatus={facets.byStatus}
+          total={facets.total}
+          active={filters.status as VehicleStatus | ''}
+          onSelect={(st) => setFilter('status', st)}
+          onClose={() => setStatusPanel(false)}
+        />
+      )}
 
       {costsFor && (
         <VehicleCostsModal

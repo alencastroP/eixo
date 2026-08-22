@@ -1,8 +1,10 @@
 import { Router } from 'express';
+import { UsageMetric } from '@prisma/client';
 import { z } from 'zod';
 import { requirePermission } from '../../middleware/permissions';
 import { currentUser } from '../../lib/current-user';
 import { ah } from '../../lib/errors';
+import { usageStatus } from '../billing/usage.service';
 import * as credit from './credit.service';
 
 /** Módulo de Análise de Crédito. Ler o histórico e disparar consulta nova são
@@ -26,6 +28,15 @@ creditRouter.post(
     const { document, leadId, consentConfirmed, consentSource } = querySchema.parse(req.body);
     const result = await credit.runQuery(document, currentUser(req), { leadId, consentConfirmed, consentSource });
     res.status(201).json(result);
+  }),
+);
+
+/** Saldo de consultas do mês. Fica no módulo de crédito (e não em /billing,
+ *  que exige `billing.view`) para que o vendedor veja o custo antes de gastar. */
+creditRouter.get(
+  '/quota',
+  ah(async (req, res) => {
+    res.json(await usageStatus(currentUser(req).accountId, UsageMetric.CREDIT_QUERY));
   }),
 );
 

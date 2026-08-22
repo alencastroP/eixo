@@ -2,8 +2,10 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { VehicleType } from '@prisma/client';
 import { ah } from '../../lib/errors';
+import { prisma } from '../../lib/prisma';
 import { siteChatPollRateLimit, siteChatRateLimit, siteLeadRateLimit } from '../../middleware/security';
 import { normalizePhone } from '../../integrations/core/verify';
+import { handleInboundMessage } from '../aiAgent/agent.service';
 import { ingestNormalizedLead } from '../tickets/ingest.service';
 import * as storefront from './storefront.service';
 import { fetchChatMessages, sendChatMessage } from './chat.service';
@@ -117,6 +119,18 @@ publicSiteRouter.post(
       vehicle,
       campaign: `site:${slug}`,
     });
+
+    // Mensagem enviada de dentro do anúncio de um veículo: liga a IA no mesmo
+    // ticket, igual ao chat do site - o visitante que manda "quero mais
+    // informações" já recebe uma resposta automática, sem esperar um atendente
+    // humano abrir a conversa. Só na criação: se o ticket já existia (dedup) e um
+    // humano assumiu, `botEnabled` já está false e não é reativado aqui.
+    if (input.origin === 'vehicle') {
+      if (result.created) {
+        await prisma.ticket.update({ where: { id: result.ticketId }, data: { botEnabled: true } });
+      }
+      await handleInboundMessage(result.ticketId); // nunca lança: falha da IA vira log
+    }
 
     return res.status(201).json({ ok: true, created: result.created });
   }),

@@ -134,6 +134,7 @@ h3 {
 .margin-value,
 .funnel-count,
 .board-col-count,
+.st-count,
 .platform-count,
 .gauge-value,
 .conv-number,
@@ -162,7 +163,7 @@ h3 {
 .settings-card,
 .board-col,
 .veh-card,
-.inv-toolbar,
+.inv-filters,
 .composer-card,
 .conv-sidebar,
 .copilot,
@@ -170,7 +171,7 @@ h3 {
 .login-card,
 .auth-card,
 .user-menu-pop,
-.stat-chip,
+.st-more,
 .report-tab {
   background-image: var(--surface-top);
   box-shadow: var(--edge-light), var(--shadow-sm);
@@ -703,6 +704,8 @@ textarea {
   .btn-sm,
   .tab-btn,
   .ds-pill,
+  .st-chip,
+  .st-more,
   .rail-btn,
   .report-tab-name,
   .segmented button,

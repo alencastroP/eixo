@@ -41,6 +41,7 @@ import type {
   TicketPriority,
   TicketStats,
   TicketStatus,
+  UsageStatus,
   UserChannel,
   UserListItem,
   VehicleCard,
@@ -223,6 +224,7 @@ export const creditApi = {
   query: (document: string, consent: CreditConsentInput) =>
     api<CreditQuery>('/credit/queries', { method: 'POST', body: { document, ...consent } }),
   recent: () => api<CreditQuery[]>('/credit/queries/recent'),
+  quota: () => api<UsageStatus>('/credit/quota'),
   get: (id: string) => api<CreditQuery>(`/credit/queries/${id}`),
   link: (id: string, leadId: string) =>
     api<CreditQuery>(`/credit/queries/${id}/link`, { method: 'POST', body: { leadId } }),

@@ -2,7 +2,7 @@ import { useRef, useState, type DragEvent } from 'react';
 import { vehiclesApi } from '../api/endpoints';
 import { ApiError } from '../api/client';
 import type { VehicleDetail, VehiclePhoto } from '../types';
-import { CameraIcon, StarIcon, TrashIcon } from './icons';
+import { CameraIcon, PlayIcon, StarIcon, TrashIcon } from './icons';
 
 interface Props {
   vehicleId: string;
@@ -33,15 +33,15 @@ export function PhotoGallery({ vehicleId, photos, onChange }: Props) {
   const [overId, setOverId] = useState<string | null>(null);
 
   const uploadFiles = async (files: FileList | File[]) => {
-    const images = Array.from(files).filter((f) => f.type.startsWith('image/'));
-    if (images.length === 0) return;
+    const media = Array.from(files).filter((f) => f.type.startsWith('image/') || f.type.startsWith('video/'));
+    if (media.length === 0) return;
     setUploading(true);
     setError(null);
     try {
-      const dataUrls = await Promise.all(images.map(readAsDataUrl));
+      const dataUrls = await Promise.all(media.map(readAsDataUrl));
       onChange(await vehiclesApi.addPhotos(vehicleId, dataUrls));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Falha ao enviar as fotos');
+      setError(err instanceof ApiError ? err.message : 'Falha ao enviar a galeria');
     } finally {
       setUploading(false);
     }
@@ -109,13 +109,13 @@ export function PhotoGallery({ vehicleId, photos, onChange }: Props) {
       >
         <CameraIcon size={26} />
         <div>
-          <strong>Arraste fotos aqui</strong> ou clique para selecionar
+          <strong>Arraste fotos ou vídeos aqui</strong> ou clique para selecionar
         </div>
-        <span className="muted small">JPG, PNG ou WebP · até 20 por vez</span>
+        <span className="muted small">JPG, PNG, WebP ou MP4/WebM/MOV (até 60MB) · até 20 por vez</span>
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           multiple
           hidden
           onChange={(e) => {
@@ -156,18 +156,29 @@ export function PhotoGallery({ vehicleId, photos, onChange }: Props) {
                   setOverId(null);
                 }}
               >
-                <img src={p.url} alt="Foto do veículo" />
+                {p.type === 'VIDEO' ? (
+                  <>
+                    <video src={p.url} muted playsInline />
+                    <span className="video-badge">
+                      <PlayIcon size={13} />
+                    </span>
+                  </>
+                ) : (
+                  <img src={p.url} alt="Foto do veículo" />
+                )}
                 {p.isCover && <span className="cover-tag">Capa</span>}
                 <div className="thumb-actions">
-                  <button
-                    type="button"
-                    className={`thumb-btn ${p.isCover ? 'active' : ''}`}
-                    title="Definir como capa"
-                    onClick={() => setCover(p.id)}
-                    disabled={busy}
-                  >
-                    <StarIcon size={14} />
-                  </button>
+                  {p.type === 'PHOTO' && (
+                    <button
+                      type="button"
+                      className={`thumb-btn ${p.isCover ? 'active' : ''}`}
+                      title="Definir como capa"
+                      onClick={() => setCover(p.id)}
+                      disabled={busy}
+                    >
+                      <StarIcon size={14} />
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="thumb-btn danger"

@@ -11,7 +11,7 @@ import {
   vehicleWhatsAppMessage,
   whatsappLink,
 } from './components';
-import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, SparkIcon, WhatsAppIcon } from './icons';
+import { ArrowLeftIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, PlayIcon, SparkIcon, WhatsAppIcon } from './icons';
 import { useSite } from './StorefrontLayout';
 import type { SiteVehicleDetail } from './types';
 
@@ -82,7 +82,11 @@ export function VehiclePage() {
         <div>
           <div className={`sf-gallery ${current ? '' : 'is-empty'}`}>
             {current ? (
-              <img src={current.url} alt={title} />
+              current.type === 'VIDEO' ? (
+                <video src={current.url} controls playsInline />
+              ) : (
+                <img src={current.url} alt={title} />
+              )
             ) : (
               <span className="sf-card-placeholder">foto em breve - peça pelo WhatsApp</span>
             )}
@@ -106,9 +110,18 @@ export function VehiclePage() {
                   key={photo.id}
                   className={`sf-thumb ${index === photoIndex ? 'is-on' : ''}`}
                   onClick={() => setPhotoIndex(index)}
-                  aria-label={`Foto ${index + 1}`}
+                  aria-label={photo.type === 'VIDEO' ? `Vídeo ${index + 1}` : `Foto ${index + 1}`}
                 >
-                  <img src={photo.url} alt="" loading="lazy" />
+                  {photo.type === 'VIDEO' ? (
+                    <>
+                      <video src={photo.url} muted playsInline />
+                      <span className="sf-thumb-video-badge">
+                        <PlayIcon size={12} />
+                      </span>
+                    </>
+                  ) : (
+                    <img src={photo.url} alt="" loading="lazy" />
+                  )}
                 </button>
               ))}
             </div>
@@ -198,7 +211,7 @@ export function VehiclePage() {
 
             {contact.whatsapp && (
               <a
-                className="sf-btn sf-btn-accent sf-btn-block"
+                className="sf-btn sf-btn-whatsapp sf-btn-block"
                 href={whatsappLink(contact.whatsapp, vehicleWhatsAppMessage(vehicle, brand.name))}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -207,15 +220,10 @@ export function VehiclePage() {
                 Falar sobre este veículo
               </a>
             )}
-            <button className="sf-btn sf-btn-ink sf-btn-block" onClick={() => openChat(vehicle.id)}>
+            <button className="sf-btn sf-btn-ink sf-btn-block sf-btn-quiet" onClick={() => openChat(vehicle.id)}>
               <SparkIcon size={15} />
               Tirar dúvidas agora
             </button>
-            {contact.phone && (
-              <a className="sf-btn sf-btn-outline sf-btn-block" href={`tel:${contact.phone.replace(/\D/g, '')}`}>
-                {contact.phone}
-              </a>
-            )}
           </div>
 
           <div className="sf-panel">

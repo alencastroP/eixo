@@ -422,7 +422,7 @@ export function VehicleFormPage() {
         <section className="form-section">
           <div className="section-head">
             <span className="section-num">3</span>
-            <h2>Galeria de Fotos</h2>
+            <h2>Galeria de Fotos e Vídeos</h2>
           </div>
           {isEdit && detail ? (
             <PhotoGallery vehicleId={detail.id} photos={detail.photos} onChange={setDetail} />

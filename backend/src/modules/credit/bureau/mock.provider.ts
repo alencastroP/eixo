@@ -1,44 +1,17 @@
-import type { DocType } from '../../lib/document';
-import { formatDocument } from '../../lib/document';
+import type { DocType } from '../../../lib/document';
+import { formatDocument } from '../../../lib/document';
+import { bandLabelOf, bandOf, estimateCredit, headlineOf, round } from './scoring';
+import type { BureauProvider, BureauQuery, CreditReport, ScoreBand } from './types';
 
 /**
- * Bureau de crédito MOCKADO - determinístico por documento (mesmo CPF/CNPJ →
- * mesmo resultado). Substituir por integração real (Serasa/SPC/Boa Vista)
- * mantendo o contrato CreditReport; nada no restante do módulo precisa mudar.
+ * Bureau de crédito SIMULADO - determinístico por documento (mesmo CPF/CNPJ →
+ * mesmo resultado).
+ *
+ * Continua existindo depois da integração real por três motivos: desenvolvimento
+ * sem queimar consulta paga, ambiente de demonstração, e rede de segurança
+ * quando falta credencial (ver index.ts). O laudo sai marcado `source: 'mock'`
+ * e a tela estampa "Resultado simulado" - dado falso nunca passa por verdadeiro.
  */
-
-export type ScoreBand = 'HIGH_RISK' | 'MEDIUM_RISK' | 'LOW_RISK';
-
-export interface CreditReport {
-  document: string; // formatado
-  docType: DocType;
-  name: string;
-  score: number; // 0..1000
-  band: ScoreBand;
-  bandLabel: string; // "Risco Alto" | "Risco Médio" | "Risco Baixo"
-  headline: string; // ex.: "Perfil Altamente Conversível"
-  restrictions: {
-    hasRestrictions: boolean;
-    protests: number;
-    negativacoes: number;
-    badChecks: number;
-    judicialActions: number;
-    totalAmount: number; // soma das pendências (R$)
-  };
-  company?: {
-    active: boolean;
-    situation: string;
-    openedYear: number;
-  };
-  credit: {
-    limit: number; // limite de financiamento estimado (R$)
-    downPaymentPct: number; // entrada recomendada (%)
-    downPaymentLabel: string;
-    installmentEstimate: number; // parcela estimada em 48x (R$)
-  };
-  queriedAt: string;
-  source: 'mock';
-}
 
 const FIRST = ['João', 'Maria', 'Carlos', 'Ana', 'Pedro', 'Fernanda', 'Rafael', 'Juliana', 'Bruno', 'Camila', 'Lucas', 'Patrícia'];
 const LAST = ['Silva', 'Santos', 'Oliveira', 'Souza', 'Pereira', 'Costa', 'Almeida', 'Ferreira', 'Rodrigues', 'Martins'];
@@ -66,21 +39,7 @@ function rng(seed: number): () => number {
   };
 }
 
-function bandOf(score: number): ScoreBand {
-  if (score <= 300) return 'HIGH_RISK';
-  if (score <= 700) return 'MEDIUM_RISK';
-  return 'LOW_RISK';
-}
-
-function headlineOf(band: ScoreBand, score: number): string {
-  if (band === 'LOW_RISK') return score >= 850 ? 'Perfil Altamente Conversível' : 'Bom Perfil de Crédito';
-  if (band === 'MEDIUM_RISK') return 'Perfil Moderado · Requer Análise';
-  return 'Alto Risco · Aprovação Restrita';
-}
-
-const round = (n: number, step: number) => Math.round(n / step) * step;
-
-export function generateReport(digits: string, docType: DocType): CreditReport {
+export function generateReport(digits: string, docType: DocType, fallbackName?: string): CreditReport {
   const seed = seedFrom(digits);
   const rand = rng(seed);
 
@@ -102,6 +61,9 @@ export function generateReport(digits: string, docType: DocType): CreditReport {
   } else {
     name = `${FIRST[seed % FIRST.length]} ${LAST[(seed >>> 4) % LAST.length]} ${LAST[(seed >>> 8) % LAST.length]}`;
   }
+  // Em demonstração o titular do cadastro é mais convincente que um nome
+  // sorteado - e deixa claro de quem é o laudo. Segue não conferido.
+  if (fallbackName?.trim()) name = fallbackName.trim();
 
   // restrições coerentes com a faixa de score
   let protests = 0;
@@ -120,23 +82,16 @@ export function generateReport(digits: string, docType: DocType): CreditReport {
   const count = protests + negativacoes + badChecks + judicialActions;
   const totalAmount = count === 0 ? 0 : round(count * (800 + rand() * 6000), 50);
 
-  // crédito estimado - cresce com o score; CNPJ tem teto maior
-  const ceiling = docType === 'CNPJ' ? 220000 : 120000;
-  const limit = band === 'HIGH_RISK' && count > 2 ? 0 : round(Math.pow(score / 1000, 1.4) * ceiling, 500);
-  const downPaymentPct = band === 'LOW_RISK' ? 0 : band === 'MEDIUM_RISK' ? 20 : 40;
-  const downPaymentLabel =
-    downPaymentPct === 0
-      ? 'Financiamento sem entrada disponível'
-      : `Necessita de pelo menos ${downPaymentPct}% de entrada`;
-  const installmentEstimate = limit > 0 ? round((limit * 1.28) / 48, 10) : 0;
-
   return {
     document: formatDocument(digits),
     docType,
     name,
+    // O mock inventa o nome, então ele nunca conta como conferido - a não ser
+    // que o chamador tenha passado o titular do nosso próprio cadastro.
+    nameConfirmed: false,
     score,
     band,
-    bandLabel: band === 'LOW_RISK' ? 'Risco Baixo' : band === 'MEDIUM_RISK' ? 'Risco Médio' : 'Risco Alto',
+    bandLabel: bandLabelOf(band),
     headline: headlineOf(band, score),
     restrictions: {
       hasRestrictions: count > 0,
@@ -147,8 +102,17 @@ export function generateReport(digits: string, docType: DocType): CreditReport {
       totalAmount,
     },
     company,
-    credit: { limit, downPaymentPct, downPaymentLabel, installmentEstimate },
+    credit: estimateCredit({ score, band, docType, restrictionCount: count }),
     queriedAt: new Date().toISOString(),
     source: 'mock',
   };
 }
+
+export const mockProvider: BureauProvider = {
+  slug: 'mock',
+  label: 'Simulado',
+  enabled: true,
+  async query({ digits, docType, fallbackName }: BureauQuery): Promise<CreditReport> {
+    return generateReport(digits, docType, fallbackName);
+  },
+};

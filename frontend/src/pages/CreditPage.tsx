@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from 'react';
 import { creditApi, leadsApi } from '../api/endpoints';
 import { ApiError } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
@@ -9,14 +17,18 @@ import {
   CheckIcon,
   CoinsIcon,
   FileTextIcon,
+  HistoryIcon,
+  InfoIcon,
   LinkIcon,
   SearchDataIcon,
   SearchIcon,
   ShieldIcon,
   TrendUpIcon,
+  UserIcon,
 } from '../components/icons';
-import type { CreditQuery, LeadSearchResult, ScoreBand } from '../types';
-import { formatBRL, formatDateTime, formatDocumentInput } from '../utils/format';
+import type { CreditQuery, LeadSearchResult, ScoreBand, UsageStatus } from '../types';
+import { formatBRL, formatDateTime, formatDocumentInput, formatPhone, timeAgo } from '../utils/format';
+import { documentState, onlyDigits } from '../utils/document';
 
 /** Canais aceitos para o registro do consentimento (legal/09 §8.1). */
 const CONSENT_SOURCES: { value: string; label: string }[] = [
@@ -25,6 +37,28 @@ const CONSENT_SOURCES: { value: string; label: string }[] = [
   { value: 'site', label: 'Site / chat' },
   { value: 'telefone', label: 'Telefone' },
 ];
+
+/** Campo que o envio precisa devolver o foco quando a validação barra. */
+type FormField = 'lead' | 'document' | 'consent';
+
+/**
+ * Cabeçalho numerado de cada etapa. O número vira um check assim que a etapa
+ * está satisfeita: a consulta tem três pré-requisitos legais e o operador
+ * precisa ver de relance qual ainda falta.
+ */
+function StepHead({ n, done, title, hint }: { n: number; done: boolean; title: string; hint?: string }) {
+  return (
+    <div className="credit-step-head">
+      <span className={`credit-step-num ${done ? 'done' : ''}`} aria-hidden="true">
+        {done ? <CheckIcon size={13} /> : n}
+      </span>
+      <span className="credit-step-text">
+        <span className="credit-step-title">{title}</span>
+        {hint && <span className="credit-step-hint">{hint}</span>}
+      </span>
+    </div>
+  );
+}
 
 const BAND_CLASS: Record<ScoreBand, string> = {
   HIGH_RISK: 'band-high',
@@ -50,10 +84,15 @@ function RestrictionRow({ label, count, amber }: { label: string; count: number;
 
 export function CreditPage() {
   const [docInput, setDocInput] = useState('');
+  /** true enquanto o documento veio do cadastro do lead e não da digitação -
+   *  só um valor autopreenchido pode ser trocado ao mudar de titular. */
+  const [docAutofilled, setDocAutofilled] = useState(false);
   const [result, setResult] = useState<CreditQuery | null>(null);
   const [recent, setRecent] = useState<CreditQuery[]>([]);
+  const [quota, setQuota] = useState<UsageStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorField, setErrorField] = useState<FormField | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
 
   // Titular da consulta - obrigatório: sem lead não há como registrar quem
@@ -61,9 +100,15 @@ export function CreditPage() {
   const [leadTerm, setLeadTerm] = useState('');
   const [leadResults, setLeadResults] = useState<LeadSearchResult[]>([]);
   const [leadSearching, setLeadSearching] = useState(false);
+  const [leadFailed, setLeadFailed] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(0);
   const [selectedLead, setSelectedLead] = useState<LeadSearchResult | null>(null);
   const [consentConfirmed, setConsentConfirmed] = useState(false);
   const [consentSource, setConsentSource] = useState('presencial');
+
+  const leadInputRef = useRef<HTMLInputElement>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
+  const consentRef = useRef<HTMLInputElement>(null);
 
   const loadRecent = useCallback(() => {
     creditApi
@@ -72,9 +117,18 @@ export function CreditPage() {
       .catch(() => setRecent([]));
   }, []);
 
+  /** Saldo do mês: a consulta é tarifada, então o custo aparece antes do clique. */
+  const loadQuota = useCallback(() => {
+    creditApi
+      .quota()
+      .then(setQuota)
+      .catch(() => setQuota(null));
+  }, []);
+
   useEffect(() => {
     loadRecent();
-  }, [loadRecent]);
+    loadQuota();
+  }, [loadRecent, loadQuota]);
 
   useEffect(() => {
     if (selectedLead || !leadTerm.trim()) {
@@ -83,11 +137,20 @@ export function CreditPage() {
     }
     let cancelled = false;
     setLeadSearching(true);
+    setLeadFailed(false);
     const t = setTimeout(() => {
       leadsApi
         .search(leadTerm.trim())
-        .then((r) => !cancelled && setLeadResults(r))
-        .catch(() => !cancelled && setLeadResults([]))
+        .then((r) => {
+          if (cancelled) return;
+          setLeadResults(r);
+          setActiveIdx(0);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setLeadResults([]);
+          setLeadFailed(true);
+        })
         .finally(() => !cancelled && setLeadSearching(false));
     }, 300);
     return () => {
@@ -96,23 +159,94 @@ export function CreditPage() {
     };
   }, [leadTerm, selectedLead]);
 
-  const runQuery = async (e: FormEvent) => {
-    e.preventDefault();
-    const digits = docInput.replace(/\D/g, '');
-    if (digits.length !== 11 && digits.length !== 14) {
-      setError('Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).');
+  const docState = useMemo(() => documentState(docInput), [docInput]);
+
+  /** Mesmo documento consultado há pouco: abrir o relatório arquivado entrega
+   *  o mesmo dado sem queimar outra consulta tarifada. */
+  const duplicate = useMemo(() => {
+    if (docState.status !== 'valid') return null;
+    return recent.find((q) => onlyDigits(q.report.document) === docState.digits) ?? null;
+  }, [docState, recent]);
+
+  const quotaExhausted = quota?.exceeded === true;
+  const listboxOpen = !selectedLead && leadResults.length > 0;
+
+  const pickLead = (lead: LeadSearchResult) => {
+    setSelectedLead(lead);
+    setLeadResults([]);
+    setError(null);
+    setErrorField(null);
+    // O documento do cadastro entra sozinho; digitação do operador tem precedência.
+    if (lead.document && (!docInput || docAutofilled)) {
+      setDocInput(formatDocumentInput(lead.document));
+      setDocAutofilled(true);
+    }
+  };
+
+  const clearLead = () => {
+    setSelectedLead(null);
+    setConsentConfirmed(false);
+    setLeadTerm('');
+    if (docAutofilled) {
+      setDocInput('');
+      setDocAutofilled(false);
+    }
+  };
+
+  /** Navegação por teclado no combobox de titular (setas, Enter, Esc). */
+  const onLeadKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      setLeadTerm('');
+      setLeadResults([]);
       return;
     }
+    if (!listboxOpen) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIdx((i) => (i + 1) % leadResults.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIdx((i) => (i - 1 + leadResults.length) % leadResults.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault(); // o Enter escolhe o titular, não envia o formulário
+      const lead = leadResults[activeIdx];
+      if (lead) pickLead(lead);
+    }
+  };
+
+  const fail = (field: FormField, message: string, focus: HTMLElement | null) => {
+    setError(message);
+    setErrorField(field);
+    focus?.focus();
+  };
+
+  const runQuery = async (e: FormEvent) => {
+    e.preventDefault();
+    // A ordem das checagens é a ordem das etapas na tela: assim o foco sempre
+    // anda para frente, nunca volta a um campo que o operador já resolveu.
     if (!selectedLead) {
-      setError('Selecione o lead/cliente desta consulta.');
+      fail('lead', 'Selecione o lead/cliente desta consulta.', leadInputRef.current);
+      return;
+    }
+    if (docState.status === 'empty' || docState.status === 'incomplete') {
+      fail('document', 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).', docInputRef.current);
+      return;
+    }
+    if (docState.status === 'invalid') {
+      fail(
+        'document',
+        `${docState.docType} inválido - os dígitos verificadores não conferem. Confira o número com o cliente.`,
+        docInputRef.current,
+      );
       return;
     }
     if (!consentConfirmed) {
-      setError('Confirme que o cliente foi informado e autorizou a consulta.');
+      fail('consent', 'Confirme que o cliente foi informado e autorizou a consulta.', consentRef.current);
       return;
     }
     setLoading(true);
     setError(null);
+    setErrorField(null);
     try {
       const q = await creditApi.query(docInput, {
         leadId: selectedLead.id,
@@ -121,8 +255,12 @@ export function CreditPage() {
       });
       setResult(q);
       loadRecent();
+      loadQuota();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Falha na consulta');
+      setErrorField(null);
+      // A franquia pode ter estourado nesta chamada - reflete o saldo real.
+      loadQuota();
     } finally {
       setLoading(false);
     }
@@ -131,6 +269,7 @@ export function CreditPage() {
   const openReport = async (id: string) => {
     setLoading(true);
     setError(null);
+    setErrorField(null);
     try {
       setResult(await creditApi.get(id));
     } catch (err) {
@@ -143,11 +282,14 @@ export function CreditPage() {
   const reset = () => {
     setResult(null);
     setDocInput('');
+    setDocAutofilled(false);
     setError(null);
+    setErrorField(null);
     setSelectedLead(null);
     setLeadTerm('');
     setConsentConfirmed(false);
     loadRecent();
+    loadQuota();
   };
 
   // ─── Tela 2: painel de diagnóstico ───
@@ -159,7 +301,9 @@ export function CreditPage() {
           icon={<ShieldIcon size={19} />}
           eyebrow="Análise de Crédito"
           title={r.name}
-          subtitle={`${r.docType} ${r.document} · consultado em ${formatDateTime(r.queriedAt)}`}
+          subtitle={`${r.docType} ${r.document} · consultado em ${formatDateTime(r.queriedAt)}${
+            r.protocol ? ` · protocolo ${r.protocol}` : ''
+          }`}
           actions={
             <button className="btn btn-ghost btn-sm" onClick={reset}>
               <SearchDataIcon size={15} /> Nova consulta
@@ -172,6 +316,16 @@ export function CreditPage() {
             <div className="alert alert-warning credit-simulated-banner">
               <AlertIcon size={14} /> <strong>Resultado simulado</strong> - sem consulta a bureau de crédito. Não
               tem validade para decisão de crédito. Não apresente como análise real.
+            </div>
+          )}
+
+          {/* O bureau devolveu score sem confirmar o titular: o nome no
+              cabeçalho é o do nosso cadastro, e isso não pode passar por
+              identificação conferida. */}
+          {r.source !== 'mock' && r.nameConfirmed === false && (
+            <div className="alert alert-info">
+              <InfoIcon size={14} /> O bureau não retornou o nome do titular. O nome exibido é o do cadastro da loja
+              e <strong>não foi conferido</strong> na base consultada.
             </div>
           )}
 
@@ -319,120 +473,260 @@ export function CreditPage() {
       />
 
       <div className="credit-search-wrap">
-        <form className="credit-search" onSubmit={runQuery}>
-          <span className="credit-search-badge">
-            <SearchDataIcon size={24} />
-          </span>
-          <h2 className="credit-search-title">Consultar perfil de crédito</h2>
-          <p className="credit-search-hint">
-            Toda consulta precisa de um titular e de confirmação de que ele autorizou.
-          </p>
-
-          <label className="credit-search-label">Lead / cliente</label>
-          {selectedLead ? (
-            <div className="lead-result" style={{ cursor: 'default', marginBottom: 10 }}>
-              <span className="lead-result-info">
-                <span className="lead-result-name">{selectedLead.name}</span>
-                <span className="lead-result-contact muted small">
-                  {selectedLead.phone ?? selectedLead.email ?? 'sem contato'}
-                </span>
-              </span>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  setSelectedLead(null);
-                  setConsentConfirmed(false);
-                }}
-              >
-                Trocar
-              </button>
+        <form className="credit-search credit-form" onSubmit={runQuery} noValidate>
+          <div className="credit-form-head">
+            <span className="credit-search-badge">
+              <SearchDataIcon size={24} />
+            </span>
+            <div>
+              <h2 className="credit-search-title">Consultar perfil de crédito</h2>
+              <p className="credit-search-hint">
+                Cada consulta é tarifada e fica registrada com o titular, o canal e a data da autorização.
+              </p>
             </div>
-          ) : (
-            <>
-              <div className="inbox-search link-search">
-                <SearchIcon size={15} />
-                <input
-                  autoFocus
-                  placeholder="Buscar por nome, telefone ou e-mail…"
-                  value={leadTerm}
-                  onChange={(e) => setLeadTerm(e.target.value)}
-                />
-              </div>
-              {leadTerm.trim() && (
-                <div className="lead-results" style={{ marginBottom: 10 }}>
-                  {leadSearching && leadResults.length === 0 && <div className="muted small">Buscando…</div>}
-                  {!leadSearching && leadResults.length === 0 && (
-                    <div className="muted small">Nenhum lead encontrado.</div>
-                  )}
-                  {leadResults.map((l) => (
-                    <button
-                      key={l.id}
-                      type="button"
-                      className="lead-result"
-                      onClick={() => {
-                        setSelectedLead(l);
-                        setLeadResults([]);
-                      }}
-                    >
-                      <span className="lead-result-info">
-                        <span className="lead-result-name">{l.name}</span>
-                        <span className="lead-result-contact muted small">{l.phone ?? l.email ?? 'sem contato'}</span>
-                      </span>
-                      <span className="lead-result-cta">Selecionar</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-
-          <label className="credit-search-label">CPF ou CNPJ</label>
-          <div className="credit-search-row">
-            <input
-              className="credit-doc-input"
-              value={docInput}
-              onChange={(e) => setDocInput(formatDocumentInput(e.target.value))}
-              placeholder="000.000.000-00"
-              inputMode="numeric"
-            />
+            {quota && (
+              <span
+                className={`credit-quota ${quota.exceeded ? 'bad' : quota.remaining !== null && quota.remaining <= 3 ? 'warn' : ''}`}
+                title="Franquia de consultas do plano no mês corrente"
+              >
+                <CoinsIcon size={13} />
+                {quota.quota === null
+                  ? `${quota.used} no mês · sem limite`
+                  : `${quota.remaining} de ${quota.quota} restantes no mês`}
+              </span>
+            )}
           </div>
 
-          {selectedLead && (
-            <>
-              <label className="checkbox-field" style={{ marginTop: 10 }}>
-                <input
-                  type="checkbox"
-                  checked={consentConfirmed}
-                  onChange={(e) => setConsentConfirmed(e.target.checked)}
-                />
-                O cliente foi informado e <strong>autorizou</strong> esta consulta.
-              </label>
-              <label className="credit-search-label">Canal da autorização</label>
-              <select
-                className="credit-doc-input"
-                value={consentSource}
-                onChange={(e) => setConsentSource(e.target.value)}
-                style={{ marginBottom: 10 }}
-              >
-                {CONSENT_SOURCES.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-            </>
+          {quotaExhausted && (
+            <div className="alert alert-warning">
+              <AlertIcon size={14} /> A franquia de consultas deste mês acabou. Mude de plano em{' '}
+              <strong>Administração › Pagamentos</strong> para liberar novas consultas.
+            </div>
           )}
 
-          <button
-            type="submit"
-            className="btn btn-primary credit-submit"
-            disabled={loading || !selectedLead || !consentConfirmed}
-          >
+          {/* ── Etapa 1 · titular ── */}
+          <section className="credit-step">
+            <StepHead
+              n={1}
+              done={!!selectedLead}
+              title="Titular da consulta"
+              hint="Quem autorizou. Obrigatório para registrar o consentimento."
+            />
+            {selectedLead ? (
+              <div className="lead-result lead-result-picked">
+                <span className="lead-avatar" aria-hidden="true">
+                  <UserIcon size={15} />
+                </span>
+                <span className="lead-result-info">
+                  <span className="lead-result-name">{selectedLead.name}</span>
+                  <span className="lead-result-contact muted small">
+                    {formatPhone(selectedLead.phone) ?? selectedLead.email ?? 'sem contato'}
+                  </span>
+                </span>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={clearLead}>
+                  Trocar
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className={`inbox-search link-search ${errorField === 'lead' ? 'has-error' : ''}`}>
+                  <SearchIcon size={15} />
+                  <input
+                    autoFocus
+                    id="credit-lead"
+                    ref={leadInputRef}
+                    role="combobox"
+                    aria-expanded={listboxOpen}
+                    aria-controls="credit-lead-results"
+                    aria-autocomplete="list"
+                    aria-invalid={errorField === 'lead'}
+                    aria-activedescendant={
+                      listboxOpen && leadResults[activeIdx] ? `credit-lead-opt-${leadResults[activeIdx].id}` : undefined
+                    }
+                    placeholder="Buscar por nome, telefone ou e-mail…"
+                    value={leadTerm}
+                    onChange={(e) => setLeadTerm(e.target.value)}
+                    onKeyDown={onLeadKeyDown}
+                  />
+                </div>
+                {leadTerm.trim() && leadResults.length === 0 && (
+                  <div className="lead-search-status" aria-live="polite">
+                    {leadSearching && <span className="muted small">Buscando…</span>}
+                    {!leadSearching && leadFailed && (
+                      <span className="field-hint bad">Não foi possível buscar agora. Tente de novo.</span>
+                    )}
+                    {!leadSearching && !leadFailed && (
+                      <span className="muted small">
+                        Nenhum lead encontrado. Só é possível consultar quem já está no funil.
+                      </span>
+                    )}
+                  </div>
+                )}
+                {listboxOpen && (
+                  <div className="lead-results" id="credit-lead-results" role="listbox" aria-label="Leads encontrados">
+                    {leadResults.map((l, i) => (
+                      <div
+                        key={l.id}
+                        id={`credit-lead-opt-${l.id}`}
+                        role="option"
+                        aria-selected={i === activeIdx}
+                        className={`lead-result ${i === activeIdx ? 'active' : ''}`}
+                        onMouseEnter={() => setActiveIdx(i)}
+                        onMouseDown={(e) => e.preventDefault()} // mantém o foco no campo de busca
+                        onClick={() => pickLead(l)}
+                      >
+                        <span className="lead-result-info">
+                          <span className="lead-result-name">{l.name}</span>
+                          <span className="lead-result-contact muted small">
+                            {formatPhone(l.phone) ?? l.email ?? 'sem contato'}
+                          </span>
+                        </span>
+                        {l.document && <span className="lead-result-doc mono">{formatDocumentInput(l.document)}</span>}
+                        <span className="lead-result-cta">Selecionar</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+
+          {/* ── Etapa 2 · documento ── */}
+          <section className="credit-step">
+            <StepHead
+              n={2}
+              done={docState.status === 'valid'}
+              title="CPF ou CNPJ"
+              hint="Os dígitos verificadores são conferidos antes do envio."
+            />
+            <div className="credit-search-row">
+              <input
+                id="credit-document"
+                ref={docInputRef}
+                className={`credit-doc-input ${
+                  docState.status === 'valid' ? 'input-ok' : docState.status === 'invalid' ? 'input-bad' : ''
+                }`}
+                value={docInput}
+                onChange={(e) => {
+                  setDocInput(formatDocumentInput(e.target.value));
+                  setDocAutofilled(false);
+                  if (errorField === 'document') {
+                    setError(null);
+                    setErrorField(null);
+                  }
+                }}
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                autoComplete="off"
+                aria-label="CPF ou CNPJ do titular"
+                aria-invalid={docState.status === 'invalid'}
+                aria-describedby="credit-document-hint"
+              />
+            </div>
+            <p
+              id="credit-document-hint"
+              className={`field-hint credit-doc-hint ${
+                docState.status === 'invalid' ? 'bad' : docState.status === 'valid' ? 'ok' : ''
+              }`}
+              role={docState.status === 'invalid' ? 'alert' : undefined}
+            >
+              {docState.status === 'valid' && (
+                <>
+                  <CheckIcon size={13} /> {docState.docType} válido
+                  {docAutofilled && ' · preenchido pelo cadastro do lead'}
+                </>
+              )}
+              {docState.status === 'invalid' && (
+                <>
+                  <AlertIcon size={13} /> {docState.docType} inválido - os dígitos verificadores não conferem.
+                </>
+              )}
+              {docState.status === 'incomplete' && `${docState.digits.length} de 11 (CPF) ou 14 (CNPJ) dígitos`}
+              {docState.status === 'empty' && 'CPF com 11 dígitos ou CNPJ com 14.'}
+            </p>
+
+            {duplicate && (
+              <div className="credit-dup">
+                <HistoryIcon size={15} />
+                <span>
+                  Este documento já foi consultado <strong>{timeAgo(duplicate.createdAt)}</strong>. Abrir o relatório
+                  arquivado não consome uma nova consulta.
+                </span>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => openReport(duplicate.id)}>
+                  Abrir
+                </button>
+              </div>
+            )}
+          </section>
+
+          {/* ── Etapa 3 · consentimento (legal/09 §8.1) ── */}
+          <section className="credit-step">
+            <StepHead
+              n={3}
+              done={consentConfirmed}
+              title="Autorização do titular"
+              hint="Sem a confirmação, o servidor recusa a consulta."
+            />
+            <label className={`checkbox-field consent-check ${errorField === 'consent' ? 'has-error' : ''}`}>
+              <input
+                ref={consentRef}
+                type="checkbox"
+                checked={consentConfirmed}
+                aria-invalid={errorField === 'consent'}
+                onChange={(e) => {
+                  setConsentConfirmed(e.target.checked);
+                  if (e.target.checked && errorField === 'consent') {
+                    setError(null);
+                    setErrorField(null);
+                  }
+                }}
+              />
+              <span>
+                {selectedLead ? (
+                  <>
+                    <strong>{selectedLead.name}</strong> foi informado e <strong>autorizou</strong> esta consulta.
+                  </>
+                ) : (
+                  <>
+                    O cliente foi informado e <strong>autorizou</strong> esta consulta.
+                  </>
+                )}
+              </span>
+            </label>
+
+            <span className="credit-search-label consent-label" id="credit-consent-channel">
+              Canal da autorização
+            </span>
+            <div className="consent-channels" role="radiogroup" aria-labelledby="credit-consent-channel">
+              {CONSENT_SOURCES.map((s) => (
+                <label key={s.value} className={`consent-channel ${consentSource === s.value ? 'on' : ''}`}>
+                  <input
+                    type="radio"
+                    name="consentSource"
+                    value={s.value}
+                    checked={consentSource === s.value}
+                    onChange={() => setConsentSource(s.value)}
+                  />
+                  {s.label}
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <button type="submit" className="btn btn-primary credit-submit" disabled={loading || quotaExhausted}>
             <SearchDataIcon size={17} /> {loading ? 'Consultando…' : 'Consultar Perfil'}
           </button>
 
-          {error && <p className="form-error credit-search-error">{error}</p>}
+          {error && (
+            <p className="form-error credit-search-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          <p className="credit-legal-note">
+            <InfoIcon size={13} /> Ao consultar, ficam registrados o titular, o canal e a data da autorização, e a
+            versão do termo de consentimento vigente.
+          </p>
         </form>
 
         {recent.length > 0 && (

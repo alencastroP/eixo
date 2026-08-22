@@ -108,8 +108,12 @@ export function defaultConfig(moduleKey: string): ReportConfig {
 export const CATEGORICAL_DARK = ['#E05F2A', '#0B84FF', '#1FA35C', '#9B6DFF', '#C0850C', '#E5484D'];
 export const CATEGORICAL_LIGHT = ['#E0551F', '#0B6FD6', '#1F9D57', '#7C5CE0', '#B7791F', '#CF3339'];
 
-/** Série única (barras/linha) - laranja ignição da marca. */
+/** Série única (barras/área) - laranja ignição da marca, início do degradê. */
 export const SERIES_PRIMARY = '#FF6B35';
+/** Fim do degradê da série - âmbar (--warning), o mesmo par usado na barra de
+ *  participação de "Dados analíticos". O tom muda por tema para manter contraste. */
+export const SERIES_END_DARK = '#FFB020';
+export const SERIES_END_LIGHT = '#B7791F';
 
 /* ─────────────────────────── Gerador determinístico ────────────────────────── */
 

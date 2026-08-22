@@ -153,6 +153,33 @@ export const env = {
     graceDays: toInt(process.env.BILLING_GRACE_DAYS, 7),
   },
 
+  /**
+   * Bureau de crédito (Assertiva, produto "Credito Mix").
+   *
+   * Sem `clientId`/`clientSecret` o módulo NÃO quebra: a consulta cai no bureau
+   * simulado e o laudo sai marcado como tal, com o aviso "Resultado simulado"
+   * na tela. Ver modules/credit/bureau/index.ts.
+   *
+   * `finalidade` é exigência de LGPD da própria Assertiva: 2 = ciclo de crédito,
+   * 4 = execução de contrato. Precisa bater com o termo que o titular autorizou
+   * (legal/09-CONSENTIMENTO-CONSULTA-DE-CREDITO.md) - para consulta de
+   * financiamento, é 2.
+   *
+   * `opcoes` são módulos incrementais, CADA UM COBRADO À PARTE por consulta:
+   * ACOES (ações judiciais) e POSITIVO (Cadastro Positivo). Só vale pedir o que
+   * a tela mostra - o padrão pede ACOES e deixa POSITIVO de fora.
+   */
+  credit: {
+    provider: process.env.CREDIT_BUREAU_PROVIDER ?? 'assertiva',
+    assertiva: {
+      clientId: process.env.ASSERTIVA_CLIENT_ID ?? '',
+      clientSecret: process.env.ASSERTIVA_CLIENT_SECRET ?? '',
+      baseUrl: (process.env.ASSERTIVA_BASE_URL ?? 'https://api.assertivasolucoes.com.br').replace(/\/+$/, ''),
+      finalidade: process.env.ASSERTIVA_FINALIDADE ?? '2',
+      opcoes: process.env.ASSERTIVA_OPCOES ?? 'ACOES',
+    },
+  },
+
   // E-mail transacional (Resend). Sem apiKey, o envio vira log e a aplicação
   // segue normalmente - ver emailEnabled() e lib/email.ts.
   email: {

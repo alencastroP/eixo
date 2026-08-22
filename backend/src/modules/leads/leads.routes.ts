@@ -36,7 +36,9 @@ leadsRouter.get(
       : { accountId, anonymizedAt: null };
     const leads = await prisma.lead.findMany({
       where,
-      select: { id: true, name: true, phone: true, email: true, platform: true },
+      // `document` alimenta o preenchimento automático do CPF/CNPJ na consulta
+      // de crédito: o operador não redigita o que a loja já tem no cadastro.
+      select: { id: true, name: true, phone: true, email: true, platform: true, document: true },
       orderBy: { updatedAt: 'desc' },
       take: limit,
     });

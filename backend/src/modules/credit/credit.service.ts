@@ -5,7 +5,7 @@ import { CREDIT_CONSENT_VERSION } from '../../lib/legal-versions';
 import { logger } from '../../lib/logger';
 import { prisma } from '../../lib/prisma';
 import { hasQuota, recordUsage } from '../billing/usage.service';
-import { generateReport, type CreditReport } from './bureau.mock';
+import { bureau, type CreditReport } from './bureau';
 
 interface Actor {
   id: string;
@@ -32,10 +32,10 @@ export interface ConsentInput {
  * no servidor quando o checkbox não foi marcado: a interface já força isso,
  * mas quem decide não pode ser só o cliente.
  */
-async function registerConsent(consent: ConsentInput, accountId: string) {
+async function registerConsent(consent: ConsentInput, accountId: string, documentDigits: string) {
   const lead = await prisma.lead.findUnique({
     where: { id: consent.leadId },
-    select: { id: true, accountId: true },
+    select: { id: true, accountId: true, document: true, name: true },
   });
   if (!lead || lead.accountId !== accountId) throw badRequest('Lead não encontrado', 'LEAD_NOT_FOUND');
 
@@ -52,7 +52,15 @@ async function registerConsent(consent: ConsentInput, accountId: string) {
 
   await prisma.lead.update({
     where: { id: lead.id },
-    data: { creditConsentAt: new Date(), creditConsentSource: source, creditConsentVersion: CREDIT_CONSENT_VERSION },
+    data: {
+      creditConsentAt: new Date(),
+      creditConsentSource: source,
+      creditConsentVersion: CREDIT_CONSENT_VERSION,
+      // Guarda o documento no cadastro quando ele ainda não existe, para a
+      // próxima consulta já vir preenchida. Nunca sobrescreve: um documento
+      // digitado errado aqui não pode corromper o cadastro do titular.
+      ...(lead.document ? {} : { document: documentDigits }),
+    },
   });
 
   return lead;
@@ -89,7 +97,7 @@ export async function runQuery(rawDocument: string, actor: Actor, consent: Conse
   const valid = validateDocument(rawDocument);
   if (!valid) throw badRequest('CPF ou CNPJ inválido. Verifique os dígitos informados.', 'INVALID_DOCUMENT');
 
-  await registerConsent(consent, actor.accountId);
+  const lead = await registerConsent(consent, actor.accountId, valid.digits);
 
   // Consulta a bureau tem tarifa por unidade - a franquia do plano é o teto.
   // Diferente da IA (que apenas silencia), aqui o erro é explícito: quem
@@ -101,7 +109,13 @@ export async function runQuery(rawDocument: string, actor: Actor, consent: Conse
     );
   }
 
-  const report = generateReport(valid.digits, valid.docType);
+  // O bureau ativo vem do registry: real quando há credencial, simulado quando
+  // não - e o laudo diz qual dos dois foi (`report.source`).
+  const report = await bureau().query({
+    digits: valid.digits,
+    docType: valid.docType,
+    fallbackName: lead.name ?? undefined,
+  });
 
   const row = await prisma.creditQuery.create({
     data: {
@@ -128,6 +142,8 @@ export async function runQuery(rawDocument: string, actor: Actor, consent: Conse
     actor: actor.id,
     leadId: consent.leadId,
     consentSource: consent.consentSource,
+    source: report.source,
+    protocol: report.protocol,
   });
 
   return serialize(row);

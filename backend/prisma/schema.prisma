@@ -1117,14 +1117,20 @@ model Vehicle {
   @@map("vehicles")
 }
 
+enum VehicleMediaType {
+  PHOTO
+  VIDEO
+}
+
 model VehiclePhoto {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   vehicleId String
-  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle          @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   url       String
-  position  Int      @default(0) // ordem na galeria
-  isCover   Boolean  @default(false) // foto principal/capa
-  createdAt DateTime @default(now())
+  type      VehicleMediaType @default(PHOTO)
+  position  Int              @default(0) // ordem na galeria
+  isCover   Boolean          @default(false) // foto principal/capa (só entre as fotos - vídeo nunca é capa)
+  createdAt DateTime         @default(now())
 
   @@index([vehicleId, position])
   @@map("vehicle_photos")

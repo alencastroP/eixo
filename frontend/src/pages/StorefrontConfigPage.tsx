@@ -212,6 +212,26 @@ export function StorefrontConfigPage() {
               </div>
               <p className="muted small">Sem logo, o site usa as iniciais da loja em um selo na cor principal.</p>
             </div>
+
+            <div className={`field-toggle ${config.brand.showName ? 'on' : ''}`} style={{ maxWidth: 460 }}>
+              <div className="field-toggle-main">
+                <span className="field-toggle-label">Mostrar nome da loja ao lado do logo</span>
+                <button
+                  type="button"
+                  className={`switch ${config.brand.showName ? 'on blue' : ''}`}
+                  onClick={() => patch('brand', { showName: !config.brand.showName })}
+                  role="switch"
+                  aria-checked={config.brand.showName}
+                  disabled={!canEdit}
+                >
+                  <span className="switch-knob" />
+                </button>
+              </div>
+            </div>
+            <p className="muted small">
+              Desligue se o arquivo do logo já traz o nome da loja desenhado - evita repetir o nome duas vezes no
+              cabeçalho e no rodapé do site.
+            </p>
           </div>
         )}
 

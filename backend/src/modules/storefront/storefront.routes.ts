@@ -29,6 +29,7 @@ const brandSchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida (use hexadecimal, ex.: #ff6b35)')
     .default('#ff6b35'),
   theme: z.enum(['dark', 'light']).default('dark'),
+  showName: z.boolean().default(true),
 });
 
 const heroSchema = z.object({

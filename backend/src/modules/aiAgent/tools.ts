@@ -5,7 +5,7 @@ import { logger } from '../../lib/logger';
 import { maskDocument, validateDocument } from '../../lib/document';
 import { CREDIT_CONSENT_VERSION } from '../../lib/legal-versions';
 import { hasQuota, recordUsage } from '../billing/usage.service';
-import { generateReport } from '../credit/bureau.mock';
+import { bureau } from '../credit/bureau';
 import { getInventoryDetail, searchInventory } from './inventory.tool';
 import { mergeLeadProfile, searchKnowledge, type AgentProfileResolved, type LeadProfile } from './context.service';
 
@@ -312,7 +312,24 @@ async function runCreditTool(documentoRaw: unknown, ctx: AgentToolContext): Prom
     };
   }
 
-  const report = generateReport(valid.digits, valid.docType);
+  // O bureau real é rede: pode dar timeout, 429 ou instabilidade do fornecedor.
+  // O despachante de ferramentas (executeAgentTool) não tem try/catch, então uma
+  // exceção aqui derrubaria o turno inteiro e o cliente ficaria sem resposta no
+  // meio da conversa. A falha vira instrução para o modelo transbordar.
+  let report;
+  try {
+    report = await bureau().query({ digits: valid.digits, docType: valid.docType });
+  } catch (err) {
+    logger.warn('IA: consulta de crédito falhou no bureau', {
+      ticketId: ctx.ticketId,
+      document: maskDocument(valid.digits),
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return {
+      content:
+        'A consulta ao bureau de crédito falhou agora (indisponibilidade do fornecedor). Não invente números nem prometa aprovação; diga ao cliente que a análise será feita por um consultor e transfira para um atendente humano.',
+    };
+  }
 
   // Consentimento: o próprio titular está fornecendo o documento voluntariamente
   // nesta mensagem, para esta simulação - é um ato específico e contemporâneo

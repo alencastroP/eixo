@@ -7,6 +7,7 @@ export interface StorefrontBrand {
   logoUrl: string | null;
   primary: string;
   theme: 'dark' | 'light';
+  showName: boolean;
 }
 
 export interface StorefrontHero {
@@ -85,7 +86,7 @@ export interface SiteVehicle {
 export interface SiteVehicleDetail extends SiteVehicle {
   optionals: string[];
   description: string | null;
-  photos: { id: string; url: string }[];
+  photos: { id: string; url: string; type: 'PHOTO' | 'VIDEO' }[];
 }
 
 export interface SiteFacets {
